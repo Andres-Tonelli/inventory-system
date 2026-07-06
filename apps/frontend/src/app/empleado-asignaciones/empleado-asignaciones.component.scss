@@ -1,0 +1,75 @@
+:host {
+  --card: #ffffff;
+  --ink: #1a1a2e;
+  --muted: #6b7180;
+  --muted-2: #969cad;
+  --border: #e7e8f1;
+  --border-soft: #eef0f5;
+  --indigo: #6366f1;
+  --indigo-600: #4f46e5;
+  --indigo-soft: #eef0ff;
+  --green: #15a34a;
+  --green-soft: #e6f6ec;
+  --blue: #2563eb;
+  --blue-soft: #e6effe;
+  --amber: #b45309;
+  --amber-soft: #fdf1e3;
+  --slate: #5b6474;
+  --slate-soft: #eef1f5;
+  --radius: 12px;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.page { padding: 24px 28px 44px; color: var(--ink); }
+
+.back { appearance: none; border: none; background: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 4px 0; margin-bottom: 14px; }
+.back:hover { color: var(--indigo-600); }
+.back i { font-size: 12px; }
+
+/* Header */
+.head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.avatar { width: 56px; height: 56px; border-radius: 14px; background: var(--indigo-soft); color: var(--indigo-600); display: grid; place-items: center; font-size: 24px; flex: none; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
+.head h1 { font-size: 23px; font-weight: 700; margin: 3px 0 6px; letter-spacing: -.3px; }
+.sub { display: flex; align-items: center; gap: 10px; }
+.legajo { font-size: 12.5px; color: var(--muted); font-family: var(--mono); }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 26px; }
+.stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.stat .n { font-size: 22px; font-weight: 700; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 12px; color: var(--muted); }
+
+.section-lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted-2); margin-bottom: 12px; }
+.section-lbl.mt { margin-top: 26px; }
+.muted-center { text-align: center; color: var(--muted); padding: 30px; }
+.empty-card { background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); padding: 22px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* Conjunto card */
+.ag-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+.ag-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--border-soft); background: #fbfbfe; }
+.ag-title { display: flex; align-items: center; gap: 10px; }
+.ag-name { font-weight: 700; font-size: 15px; }
+.ag-date { font-size: 12px; color: var(--muted-2); }
+
+/* Tables */
+.tablecard { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.tablescroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted-2); padding: 10px 14px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; font-size: 13.5px; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #fafbff; }
+.cell-name { font-weight: 600; }
+.mut { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 18px; }
+
+/* Pills */
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; padding: 3px 9px; border-radius: 20px; white-space: nowrap; background: var(--slate-soft); color: var(--slate); }
+.pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.green { background: var(--green-soft); color: var(--green); }
+.pill.blue { background: var(--blue-soft); color: var(--blue); }
+.pill.amber { background: var(--amber-soft); color: var(--amber); }
+.pill.slate { background: var(--slate-soft); color: var(--slate); }
+.pill.indigo { background: var(--indigo-soft); color: var(--indigo-600); }

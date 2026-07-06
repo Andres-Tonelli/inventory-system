@@ -1,0 +1,73 @@
+:host {
+  --card: #ffffff;
+  --ink: #1a1a2e;
+  --muted: #6b7180;
+  --muted-2: #969cad;
+  --border: #e7e8f1;
+  --border-soft: #eef0f5;
+  --indigo: #6366f1;
+  --indigo-600: #4f46e5;
+  --indigo-soft: #eef0ff;
+  --slate-soft: #eef1f5;
+  --radius: 12px;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.config-page { padding: 24px 28px 40px; color: var(--ink); }
+.crumbs { display: flex; align-items: center; gap: 7px; color: var(--muted-2); font-size: 12.5px; }
+.crumbs .sep { font-size: 11px; color: #cdd1dc; }
+.crumbs .here { color: var(--muted); }
+.page-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 20px; }
+.page-title h1 { font-size: 21px; font-weight: 700; margin: 0; letter-spacing: -.2px; }
+.page-title p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: #fff; color: var(--ink);
+  font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 8px;
+}
+.btn i { font-size: 11px; }
+.btn:hover { border-color: #d5d8e6; background: #fafbff; }
+.btn.primary { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+.btn.primary:hover { background: var(--indigo-600); border-color: var(--indigo-600); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.ghost:hover { background: var(--slate-soft); color: var(--ink); }
+.btn.sm { padding: 6px 10px; font-size: 12px; }
+
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); max-width: 860px; }
+.tabs { display: flex; gap: 4px; padding: 14px 20px 0; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; }
+.tab {
+  appearance: none; border: none; background: none; font: inherit; cursor: pointer;
+  padding: 9px 13px 12px; font-size: 13.5px; font-weight: 600; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--indigo-600); border-bottom-color: var(--indigo); }
+.tab .count { font-size: 11px; color: var(--muted-2); font-weight: 600; margin-left: 5px; background: var(--slate-soft); padding: 1px 6px; border-radius: 20px; }
+.tab[aria-selected="true"] .count { background: var(--indigo-soft); color: var(--indigo-600); }
+
+.tabpanel { padding: 16px 20px 22px; }
+.panel-note { display: flex; gap: 9px; align-items: flex-start; background: #fbfbfe; border: 1px solid var(--border-soft); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.panel-note i { color: var(--indigo); flex: none; margin-top: 2px; font-size: 14px; }
+.panel-note b { color: var(--ink); font-weight: 650; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.toolbar .cap { font-size: 12.5px; color: var(--muted); }
+.empty { padding: 26px 12px; text-align: center; color: var(--muted); font-size: 13px; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted-2); padding: 0 12px 8px; border-bottom: 1px solid var(--border-soft); }
+thead th.ta-right { text-align: right; }
+tbody td { padding: 12px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #fafbff; }
+.cell-name { font-weight: 600; font-size: 14px; }
+code { font-family: var(--mono); font-size: 12.5px; background: var(--slate-soft); color: #3f4658; padding: 2px 7px; border-radius: 6px; }
+.row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+.form { display: flex; flex-direction: column; gap: 6px; }
+.form label { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.form label.mt { margin-top: 12px; }
+.form input { width: 100%; }
+.form .hint { color: var(--muted); font-size: 11.5px; margin-top: 5px; }
+
+:host ::ng-deep .p-dialog .p-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }

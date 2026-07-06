@@ -1,0 +1,210 @@
+<div class="config-page">
+  <div class="crumbs"><span>Configuración</span><i class="pi pi-angle-right sep"></i><span class="here">Dominios</span></div>
+  <div class="page-title">
+    <h1>Dominios de inventario</h1>
+    <p>Cada dominio define sus propios tipos de agrupador y atributos de artículo.</p>
+  </div>
+
+  <div class="layout">
+    <!-- Master: dominios -->
+    <section class="rail" aria-label="Lista de dominios">
+      <div class="rail-head">
+        <span class="lbl">Dominios</span>
+        <button class="btn primary sm" (click)="openNewDominio()"><i class="pi pi-plus"></i>Nuevo</button>
+      </div>
+      <div class="rail-list">
+        <button
+          type="button"
+          class="dom"
+          *ngFor="let d of dominios"
+          [class.sel]="d.id === selectedId"
+          (click)="select(d)"
+        >
+          <span class="dico" [ngClass]="d.color || 'indigo'"><i [ngClass]="'pi pi-' + (d.icono || 'box')"></i></span>
+          <span class="dmeta">
+            <span class="dname">{{ d.nombre }}</span>
+            <span class="dsub">{{ countTipos(d) }} tipos · {{ countAtrs(d) }} atributos</span>
+          </span>
+          <span class="dom-actions">
+            <button class="icon-btn" title="Renombrar" (click)="openEditDominio(d, $event)"><i class="pi pi-pencil"></i></button>
+            <button class="icon-btn danger" title="Eliminar" (click)="deleteDominio(d, $event)"><i class="pi pi-trash"></i></button>
+          </span>
+        </button>
+        <div class="rail-empty" *ngIf="dominios.length === 0">Todavía no hay dominios.</div>
+      </div>
+    </section>
+
+    <!-- Detail: config del dominio seleccionado -->
+    <section class="panel" aria-label="Configuración del dominio">
+      <ng-container *ngIf="selected as dom; else noSel">
+        <div class="panel-head">
+          <div class="ph-title">
+            <span class="dico lg" [ngClass]="dom.color || 'indigo'"><i [ngClass]="'pi pi-' + (dom.icono || 'box')"></i></span>
+            <div>
+              <h2>{{ dom.nombre }}</h2>
+              <p class="desc">Tipos de agrupador y atributos de los artículos de este dominio.</p>
+            </div>
+          </div>
+          <div class="head-actions">
+            <button class="btn sm" (click)="openEditDominio(dom)"><i class="pi pi-pencil"></i>Renombrar</button>
+            <button class="btn ghost sm" (click)="deleteDominio(dom)"><i class="pi pi-trash"></i>Eliminar</button>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'tipos'" (click)="activeTab = 'tipos'">
+            Tipos de agrupador <span class="count">{{ tipos.length }}</span>
+          </button>
+          <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'atributos'" (click)="activeTab = 'atributos'">
+            Atributos <span class="count">{{ atributos.length }}</span>
+          </button>
+        </div>
+
+        <!-- Tipos de agrupador -->
+        <div class="tabpanel" *ngIf="activeTab === 'tipos'">
+          <div class="panel-note">
+            <i class="pi pi-info-circle"></i>
+            <span>Un tipo <b>asignable</b> se puede entregar a una persona (ej. un conjunto de indumentaria). Un <b>contenedor</b> agrupa artículos por ubicación pero no se entrega (ej. un locker).</span>
+          </div>
+          <div class="toolbar">
+            <span class="cap">Cómo se agrupan los artículos de este dominio.</span>
+            <button class="btn primary sm" (click)="openNewTipo()"><i class="pi pi-plus"></i>Nuevo tipo</button>
+          </div>
+
+          <table *ngIf="tipos.length > 0; else emptyTipos">
+            <thead><tr><th>Nombre</th><th>Comportamiento</th><th class="ta-right"></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let t of tipos">
+                <td class="cell-name">{{ t.nombre }}</td>
+                <td>
+                  <span class="pill" [class.green]="t.asignable !== false" [class.slate]="t.asignable === false">
+                    <span class="dot"></span>{{ t.asignable === false ? 'Contenedor' : 'Asignable' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button class="btn ghost sm" (click)="openEditTipo(t)">Editar</button>
+                    <button class="btn ghost sm" (click)="deleteTipo(t)">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyTipos><div class="empty">Sin tipos de agrupador. Creá el primero.</div></ng-template>
+        </div>
+
+        <!-- Atributos -->
+        <div class="tabpanel" *ngIf="activeTab === 'atributos'">
+          <div class="panel-note">
+            <i class="pi pi-info-circle"></i>
+            <span>Campos extra que tendrá cada artículo de <b>{{ dom.nombre }}</b>. La <b>clave</b> es el identificador interno; el <b>nombre</b> es lo que ve el usuario.</span>
+          </div>
+          <div class="toolbar">
+            <span class="cap">{{ atributos.length }} atributos definidos.</span>
+            <button class="btn primary sm" (click)="openNewAtributo()"><i class="pi pi-plus"></i>Nuevo atributo</button>
+          </div>
+
+          <table *ngIf="atributos.length > 0; else emptyAtrs">
+            <thead><tr><th>Nombre</th><th>Clave</th><th>Tipo de dato</th><th class="ta-right"></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let a of atributos">
+                <td class="cell-name">{{ a.nombre }}</td>
+                <td><code>{{ a.clave }}</code></td>
+                <td>
+                  <span [ngClass]="{
+                    'pill': true,
+                    'slate': a.tipoDato === 'TEXTO',
+                    'indigo': a.tipoDato === 'NUMERO',
+                    'amber': a.tipoDato === 'FECHA',
+                    'teal': a.tipoDato === 'BOOLEANO',
+                    'green': a.tipoDato === 'LISTA'
+                  }">{{ tipoDatoLabel(a.tipoDato) }}</span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button class="btn ghost sm" (click)="openEditAtributo(a)">Editar</button>
+                    <button class="btn ghost sm" (click)="deleteAtributo(a)">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyAtrs><div class="empty">Sin atributos. Agregá el primero.</div></ng-template>
+        </div>
+      </ng-container>
+
+      <ng-template #noSel>
+        <div class="panel-placeholder">
+          <i class="pi pi-arrow-left"></i>
+          <p>{{ dominios.length ? 'Seleccioná un dominio para configurarlo.' : 'Creá tu primer dominio para empezar.' }}</p>
+        </div>
+      </ng-template>
+    </section>
+  </div>
+</div>
+
+<!-- Diálogo Dominio -->
+<p-dialog [(visible)]="showDominioDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '480px' }" [header]="editingDominioId ? 'Editar dominio' : 'Nuevo dominio'">
+  <div class="form">
+    <label>Nombre</label>
+    <input pInputText [(ngModel)]="dominioForm.nombre" placeholder="Ej: Informática" (keyup.enter)="saveDominio()" />
+
+    <label class="mt">Icono</label>
+    <div class="icon-grid">
+      <button type="button" class="icon-opt" *ngFor="let ic of iconos" [class.sel]="dominioForm.icono === ic" (click)="dominioForm.icono = ic" [attr.aria-label]="ic">
+        <i [ngClass]="'pi pi-' + ic"></i>
+      </button>
+    </div>
+
+    <label class="mt">Color</label>
+    <div class="swatches">
+      <button type="button" class="swatch" *ngFor="let c of colores" [ngClass]="c" [class.sel]="dominioForm.color === c" (click)="dominioForm.color = c" [attr.aria-label]="c"></button>
+    </div>
+
+    <div class="dom-preview">
+      <span class="dico lg" [ngClass]="dominioForm.color"><i [ngClass]="'pi pi-' + dominioForm.icono"></i></span>
+      <div class="dp-meta">
+        <span class="dp-name">{{ dominioForm.nombre || 'Nombre del dominio' }}</span>
+        <span class="dp-sub">Así se verá en el panel</span>
+      </div>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showDominioDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveDominio()">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo Tipo de agrupador -->
+<p-dialog [(visible)]="showTipoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '440px' }" [header]="editingTipoId ? 'Editar tipo de agrupador' : 'Nuevo tipo de agrupador'">
+  <div class="form">
+    <label>Nombre</label>
+    <input pInputText [(ngModel)]="tipoForm.nombre" placeholder="Ej: PC, Locker, Kit" />
+    <label class="mt">Comportamiento</label>
+    <p-select [options]="asignableOptions" [(ngModel)]="tipoForm.asignable" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+    <small class="hint">Asignable = se entrega a una persona · Contenedor = ubicación (no se entrega).</small>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showTipoDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveTipo()">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo Atributo -->
+<p-dialog [(visible)]="showAtributoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '460px' }" [header]="editingAtributoId ? 'Editar atributo' : 'Nuevo atributo'">
+  <div class="form">
+    <label>Nombre</label>
+    <input pInputText [(ngModel)]="atributoForm.nombre" placeholder="Ej: Memoria RAM" />
+    <label class="mt">Clave <span class="muted">(identificador interno)</span></label>
+    <input pInputText [(ngModel)]="atributoForm.clave" placeholder="Ej: ram_gb" class="mono" />
+    <label class="mt">Tipo de dato</label>
+    <p-select [options]="tipoDatoOptions" [(ngModel)]="atributoForm.tipoDato" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showAtributoDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveAtributo()">Guardar</button>
+  </ng-template>
+</p-dialog>

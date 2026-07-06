@@ -1,0 +1,142 @@
+<div class="config-page">
+  <div class="crumbs"><span>Configuración</span><i class="pi pi-angle-right sep"></i><span class="here">Organización</span></div>
+  <div class="page-title">
+    <h1>Organización</h1>
+    <p>Empleados, áreas y estados de artículo (configuración general, no depende del dominio).</p>
+  </div>
+
+  <section class="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'empleados'" (click)="activeTab = 'empleados'">
+        Empleados <span class="count">{{ empleados.length }}</span>
+      </button>
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'areas'" (click)="activeTab = 'areas'">
+        Áreas <span class="count">{{ areas.length }}</span>
+      </button>
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'estados'" (click)="activeTab = 'estados'">
+        Estados de artículo <span class="count">{{ estados.length }}</span>
+      </button>
+    </div>
+
+    <!-- Empleados -->
+    <div class="tabpanel" *ngIf="activeTab === 'empleados'">
+      <div class="toolbar">
+        <span class="cap">Personas del sistema. Se identifican por legajo.</span>
+        <button class="btn primary sm" (click)="openNewEmp()"><i class="pi pi-plus"></i>Nuevo empleado</button>
+      </div>
+      <table *ngIf="empleados.length > 0; else emptyEmp">
+        <thead><tr><th>Nombre</th><th>Legajo</th><th>Área</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let e of empleados">
+            <td class="cell-name">{{ e.nombre }}</td>
+            <td><code>{{ e.legajo }}</code></td>
+            <td>{{ e.area?.nombre || '—' }}</td>
+            <td>
+              <div class="row-actions">
+                <button class="btn ghost sm" (click)="verAsignaciones(e)"><i class="pi pi-eye"></i>Asignaciones</button>
+                <button class="btn ghost sm" (click)="openEditEmp(e)">Editar</button>
+                <button class="btn ghost sm" (click)="deleteEmp(e)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyEmp><div class="empty">Sin empleados. Agregá el primero.</div></ng-template>
+    </div>
+
+    <!-- Áreas -->
+    <div class="tabpanel" *ngIf="activeTab === 'areas'">
+      <div class="toolbar">
+        <span class="cap">Sectores a los que pertenecen los empleados.</span>
+        <button class="btn primary sm" (click)="openNewArea()"><i class="pi pi-plus"></i>Nueva área</button>
+      </div>
+      <table *ngIf="areas.length > 0; else emptyArea">
+        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let a of areas">
+            <td class="cell-name">{{ a.nombre }}</td>
+            <td>
+              <div class="row-actions">
+                <button class="btn ghost sm" (click)="openEditArea(a)">Editar</button>
+                <button class="btn ghost sm" (click)="deleteArea(a)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyArea><div class="empty">Sin áreas. Agregá la primera.</div></ng-template>
+    </div>
+
+    <!-- Estados -->
+    <div class="tabpanel" *ngIf="activeTab === 'estados'">
+      <div class="panel-note">
+        <i class="pi pi-info-circle"></i>
+        <span>La condición de cada artículo (Disponible, En uso, etc.). El <b>código</b> es estable e interno; sólo se edita el nombre visible.</span>
+      </div>
+      <div class="toolbar">
+        <span class="cap">{{ estados.length }} estados definidos.</span>
+        <button class="btn primary sm" (click)="openNewEstado()"><i class="pi pi-plus"></i>Nuevo estado</button>
+      </div>
+      <table *ngIf="estados.length > 0; else emptyEstado">
+        <thead><tr><th>Nombre</th><th>Código</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let s of estados">
+            <td class="cell-name">{{ s.nombre }}</td>
+            <td><code>{{ s.codigo }}</code></td>
+            <td>
+              <div class="row-actions">
+                <button class="btn ghost sm" (click)="openEditEstado(s)">Editar</button>
+                <button class="btn ghost sm" (click)="deleteEstado(s)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyEstado><div class="empty">Sin estados. Agregá el primero.</div></ng-template>
+    </div>
+  </section>
+</div>
+
+<!-- Diálogo Empleado -->
+<p-dialog [(visible)]="showEmpDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '440px' }" [header]="editEmpId ? 'Editar empleado' : 'Nuevo empleado'">
+  <div class="form">
+    <label>Nombre</label>
+    <input pInputText [(ngModel)]="empForm.nombre" placeholder="Nombre y apellido" />
+    <label class="mt">Legajo</label>
+    <input pInputText [(ngModel)]="empForm.legajo" placeholder="Ej: LEG-102" />
+    <label class="mt">Área</label>
+    <p-select [options]="areas" [(ngModel)]="empForm.areaId" optionLabel="nombre" optionValue="id" placeholder="Elegí un área" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar área…" [resetFilterOnHide]="true"></p-select>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showEmpDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveEmp()">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo Área -->
+<p-dialog [(visible)]="showAreaDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '420px' }" [header]="editAreaId ? 'Editar área' : 'Nueva área'">
+  <div class="form">
+    <label>Nombre</label>
+    <input pInputText [(ngModel)]="areaForm.nombre" placeholder="Ej: Administración" (keyup.enter)="saveArea()" />
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showAreaDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveArea()">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo Estado -->
+<p-dialog [(visible)]="showEstadoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '420px' }" [header]="editEstadoId ? 'Editar estado' : 'Nuevo estado'">
+  <div class="form">
+    <label>Nombre</label>
+    <input pInputText [(ngModel)]="estadoForm.nombre" placeholder="Ej: En reparación" (keyup.enter)="saveEstado()" />
+    <small class="hint" *ngIf="!editEstadoId">El código estable se genera automáticamente a partir del nombre.</small>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showEstadoDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveEstado()">Guardar</button>
+  </ng-template>
+</p-dialog>

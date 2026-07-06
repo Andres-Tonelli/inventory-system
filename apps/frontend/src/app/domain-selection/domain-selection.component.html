@@ -1,0 +1,83 @@
+<div class="dash">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow">Panel</div>
+      <h1>Hola, {{ getUsername() }} <span class="wave">👋</span></h1>
+      <p>Resumen general del inventario. Elegí un dominio para operar sobre sus existencias, agrupadores y asignaciones.</p>
+    </div>
+    <a class="btn ghost" routerLink="/configuracion/dominios"><i class="pi pi-cog"></i>Configurar dominios</a>
+  </div>
+
+  <!-- Loading inicial -->
+  <div *ngIf="loading" class="loading-wrap">
+    <p-progressSpinner strokeWidth="4" [style]="{ width: '42px', height: '42px' }"></p-progressSpinner>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <!-- KPIs globales -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="k-ico indigo"><i class="pi pi-database"></i></div>
+        <div class="k-meta"><span class="k-num">{{ dominios.length }}</span><span class="k-lbl">Dominios</span></div>
+      </div>
+      <div class="kpi">
+        <div class="k-ico blue"><i class="pi pi-box"></i></div>
+        <div class="k-meta"><span class="k-num">{{ loadingStats ? '—' : totalArticulos }}</span><span class="k-lbl">Artículos</span></div>
+      </div>
+      <div class="kpi">
+        <div class="k-ico violet"><i class="pi pi-sitemap"></i></div>
+        <div class="k-meta"><span class="k-num">{{ loadingStats ? '—' : totalAgrupadores }}</span><span class="k-lbl">Agrupadores</span></div>
+      </div>
+      <div class="kpi">
+        <div class="k-ico teal"><i class="pi pi-users"></i></div>
+        <div class="k-meta"><span class="k-num">{{ loadingStats ? '—' : totalAsignaciones }}</span><span class="k-lbl">Asignaciones activas</span></div>
+      </div>
+      <div class="kpi" [class.alert]="totalAlertas > 0">
+        <div class="k-ico amber"><i class="pi pi-exclamation-triangle"></i></div>
+        <div class="k-meta"><span class="k-num">{{ loadingStats ? '—' : totalAlertas }}</span><span class="k-lbl">Consumibles sin stock</span></div>
+      </div>
+    </div>
+
+    <!-- Sin dominios -->
+    <div *ngIf="dominios.length === 0" class="empty-card">
+      <i class="pi pi-inbox"></i>
+      <h3>Todavía no hay dominios</h3>
+      <p>Creá tu primer dominio de inventario en Configuración para empezar a cargar artículos y agrupadores.</p>
+      <a class="btn primary" routerLink="/configuracion/dominios"><i class="pi pi-plus"></i>Crear un dominio</a>
+    </div>
+
+    <!-- Tarjetas de dominio -->
+    <div *ngIf="dominios.length > 0" class="section-lbl">Dominios de inventario</div>
+    <div class="cards" *ngIf="dominios.length > 0">
+      <button class="card" *ngFor="let d of dominios" (click)="selectDomain(d)">
+        <div class="card-top">
+          <div class="d-ico" [ngClass]="domainTone(d)"><i [ngClass]="domainIcon(d)"></i></div>
+          <div class="d-name">{{ d.nombre }}</div>
+          <span class="alert-pill" *ngIf="!loadingStats && statsOf(d.id).consumiblesSinStock > 0">
+            <i class="pi pi-exclamation-circle"></i>{{ statsOf(d.id).consumiblesSinStock }} sin stock
+          </span>
+        </div>
+
+        <div class="minis">
+          <div class="mini">
+            <span class="m-num">{{ loadingStats ? '—' : statsOf(d.id).articulos }}</span>
+            <span class="m-lbl">Artículos</span>
+          </div>
+          <div class="mini">
+            <span class="m-num">{{ loadingStats ? '—' : statsOf(d.id).agrupadores }}</span>
+            <span class="m-lbl">Agrupadores</span>
+          </div>
+          <div class="mini">
+            <span class="m-num">{{ loadingStats ? '—' : statsOf(d.id).asignaciones }}</span>
+            <span class="m-lbl">Asignaciones</span>
+          </div>
+        </div>
+
+        <div class="card-foot">
+          <span>Entrar al workspace</span>
+          <i class="pi pi-arrow-right"></i>
+        </div>
+      </button>
+    </div>
+  </ng-container>
+</div>

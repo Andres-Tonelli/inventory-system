@@ -1,0 +1,164 @@
+<div class="workspace">
+  <div class="ws-head">
+    <div>
+      <div class="eyebrow">Dominio</div>
+      <h1>Asignaciones</h1>
+      <p>Control de entregas y asignación de activos a las personas de la organización.</p>
+    </div>
+    <button class="btn primary" (click)="abrirDialogo()"><i class="pi pi-plus"></i>Nueva asignación</button>
+  </div>
+
+  <!-- Resumen -->
+  <div class="stats">
+    <div class="stat">
+      <div class="s-ico indigo"><i class="pi pi-users"></i></div>
+      <div class="s-meta"><span class="s-num">{{ totalAsignaciones }}</span><span class="s-lbl">Asignaciones activas</span></div>
+    </div>
+    <div class="stat">
+      <div class="s-ico blue"><i class="pi pi-box"></i></div>
+      <div class="s-meta"><span class="s-num">{{ totalArticulos }}</span><span class="s-lbl">Artículos entregados</span></div>
+    </div>
+    <div class="stat">
+      <div class="s-ico violet"><i class="pi pi-sitemap"></i></div>
+      <div class="s-meta"><span class="s-num">{{ totalAgrupadores }}</span><span class="s-lbl">Agrupadores asignados</span></div>
+    </div>
+    <div class="stat">
+      <div class="s-ico teal"><i class="pi pi-database"></i></div>
+      <div class="s-meta"><span class="s-num">{{ totalConsumibles }}</span><span class="s-lbl">Entregas de consumibles</span></div>
+    </div>
+  </div>
+
+  <!-- Pestañas -->
+  <div class="stabs">
+    <button class="stab" [class.active]="activeTab === 'articulos'" (click)="activeTab = 'articulos'"><i class="pi pi-box"></i>Artículos <span class="badge">{{ totalArticulos }}</span></button>
+    <button class="stab" [class.active]="activeTab === 'agrupadores'" (click)="activeTab = 'agrupadores'"><i class="pi pi-sitemap"></i>Agrupadores <span class="badge">{{ totalAgrupadores }}</span></button>
+    <button class="stab" [class.active]="activeTab === 'consumibles'" (click)="activeTab = 'consumibles'"><i class="pi pi-database"></i>Consumibles <span class="badge">{{ totalConsumibles }}</span></button>
+  </div>
+
+  <!-- ARTÍCULOS -->
+  <div class="panel-block" *ngIf="activeTab === 'articulos'">
+    <div class="toolbar">
+      <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArticulo" placeholder="Serie, alias, modelo, empleado, área…" /></span>
+    </div>
+    <div class="tablecard"><div class="tablescroll"><table>
+      <thead><tr><th>Entrega</th><th>Artículo</th><th>Modelo</th><th>Empleado</th><th>Área</th><th>Observaciones</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let asig of filteredAsignacionesArticulos">
+          <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <div class="art">
+              <span class="alias">{{ asig.articulo?.alias || 'Sin alias' }}</span>
+              <span class="sn" *ngIf="asig.articulo?.nroSerie">{{ asig.articulo.nroSerie }}</span>
+            </div>
+          </td>
+          <td class="mut">{{ asig.articulo?.modelo?.nombre || 'Sin modelo' }}</td>
+          <td class="cell-name">{{ asig.empleado?.nombre }}</td>
+          <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
+          <td class="mut">{{ asig.observaciones || '—' }}</td>
+        </tr>
+        <tr *ngIf="filteredAsignacionesArticulos.length === 0"><td colspan="6" class="empty">No hay asignaciones de artículos en este dominio.</td></tr>
+      </tbody>
+    </table></div></div>
+  </div>
+
+  <!-- CONJUNTOS -->
+  <div class="panel-block" *ngIf="activeTab === 'agrupadores'">
+    <div class="toolbar">
+      <div class="tipo-pick">
+        <label>Tipo de agrupador</label>
+        <p-select [options]="tiposAgrupador" [(ngModel)]="selectedTipoConjunto" optionLabel="nombre" optionValue="id" placeholder="Elegí un tipo" [showClear]="true" appendTo="body" styleClass="w-full"></p-select>
+      </div>
+      <span class="inp search" *ngIf="selectedTipoConjunto"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchAgrupador" placeholder="Agrupador, empleado, área…" /></span>
+    </div>
+
+    <ng-container *ngIf="selectedTipoConjunto; else pickTipo">
+      <div class="tablecard"><div class="tablescroll"><table>
+        <thead><tr><th>Entrega</th><th>Agrupador</th><th>Tipo</th><th>Empleado</th><th>Área</th><th>Observaciones</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let asig of filteredAsignacionesAgrupadores">
+            <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+            <td class="cell-name">{{ asig.agrupador?.nombre }}</td>
+            <td><span class="pill indigo">{{ asig.agrupador?.tipoAgrupador?.nombre }}</span></td>
+            <td class="cell-name">{{ asig.empleado?.nombre }}</td>
+            <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
+            <td class="mut">{{ asig.observaciones || '—' }}</td>
+          </tr>
+          <tr *ngIf="filteredAsignacionesAgrupadores.length === 0"><td colspan="6" class="empty">No hay agrupadores asignados de este tipo.</td></tr>
+        </tbody>
+      </table></div></div>
+    </ng-container>
+    <ng-template #pickTipo>
+      <div class="pick-prompt">
+        <i class="pi pi-sitemap"></i>
+        <p>Elegí un <b>tipo de agrupador</b> para ver sus asignaciones.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- CONSUMIBLES -->
+  <div class="panel-block" *ngIf="activeTab === 'consumibles'">
+    <div class="toolbar">
+      <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchConsumible" placeholder="Consumible, empleado, área…" /></span>
+    </div>
+    <div class="tablecard"><div class="tablescroll"><table>
+      <thead><tr><th>Entrega</th><th>Consumible</th><th>Cantidad</th><th>Empleado</th><th>Área</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let asig of filteredEntregasConsumibles">
+          <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+          <td class="cell-name">{{ asig.lote?.modelo?.nombre }}</td>
+          <td><span class="pill teal">{{ asig.cantidadEntregada }} u.</span></td>
+          <td class="cell-name">{{ asig.empleado?.nombre }}</td>
+          <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
+        </tr>
+        <tr *ngIf="filteredEntregasConsumibles.length === 0"><td colspan="5" class="empty">No hay entregas de consumibles en este dominio.</td></tr>
+      </tbody>
+    </table></div></div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA ASIGNACIÓN -->
+<p-dialog header="Registrar asignación" [(visible)]="showNuevoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '560px' }">
+  <div class="form">
+    <label>Empleado receptor</label>
+    <p-select [options]="empleados" [(ngModel)]="newAsignacion.empleadoId" optionLabel="nombre" optionValue="id" placeholder="Seleccioná el empleado" appendTo="body" styleClass="w-full"
+      [filter]="true" filterBy="nombre,legajo" filterPlaceholder="Buscar empleado…" [resetFilterOnHide]="true"></p-select>
+
+    <label class="mt">¿Qué se entrega?</label>
+    <div class="seg">
+      <button class="seg-btn" [class.active]="tipoAsignacion === 'ARTICULO'" (click)="tipoAsignacion = 'ARTICULO'; newAsignacion.itemId = null"><i class="pi pi-box"></i>Artículo</button>
+      <button class="seg-btn" [class.active]="tipoAsignacion === 'AGRUPADOR'" (click)="tipoAsignacion = 'AGRUPADOR'; newAsignacion.itemId = null"><i class="pi pi-sitemap"></i>Agrupador</button>
+      <button class="seg-btn" [class.active]="tipoAsignacion === 'CONSUMIBLE'" (click)="tipoAsignacion = 'CONSUMIBLE'; newAsignacion.itemId = null; newAsignacion.cantidad = 1"><i class="pi pi-database"></i>Consumible</button>
+    </div>
+
+    <ng-container *ngIf="tipoAsignacion === 'ARTICULO'">
+      <label class="mt">Artículo disponible</label>
+      <p-select [options]="articulosDisponibles" [(ngModel)]="newAsignacion.itemId" optionLabel="displayLabel" optionValue="id" placeholder="Buscar artículo…" appendTo="body" styleClass="w-full"
+        [filter]="true" filterBy="displayLabel" filterPlaceholder="Serie, alias o modelo…" [resetFilterOnHide]="true"></p-select>
+    </ng-container>
+
+    <ng-container *ngIf="tipoAsignacion === 'AGRUPADOR'">
+      <label class="mt">Agrupador disponible</label>
+      <p-select [options]="agrupadoresDisponibles" [(ngModel)]="newAsignacion.itemId" optionLabel="displayLabel" optionValue="id" placeholder="Buscar agrupador…" appendTo="body" styleClass="w-full"
+        [filter]="true" filterBy="displayLabel" filterPlaceholder="Nombre o tipo…" [resetFilterOnHide]="true"></p-select>
+    </ng-container>
+
+    <ng-container *ngIf="tipoAsignacion === 'CONSUMIBLE'">
+      <label class="mt">Lote de consumible</label>
+      <p-select [options]="lotesDisponibles" [(ngModel)]="newAsignacion.itemId" optionLabel="displayLabel" optionValue="id" placeholder="Buscar lote…" appendTo="body" styleClass="w-full"
+        [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar consumible…" [resetFilterOnHide]="true"></p-select>
+      <ng-container *ngIf="newAsignacion.itemId">
+        <label class="mt">Cantidad a entregar</label>
+        <input pInputText type="number" [(ngModel)]="newAsignacion.cantidad" [min]="1" placeholder="Ej: 5" />
+      </ng-container>
+    </ng-container>
+
+    <ng-container *ngIf="tipoAsignacion !== 'CONSUMIBLE'">
+      <label class="mt">Observaciones</label>
+      <input pInputText [(ngModel)]="newAsignacion.observaciones" placeholder="Ej: Se entrega con cargador, caja y funda." />
+    </ng-container>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showNuevoDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="guardarAsignacion()" [disabled]="!newAsignacion.empleadoId || !newAsignacion.itemId || (tipoAsignacion === 'CONSUMIBLE' && (!newAsignacion.cantidad || newAsignacion.cantidad <= 0))">Confirmar asignación</button>
+  </ng-template>
+</p-dialog>

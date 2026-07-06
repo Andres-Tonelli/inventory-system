@@ -1,0 +1,413 @@
+<div class="workspace">
+  <div class="ws-head">
+    <div>
+      <div class="eyebrow">Dominio</div>
+      <h1>{{ dominioNombre || 'Inventario' }}</h1>
+      <p>Artículos, consumibles y agrupadores de este dominio.</p>
+    </div>
+  </div>
+
+  <!-- Nivel 1 -->
+  <div class="ptabs">
+    <button class="ptab" [class.active]="activeMainTab === 'operar'" (click)="activeMainTab = 'operar'"><i class="pi pi-bolt"></i>Operar</button>
+    <button class="ptab" [class.active]="activeMainTab === 'catalogo'" (click)="activeMainTab = 'catalogo'"><i class="pi pi-book"></i>Catálogo del dominio</button>
+  </div>
+
+  <!-- Nivel 2: Operar -->
+  <div class="stabs" *ngIf="activeMainTab === 'operar'">
+    <button class="stab" [class.active]="activeSubTab === 'articulos'" (click)="selectSubTab('articulos')"><i class="pi pi-box"></i>Artículos</button>
+    <button class="stab" [class.active]="activeSubTab === 'consumibles'" (click)="selectSubTab('consumibles')"><i class="pi pi-database"></i>Consumibles</button>
+    <button class="stab" *ngFor="let tipo of tiposAgrupador" [class.active]="activeSubTab === 'agrupador-' + tipo.id" (click)="selectSubTab('agrupador-' + tipo.id)">
+      <i class="pi pi-sitemap"></i>{{ tipo.nombre }}s
+    </button>
+  </div>
+
+  <!-- Nivel 2: Catálogo -->
+  <div class="stabs" *ngIf="activeMainTab === 'catalogo'">
+    <button class="stab" [class.active]="activeCatTab === 'categorias'" (click)="activeCatTab = 'categorias'"><i class="pi pi-tags"></i>Categorías</button>
+    <button class="stab" [class.active]="activeCatTab === 'marcas'" (click)="activeCatTab = 'marcas'"><i class="pi pi-verified"></i>Marcas</button>
+    <button class="stab" [class.active]="activeCatTab === 'modelos'" (click)="activeCatTab = 'modelos'"><i class="pi pi-list"></i>Modelos</button>
+  </div>
+
+  <div class="ws-body">
+    <!-- ===================== ARTÍCULOS ===================== -->
+    <div class="panel-block" *ngIf="activeMainTab === 'operar' && activeSubTab === 'articulos'">
+      <div class="filters">
+        <div class="field grow">
+          <label>Búsqueda general</label>
+          <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArticulo" placeholder="Alias, nº serie, modelo, asignatario…" /></span>
+        </div>
+        <div class="field">
+          <label>Categoría</label>
+          <p-select [options]="categorias" [(ngModel)]="filterCategoriaId" (onChange)="onFilterCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Elegí una categoría" [showClear]="true" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar…" [resetFilterOnHide]="true"></p-select>
+        </div>
+        <div class="field">
+          <label>Modelo</label>
+          <p-select [options]="modelosFiltradosBusqueda" [(ngModel)]="filterModeloId" optionLabel="nombre" optionValue="id" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar…" [resetFilterOnHide]="true"></p-select>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <p-select [options]="estadosArticulo" [(ngModel)]="filterEstadoId" optionLabel="nombre" optionValue="id" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+      </div>
+
+      <ng-container *ngIf="filterCategoriaId; else pickCat">
+      <div class="toolbar">
+        <span class="cap"><b>{{ filteredArticulos.length }}</b> artículos</span>
+        <div class="tools">
+          <button class="btn ghost sm" (click)="limpiarFiltros()"><i class="pi pi-filter-slash"></i>Limpiar filtros</button>
+          <button class="btn primary sm" (click)="abrirDialogo()"><i class="pi pi-plus"></i>Nuevo artículo</button>
+        </div>
+      </div>
+
+      <div class="tablecard">
+        <div class="tablescroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Artículo</th><th>Modelo</th>
+                <th class="attr" *ngFor="let attr of atributosDominio">{{ attr.nombre }}</th>
+                <th>Detalle</th><th>Estado</th><th>Asignado a</th><th class="ta-right"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let art of filteredArticulos">
+                <td><div class="art"><span class="alias">{{ art.alias || 'Sin alias' }}</span><span class="sn" *ngIf="art.nroSerie">{{ art.nroSerie }}</span></div></td>
+                <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
+                <td *ngFor="let attr of atributosDominio">{{ getAtributoValor(art, attr.id) || '—' }}</td>
+                <td class="mut detalle-cell" [title]="art.detalle || ''">{{ art.detalle || '—' }}</td>
+                <td><span [ngClass]="estadoPillClass(art)"><span class="dot"></span>{{ estadoNombre(art) }}</span></td>
+                <td>
+                  <span *ngIf="getArticuloAsignatario(art); else sinAsig">{{ getArticuloAsignatario(art) }}</span>
+                  <ng-template #sinAsig><span class="dash">—</span></ng-template>
+                </td>
+                <td><div class="row-actions">
+                  <button class="btn ghost sm" (click)="abrirEditarArticulo(art)"><i class="pi pi-pencil"></i>Editar</button>
+                  <button class="btn ghost sm" (click)="abrirCambiarEstado(art)"><i class="pi pi-sync"></i>Estado</button>
+                  <button class="btn ghost sm" (click)="verDetalleArticulo(art)">Ver</button>
+                </div></td>
+              </tr>
+              <tr *ngIf="filteredArticulos.length === 0"><td [attr.colspan]="6 + atributosDominio.length" class="empty">No se encontraron artículos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="note" *ngIf="atributosDominio.length > 0">
+        <i class="pi pi-info-circle"></i>Las columnas resaltadas son los <b>atributos</b> definidos para este dominio en Configuración.
+      </div>
+      </ng-container>
+      <ng-template #pickCat>
+        <div class="pick-prompt">
+          <i class="pi pi-tags"></i>
+          <p>Elegí una <b>categoría</b> para ver sus artículos.</p>
+          <span>Así la consulta se acota a esa categoría en vez de traer todo el inventario.</span>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- ===================== CONSUMIBLES ===================== -->
+    <div class="panel-block" *ngIf="activeMainTab === 'operar' && activeSubTab === 'consumibles'">
+      <div class="toolbar">
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchLote" placeholder="Buscar consumible…" /></span>
+        <button class="btn primary sm" (click)="showLoteDialog = true"><i class="pi pi-plus"></i>Nuevo lote de stock</button>
+      </div>
+      <div class="tablecard">
+        <div class="tablescroll">
+          <table>
+            <thead><tr><th>Modelo de consumible</th><th>Categoría</th><th>Disponible</th><th>Actualizado</th><th class="ta-right"></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let lote of filteredLotes">
+                <td class="cell-name">{{ lote.modelo?.nombre }}</td>
+                <td class="mut">{{ lote.modelo?.categoria?.nombre }}</td>
+                <td><span class="pill teal"><span class="dot"></span>{{ lote.cantidadDisponible }} u.</span></td>
+                <td class="mut">{{ lote.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="btn ghost sm" (click)="abrirAdicionarLoteDialog(lote)">Adicionar</button>
+                    <button class="btn ghost sm" (click)="abrirConsumirLoteDialog(lote)" [disabled]="lote.cantidadDisponible <= 0">Consumir</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filteredLotes.length === 0"><td colspan="5" class="empty">Sin lotes de consumibles.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== AGRUPADORES (master-detail por tipo) ===================== -->
+    <ng-container *ngFor="let tipo of tiposAgrupador">
+      <div class="panel-block" *ngIf="activeMainTab === 'operar' && activeSubTab === 'agrupador-' + tipo.id">
+        <div class="toolbar">
+          <span class="cap"><b>{{ getAgrupadoresPorTipo(tipo.id!).length }}</b> {{ tipo.nombre }}s ·
+            <span class="mini-pill" [class.g]="tipo.asignable !== false" [class.s]="tipo.asignable === false">{{ tipo.asignable === false ? 'contenedor' : 'asignable' }}</span>
+          </span>
+          <button class="btn primary sm" (click)="abrirDialogoNuevoAgrupador(tipo.id)"><i class="pi pi-plus"></i>Nuevo {{ tipo.nombre }}</button>
+        </div>
+
+        <div class="md">
+          <div class="md-list tablecard">
+            <div class="tablescroll">
+              <table>
+                <thead><tr><th>Nombre</th><th>Estado</th><th>Asignado a</th><th class="ta-right">Art.</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let ag of getAgrupadoresPorTipo(tipo.id!)" [class.sel]="ag.id === selectedAgrupadorId" (click)="selectAgrupador(ag, $event)">
+                    <td class="rowname">{{ ag.nombre }}</td>
+                    <td><span class="pill" [class.blue]="ag.estado !== 'DISPONIBLE'" [class.green]="ag.estado === 'DISPONIBLE'"><span class="dot"></span>{{ ag.estado === 'DISPONIBLE' ? 'Disponible' : 'Asignado' }}</span></td>
+                    <td class="mut">{{ getAgrupadorAsignatario(ag) || '—' }}</td>
+                    <td class="ta-right num">{{ ag.articulos?.length || 0 }}</td>
+                  </tr>
+                  <tr *ngIf="getAgrupadoresPorTipo(tipo.id!).length === 0"><td colspan="4" class="empty">Sin {{ tipo.nombre }}s. Creá el primero.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="md-detail-anchor">
+          <div class="md-detail tablecard" #mdCard [style.top.px]="detailTop">
+            <ng-container *ngIf="selectedAgrupadorDetalle as ag; else pickAg">
+              <div class="md-head">
+                <div class="md-title">{{ ag.nombre }}</div>
+                <div class="md-sub">
+                  <span class="pill" [class.blue]="ag.estado !== 'DISPONIBLE'" [class.green]="ag.estado === 'DISPONIBLE'"><span class="dot"></span>{{ ag.estado === 'DISPONIBLE' ? 'Disponible' : 'Asignado' }}</span>
+                  <span class="mut" *ngIf="getAgrupadorAsignatario(ag)">a {{ getAgrupadorAsignatario(ag) }}</span>
+                </div>
+              </div>
+              <div class="md-body">
+                <div class="md-lbl">Artículos ({{ ag.articulos?.length || 0 }})</div>
+                <div class="chips" *ngIf="ag.articulos?.length; else noArts">
+                  <span class="chip" *ngFor="let art of ag.articulos" (click)="verDetalleArticulo(art)">
+                    <span class="cn">{{ art.alias || art.nroSerie || 'Artículo' }}</span>
+                    <i class="pi pi-times x" (click)="$event.stopPropagation(); desvincularArticulo(art.id)"></i>
+                  </span>
+                </div>
+                <ng-template #noArts><div class="empty sm">Sin artículos vinculados.</div></ng-template>
+
+                <div class="md-lbl mt">Sub-agrupadores ({{ ag.subAgrupadores?.length || 0 }})</div>
+                <div class="chips" *ngIf="ag.subAgrupadores?.length; else noSubs">
+                  <span class="chip alt" *ngFor="let sub of ag.subAgrupadores">
+                    <i class="pi pi-sitemap"></i><span class="cn">{{ sub.nombre }}</span>
+                    <i class="pi pi-times x" (click)="desvincularSubAgrupador(sub.id)"></i>
+                  </span>
+                </div>
+                <ng-template #noSubs><div class="empty sm">Sin sub-agrupadores.</div></ng-template>
+              </div>
+              <div class="md-actions">
+                <button class="btn sm" (click)="abrirDialogoArticuloAgrupador(ag.id)"><i class="pi pi-link"></i>Vincular artículo</button>
+                <button class="btn sm" (click)="abrirDialogoSubAgrupador(ag)"><i class="pi pi-plus"></i>Sub-agrupador</button>
+              </div>
+            </ng-container>
+            <ng-template #pickAg>
+              <div class="md-placeholder"><i class="pi pi-arrow-left"></i><p>Elegí un {{ tipo.nombre }} de la lista para ver y editar su detalle.</p></div>
+            </ng-template>
+          </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ===================== CATÁLOGO ===================== -->
+    <div class="panel-block" *ngIf="activeMainTab === 'catalogo' && activeCatTab === 'categorias'">
+      <div class="toolbar">
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchCategoria" placeholder="Buscar categoría…" /></span>
+        <button class="btn primary sm" (click)="abrirNuevaCategoria()"><i class="pi pi-plus"></i>Nueva categoría</button>
+      </div>
+      <div class="tablecard"><div class="tablescroll"><table>
+        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let cat of filteredCategorias">
+            <td class="cell-name">{{ cat.nombre }}</td>
+            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarCategoria(cat)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+          </tr>
+          <tr *ngIf="filteredCategorias.length === 0"><td colspan="2" class="empty">Sin categorías.</td></tr>
+        </tbody>
+      </table></div></div>
+    </div>
+
+    <div class="panel-block" *ngIf="activeMainTab === 'catalogo' && activeCatTab === 'marcas'">
+      <div class="toolbar">
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchMarca" placeholder="Buscar marca…" /></span>
+        <button class="btn primary sm" (click)="abrirNuevaMarca()"><i class="pi pi-plus"></i>Nueva marca</button>
+      </div>
+      <div class="tablecard"><div class="tablescroll"><table>
+        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let marca of filteredMarcas">
+            <td class="cell-name">{{ marca.nombre }}</td>
+            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarMarca(marca)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+          </tr>
+          <tr *ngIf="filteredMarcas.length === 0"><td colspan="2" class="empty">Sin marcas.</td></tr>
+        </tbody>
+      </table></div></div>
+    </div>
+
+    <div class="panel-block" *ngIf="activeMainTab === 'catalogo' && activeCatTab === 'modelos'">
+      <div class="toolbar">
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchModelo" placeholder="Buscar modelo, marca o categoría…" /></span>
+        <button class="btn primary sm" (click)="abrirNuevoModelo()"><i class="pi pi-plus"></i>Nuevo modelo</button>
+      </div>
+      <div class="tablecard"><div class="tablescroll"><table>
+        <thead><tr><th>Modelo</th><th>Marca</th><th>Categoría</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let mod of filteredModelos">
+            <td class="cell-name">{{ mod.nombre }}</td>
+            <td class="mut">{{ mod.marca?.nombre }}</td>
+            <td><span class="pill indigo">{{ mod.categoria?.nombre }}</span></td>
+            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarModelo(mod)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+          </tr>
+          <tr *ngIf="filteredModelos.length === 0"><td colspan="4" class="empty">Sin modelos.</td></tr>
+        </tbody>
+      </table></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= DIÁLOGOS ========================= -->
+
+<!-- Alta de artículo (form dinámico) -->
+<p-dialog [header]="editingArticuloId ? 'Editar artículo' : 'Registrar artículo'" [(visible)]="showNuevoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '600px' }">
+  <div class="form">
+    <label>Categoría</label>
+    <p-select [options]="categorias" [(ngModel)]="selectedCategoriaId" (onChange)="onCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Categoría del artículo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
+    <ng-container *ngIf="selectedCategoriaId">
+      <label class="mt">Modelo</label>
+      <p-select [options]="modelosFiltrados" [(ngModel)]="selectedModeloId" optionLabel="nombre" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
+    </ng-container>
+    <ng-container *ngIf="selectedModeloId">
+      <label class="mt">Nº de serie (opcional)</label>
+      <input pInputText [(ngModel)]="nroSerie" placeholder="Ej: SN-100293" />
+      <label class="mt">Alias / descriptivo *</label>
+      <input pInputText [(ngModel)]="alias" placeholder="Ej: Notebook de Juan" />
+      <label class="mt">Detalle (opcional)</label>
+      <input pInputText [(ngModel)]="detalle" placeholder="Nota o descripción libre" />
+    </ng-container>
+    <div class="dyn-attrs" *ngIf="selectedModeloId && atributosDominio.length > 0">
+      <div class="md-lbl">Atributos del dominio</div>
+      <form [formGroup]="dynamicForm" class="form">
+        <ng-container *ngFor="let attr of atributosDominio">
+          <label class="mt">{{ attr.nombre }}</label>
+          <input *ngIf="attr.tipoDato === 'NUMERO'" pInputText type="number" [formControlName]="attr.clave" />
+          <input *ngIf="attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
+        </ng-container>
+      </form>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showNuevoDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="guardarArticulo()" [disabled]="!selectedModeloId || !alias">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Nuevo lote -->
+<p-dialog header="Nuevo lote de stock" [(visible)]="showLoteDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '460px' }">
+  <div class="form">
+    <label>Modelo de consumible</label>
+    <p-select [options]="modelos" [(ngModel)]="newLote.modeloId" optionLabel="nombre" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
+    <label class="mt">Cantidad a ingresar</label>
+    <input pInputText type="number" [(ngModel)]="newLote.cantidadDisponible" placeholder="Ej: 50" />
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showLoteDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveLote()" [disabled]="!newLote.modeloId || newLote.cantidadDisponible <= 0">Registrar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Categoría / Marca -->
+<p-dialog [header]="editingCategoriaId ? 'Editar categoría' : 'Nueva categoría'" [(visible)]="showCategoriaDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '420px' }">
+  <div class="form"><label>Nombre</label><input pInputText [(ngModel)]="newCategoria.nombre" (keyup.enter)="saveCategoria()" /></div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showCategoriaDialog = false">Cancelar</button><button class="btn primary" (click)="saveCategoria()" [disabled]="!newCategoria.nombre">Guardar</button></ng-template>
+</p-dialog>
+<p-dialog [header]="editingMarcaId ? 'Editar marca' : 'Nueva marca'" [(visible)]="showMarcaDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '420px' }">
+  <div class="form"><label>Nombre</label><input pInputText [(ngModel)]="newMarca.nombre" (keyup.enter)="saveMarca()" /></div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showMarcaDialog = false">Cancelar</button><button class="btn primary" (click)="saveMarca()" [disabled]="!newMarca.nombre">Guardar</button></ng-template>
+</p-dialog>
+
+<!-- Modelo -->
+<p-dialog [header]="editingModeloId ? 'Editar modelo' : 'Nuevo modelo'" [(visible)]="showModeloDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '480px' }">
+  <div class="form">
+    <label>Nombre</label><input pInputText [(ngModel)]="newModelo.nombre" />
+    <label class="mt">Marca</label>
+    <p-select [options]="marcas" [(ngModel)]="newModelo.marcaId" optionLabel="nombre" optionValue="id" placeholder="Marca" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar marca…" [resetFilterOnHide]="true"></p-select>
+    <label class="mt">Categoría</label>
+    <p-select [options]="categorias" [(ngModel)]="newModelo.categoriaId" optionLabel="nombre" optionValue="id" placeholder="Categoría" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showModeloDialog = false">Cancelar</button><button class="btn primary" (click)="saveModelo()" [disabled]="!newModelo.nombre || !newModelo.marcaId || !newModelo.categoriaId">Guardar</button></ng-template>
+</p-dialog>
+
+<!-- Nuevo agrupador / vincular -->
+<p-dialog header="Nuevo agrupador" [(visible)]="showAgrupadorDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '420px' }">
+  <div class="form"><label>Identificador / nombre</label><input pInputText [(ngModel)]="newAgrupador.nombre" placeholder="Ej: PC-04, Locker A" (keyup.enter)="saveAgrupador()" /></div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showAgrupadorDialog = false">Cancelar</button><button class="btn primary" (click)="saveAgrupador()" [disabled]="!newAgrupador.nombre">Guardar</button></ng-template>
+</p-dialog>
+<p-dialog header="Vincular artículo" [(visible)]="showArticuloAgrupadorDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '480px' }">
+  <div class="form">
+    <label>Artículo libre</label>
+    <p-select [options]="articulosLibres" [(ngModel)]="selectedArticuloAgrupador" optionLabel="alias" optionValue="id" placeholder="Buscar artículo…" appendTo="body" styleClass="w-full" [filter]="true" filterBy="alias,nroSerie" filterPlaceholder="Alias o serie…" [resetFilterOnHide]="true"></p-select>
+    <small class="hint"><i class="pi pi-info-circle"></i> Se listan artículos <b>Disponibles</b> que no están dentro de otro agrupador. Si está en otro agrupador, desvinculalo primero.</small>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showArticuloAgrupadorDialog = false">Cancelar</button><button class="btn primary" (click)="vincularArticuloAgrupador()" [disabled]="!selectedArticuloAgrupador">Vincular</button></ng-template>
+</p-dialog>
+<p-dialog [header]="'Sub-agrupador de ' + selectedParentAgrupadorNombre" [(visible)]="showSubAgrupadorDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '480px' }">
+  <div class="form"><label>Agrupador libre</label><p-select [options]="agrupadoresDisponibles" [(ngModel)]="selectedSubAgrupadorId" optionLabel="displayLabel" optionValue="id" placeholder="Buscar agrupador…" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Nombre o tipo…" [resetFilterOnHide]="true"></p-select></div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showSubAgrupadorDialog = false">Cancelar</button><button class="btn primary" (click)="vincularSubAgrupador()" [disabled]="!selectedSubAgrupadorId">Vincular</button></ng-template>
+</p-dialog>
+
+<!-- Consumir / adicionar -->
+<p-dialog header="Consumir unidades" [(visible)]="showConsumirLoteDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '440px' }">
+  <div class="form">
+    <div class="info" *ngIf="selectedLoteParaConsumo"><b>{{ selectedLoteParaConsumo.modelo?.nombre }}</b> · disponible: {{ selectedLoteParaConsumo.cantidadDisponible }} u.</div>
+    <label class="mt">Cantidad a consumir</label>
+    <input pInputText type="number" [(ngModel)]="cantidadAConsumir" placeholder="Ej: 5" />
+    <small class="hint err" *ngIf="cantidadAConsumir > (selectedLoteParaConsumo?.cantidadDisponible || 0)">No podés consumir más que lo disponible.</small>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showConsumirLoteDialog = false">Cancelar</button><button class="btn primary" (click)="confirmarConsumoLote()" [disabled]="cantidadAConsumir <= 0 || cantidadAConsumir > (selectedLoteParaConsumo?.cantidadDisponible || 0)">Confirmar</button></ng-template>
+</p-dialog>
+<p-dialog header="Adicionar unidades" [(visible)]="showAdicionarLoteDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '440px' }">
+  <div class="form">
+    <div class="info" *ngIf="selectedLoteParaAdicion"><b>{{ selectedLoteParaAdicion.modelo?.nombre }}</b> · disponible: {{ selectedLoteParaAdicion.cantidadDisponible }} u.</div>
+    <label class="mt">Cantidad a adicionar</label>
+    <input pInputText type="number" [(ngModel)]="cantidadAAdicionar" placeholder="Ej: 10" />
+  </div>
+  <ng-template pTemplate="footer"><button class="btn ghost" (click)="showAdicionarLoteDialog = false">Cancelar</button><button class="btn primary" (click)="confirmarAdicionLote()" [disabled]="cantidadAAdicionar <= 0">Confirmar</button></ng-template>
+</p-dialog>
+
+<!-- Detalle de artículo -->
+<p-dialog header="Detalle del artículo" [(visible)]="showDetalleArticuloDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '560px' }">
+  <div class="form" *ngIf="selectedArticuloDetalle as d">
+    <div class="detail-top">
+      <div class="dt-title">{{ d.alias || 'Artículo' }}</div>
+      <span [ngClass]="estadoPillClass(d)"><span class="dot"></span>{{ estadoNombre(d) }}</span>
+    </div>
+    <div class="detail-grid">
+      <div><span class="k">Modelo</span><span class="v">{{ d.modelo?.nombre || '—' }}</span></div>
+      <div><span class="k">Nº de serie</span><span class="v mono">{{ d.nroSerie || 'Sin serie' }}</span></div>
+      <div><span class="k">Asignado a</span><span class="v">{{ getArticuloAsignatario(d) || '—' }}</span></div>
+    </div>
+    <div class="detail-note" *ngIf="d.detalle">
+      <span class="k">Detalle</span>
+      <p class="v">{{ d.detalle }}</p>
+    </div>
+    <ng-container *ngIf="atributosConValor(d).length > 0">
+      <div class="md-lbl mt">Atributos</div>
+      <div class="chips">
+        <span class="chip alt" *ngFor="let def of atributosConValor(d)"><span class="cm">{{ def.nombre }}:</span><span class="cn">{{ getAtributoValor(d, def.id) }}</span></span>
+      </div>
+    </ng-container>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn primary" (click)="showDetalleArticuloDialog = false">Cerrar</button></ng-template>
+</p-dialog>
+
+<!-- Cambiar estado del artículo -->
+<p-dialog header="Cambiar estado" [(visible)]="showEstadoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '440px' }">
+  <div class="form" *ngIf="articuloParaEstado as a">
+    <div class="info"><b>{{ a.alias || 'Artículo' }}</b><span *ngIf="a.nroSerie"> · {{ a.nroSerie }}</span></div>
+    <div class="cur">Estado actual: <span [ngClass]="estadoPillClass(a)"><span class="dot"></span>{{ estadoNombre(a) }}</span></div>
+    <label class="mt">Nuevo estado</label>
+    <p-select [options]="estadosArticulo" [(ngModel)]="nuevoEstadoCodigo" optionLabel="nombre" optionValue="codigo" placeholder="Elegí el estado" appendTo="body" styleClass="w-full"></p-select>
+    <small class="hint" *ngIf="getArticuloAsignatario(a)"><i class="pi pi-info-circle"></i> Está asignado a {{ getArticuloAsignatario(a) }}. Cambiarlo a mano puede dejarlo inconsistente con la asignación.</small>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showEstadoDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="guardarEstado()" [disabled]="!nuevoEstadoCodigo">Guardar</button>
+  </ng-template>
+</p-dialog>

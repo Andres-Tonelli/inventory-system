@@ -1,0 +1,73 @@
+<div class="page">
+  <button class="back" (click)="volver()"><i class="pi pi-arrow-left"></i>Organización</button>
+
+  <div class="head" *ngIf="empleado as e">
+    <div class="avatar"><i class="pi pi-user"></i></div>
+    <div class="meta">
+      <div class="eyebrow">Empleado</div>
+      <h1>{{ e.nombre }}</h1>
+      <div class="sub">
+        <span class="pill slate" *ngIf="e.area">{{ e.area.nombre }}</span>
+        <span class="legajo" *ngIf="e.legajo">Legajo {{ e.legajo }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="n">{{ agrupadores.length }}</span><span class="l">Agrupadores</span></div>
+    <div class="stat"><span class="n">{{ totalArticulosEnConjuntos }}</span><span class="l">Artículos en agrupadores</span></div>
+    <div class="stat"><span class="n">{{ articulos.length }}</span><span class="l">Artículos sueltos</span></div>
+  </div>
+
+  <div *ngIf="loading" class="muted-center">Cargando…</div>
+
+  <ng-container *ngIf="!loading">
+    <!-- Agrupadores asignados -->
+    <div class="section-lbl">Agrupadores asignados</div>
+    <div class="empty-card" *ngIf="agrupadores.length === 0">Este empleado no tiene agrupadores asignados.</div>
+
+    <div class="ag-card" *ngFor="let ag of agrupadores">
+      <div class="ag-head">
+        <div class="ag-title">
+          <span class="pill indigo">{{ ag.tipoAgrupador?.nombre || 'Agrupador' }}</span>
+          <span class="ag-name">{{ ag.nombre }}</span>
+        </div>
+        <span class="ag-date" *ngIf="ag.fechaEntrega">Desde {{ ag.fechaEntrega | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="tablescroll">
+        <table>
+          <thead><tr><th>Artículo</th><th>Modelo</th><th>Nº serie</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let art of ag.articulos">
+              <td class="cell-name">{{ art.alias || 'Sin alias' }}</td>
+              <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
+              <td class="mono">{{ art.nroSerie || '—' }}</td>
+              <td><span [ngClass]="estadoPillClass(art)"><span class="dot"></span>{{ estadoNombre(art) }}</span></td>
+            </tr>
+            <tr *ngIf="!ag.articulos?.length"><td colspan="4" class="empty">Agrupador sin artículos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Artículos sueltos -->
+    <div class="section-lbl mt">Artículos asignados directamente</div>
+    <div class="empty-card" *ngIf="articulos.length === 0">Sin artículos sueltos asignados.</div>
+    <div class="tablecard" *ngIf="articulos.length > 0">
+      <div class="tablescroll">
+        <table>
+          <thead><tr><th>Artículo</th><th>Modelo</th><th>Nº serie</th><th>Estado</th><th>Desde</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let art of articulos">
+              <td class="cell-name">{{ art.alias || 'Sin alias' }}</td>
+              <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
+              <td class="mono">{{ art.nroSerie || '—' }}</td>
+              <td><span [ngClass]="estadoPillClass(art)"><span class="dot"></span>{{ estadoNombre(art) }}</span></td>
+              <td class="mut">{{ art.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>

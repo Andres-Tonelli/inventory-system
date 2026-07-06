@@ -1,0 +1,57 @@
+<div class="app-container" *ngIf="isAuthenticated(); else unauthenticated">
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-logo">
+      <i class="pi pi-box"></i>
+      <span>StockFlow</span>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li class="menu-item" [class.active]="isRouteActive('/')">
+        <a routerLink="/"><i class="pi pi-home"></i>Dashboard</a>
+      </li>
+      
+      <!-- Menú dinámico si hay dominio seleccionado -->
+      <ng-container *ngIf="hasSelectedDomain()">
+        <li class="menu-item" [class.active]="isDomainActive()">
+          <a [routerLink]="['/dominios', getSelectedDomainId()]">
+            <i class="pi pi-server text-primary-light"></i>
+            <span class="font-bold text-white">{{ getSelectedDomainName() }}</span>
+          </a>
+        </li>
+      </ng-container>
+
+      <li class="menu-item" [class.active]="isAsignacionesActive()" *ngIf="hasSelectedDomain()">
+        <a routerLink="/asignaciones"><i class="pi pi-users"></i>Asignaciones</a>
+      </li>
+      
+      <li class="menu-item" [class.active]="isConfiguracionActive()">
+        <a routerLink="/configuracion/dominios"><i class="pi pi-cog"></i>Configuración</a>
+      </li>
+
+      <li class="menu-item" [class.active]="isOrganizacionActive()">
+        <a routerLink="/configuracion/organizacion"><i class="pi pi-sliders-h"></i>Organización</a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="flex align-items-center gap-3 p-2 border-round surface-hover text-sm" style="background: rgba(255,255,255,0.05)">
+        <i class="pi pi-user text-primary" style="font-size: 1.25rem; color: #818cf8 !important;"></i>
+        <div class="flex flex-column" style="min-width: 0; line-height: 1.2;">
+          <span class="font-bold text-white text-sm" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ getUsername() }}</span>
+          <span class="text-xs text-400" style="color: #a5b4fc;">Legajo: {{ getLegajo() }}</span>
+        </div>
+      </div>
+      <button pButton label="Cerrar Sesión" icon="pi pi-sign-out" styleClass="p-button-danger p-button-outlined w-full mt-2" (click)="onLogout()"></button>
+    </div>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="app-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+
+<ng-template #unauthenticated>
+  <router-outlet></router-outlet>
+</ng-template>
