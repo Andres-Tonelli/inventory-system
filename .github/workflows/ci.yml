@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Genera el cliente Prisma (no necesita base de datos, sólo el schema).
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Lint (incluye enforce-module-boundaries)
+        run: npx nx run-many -t lint
+
+      - name: Tests unitarios (services con fakes, sin DB)
+        run: npm test
+
+      - name: Build backend + frontend
+        run: npx nx run-many -t build
