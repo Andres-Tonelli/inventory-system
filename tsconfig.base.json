@@ -1,0 +1,25 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@inventory-system/api-contract": ["libs/shared/api-contract/src/index.ts"],
+      "@inventory-system/backend-domain": ["libs/backend/domain/src/index.ts"],
+      "@inventory-system/backend-persistence": ["libs/backend/persistence-prisma/src/index.ts"],
+      "@inventory-system/backend-application": ["libs/backend/application/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}
