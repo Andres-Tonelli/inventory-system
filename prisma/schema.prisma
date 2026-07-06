@@ -1,0 +1,250 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Area {
+  id        Int        @id @default(autoincrement())
+  nombre    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  empleados Empleado[]
+}
+
+model Empleado {
+  id                    Int                   @id @default(autoincrement())
+  legajo                String                @unique
+  nombre                String
+  areaId                Int
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  asignacionesAgrupador AsignacionAgrupador[]
+  asignaciones          AsignacionArticulo[]
+  area                  Area                  @relation(fields: [areaId], references: [id])
+  entregas              EntregaConsumible[]
+
+  @@index([areaId])
+}
+
+model DominioInventario {
+  id             Int                  @id @default(autoincrement())
+  nombre         String               @unique
+  icono          String?
+  color          String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  atributos      AtributoDefinicion[]
+  categorias     Categoria[]
+  marcas         Marca[]
+  tiposAgrupador TipoAgrupador[]
+}
+
+model Categoria {
+  id              Int               @id @default(autoincrement())
+  nombre          String
+  tipoSeguimiento TipoSeguimiento   @default(UNITARIO)
+  dominioId       Int
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  dominio         DominioInventario @relation(fields: [dominioId], references: [id])
+  modelos         Modelo[]
+
+  @@index([dominioId])
+}
+
+model Marca {
+  id        Int               @id @default(autoincrement())
+  nombre    String
+  dominioId Int
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  dominio   DominioInventario @relation(fields: [dominioId], references: [id])
+  modelos   Modelo[]
+
+  @@unique([nombre, dominioId])
+  @@index([dominioId])
+}
+
+model Modelo {
+  id          Int         @id @default(autoincrement())
+  nombre      String
+  marcaId     Int
+  categoriaId Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  articulos   Articulo[]
+  categoria   Categoria   @relation(fields: [categoriaId], references: [id])
+  marca       Marca       @relation(fields: [marcaId], references: [id])
+  lotesStock  StockLote[]
+
+  @@index([marcaId])
+  @@index([categoriaId])
+}
+
+/// Catálogo de atributos dinámicos por dominio. Define QUÉ atributos tiene cada
+/// dominio (para armar formularios y validar). Los VALORES viven en Articulo.atributos (JSONB).
+model AtributoDefinicion {
+  id        Int               @id @default(autoincrement())
+  nombre    String
+  clave     String
+  tipoDato  String
+  dominioId Int
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  dominio   DominioInventario @relation(fields: [dominioId], references: [id])
+
+  @@unique([clave, dominioId])
+  @@index([dominioId])
+}
+
+model Articulo {
+  id          Int            @id @default(autoincrement())
+  nroSerie    String?        @unique // Puede ser null si aún no se le asigna uno de patrimonio
+  alias       String?
+  detalle     String? // Nota/descripción libre, general para cualquier artículo (no es atributo de dominio)
+  estadoId    Int
+  estado      EstadoArticulo @relation(fields: [estadoId], references: [id])
+  modeloId    Int
+  modelo      Modelo         @relation(fields: [modeloId], references: [id])
+  agrupadorId Int? // CONTENCIÓN: dentro de qué conjunto está (no implica asignación)
+  agrupador   Agrupador?     @relation(fields: [agrupadorId], references: [id])
+
+  /// Valores de atributos dinámicos, por clave: { "ram": "16", "cpu": "i7" }.
+  /// El catálogo/validación está en AtributoDefinicion.
+  atributos Json @default("{}")
+
+  asignaciones AsignacionArticulo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([modeloId])
+  @@index([agrupadorId])
+  @@index([estadoId])
+  // Búsquedas de contención dentro del JSON de atributos (ver ADR-0004 D7).
+  @@index([atributos], type: Gin)
+}
+
+model TipoAgrupador {
+  id          Int               @id @default(autoincrement())
+  nombre      String
+  dominioId   Int
+  /// Configurable por el admin: ¿instancias de este tipo se pueden asignar a una persona?
+  /// false = contenedor/ubicación (ej. locker), true = conjunto asignable (ej. PC).
+  asignable   Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  agrupadores Agrupador[]
+  dominio     DominioInventario @relation(fields: [dominioId], references: [id])
+
+  @@unique([nombre, dominioId])
+  @@index([dominioId])
+}
+
+model Agrupador {
+  id               Int             @id @default(autoincrement())
+  nombre           String
+  /// Denormalizado por comodidad de filtrado. Lo mantiene EN SINCRONÍA el caso de uso de
+  /// asignar/devolver (único escritor, dentro de la misma transacción). Ver ADR-0004 D5.
+  estado           EstadoAgrupador @default(DISPONIBLE)
+  tipoAgrupadorId  Int
+  agrupadorPadreId Int? // CONTENCIÓN jerárquica (un conjunto dentro de otro)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  agrupadorPadre Agrupador?            @relation("AgrupadorJerarquia", fields: [agrupadorPadreId], references: [id])
+  subAgrupadores Agrupador[]           @relation("AgrupadorJerarquia")
+  tipoAgrupador  TipoAgrupador         @relation(fields: [tipoAgrupadorId], references: [id])
+  articulos      Articulo[]
+  asignaciones   AsignacionAgrupador[]
+
+  @@index([tipoAgrupadorId])
+  @@index([agrupadorPadreId])
+}
+
+model StockLote {
+  id                 Int                 @id @default(autoincrement())
+  modeloId           Int
+  cantidadInicial    Int
+  cantidadDisponible Int                 @default(0)
+  referencia         String? // remito / orden de compra / origen
+  fechaIngreso       DateTime            @default(now())
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  entregas           EntregaConsumible[]
+  modelo             Modelo              @relation(fields: [modeloId], references: [id])
+
+  @@index([modeloId])
+}
+
+model AsignacionArticulo {
+  id              Int       @id @default(autoincrement())
+  fechaEntrega    DateTime  @default(now())
+  fechaDevolucion DateTime?
+  observaciones   String?
+  articuloId      Int
+  empleadoId      Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  articulo        Articulo  @relation(fields: [articuloId], references: [id])
+  empleado        Empleado  @relation(fields: [empleadoId], references: [id])
+
+  @@index([articuloId])
+  @@index([empleadoId])
+}
+
+model AsignacionAgrupador {
+  id              Int       @id @default(autoincrement())
+  fechaEntrega    DateTime  @default(now())
+  fechaDevolucion DateTime?
+  observaciones   String?
+  agrupadorId     Int
+  empleadoId      Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  agrupador       Agrupador @relation(fields: [agrupadorId], references: [id])
+  empleado        Empleado  @relation(fields: [empleadoId], references: [id])
+
+  @@index([agrupadorId])
+  @@index([empleadoId])
+}
+
+model EntregaConsumible {
+  id                Int       @id @default(autoincrement())
+  cantidadEntregada Int
+  fechaEntrega      DateTime  @default(now())
+  loteId            Int
+  empleadoId        Int
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  empleado          Empleado  @relation(fields: [empleadoId], references: [id])
+  lote              StockLote @relation(fields: [loteId], references: [id])
+
+  @@index([loteId])
+  @@index([empleadoId])
+}
+
+model EstadoArticulo {
+  id        Int        @id @default(autoincrement())
+  /// Código estable para referenciar desde el código (NUNCA por id numérico).
+  codigo    String     @unique
+  nombre    String     @unique
+  articulos Articulo[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+enum TipoSeguimiento {
+  UNITARIO
+  POR_LOTE
+}
+
+enum EstadoAgrupador {
+  DISPONIBLE
+  ASIGNADO
+}

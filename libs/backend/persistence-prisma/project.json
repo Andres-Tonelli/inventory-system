@@ -1,0 +1,7 @@
+{
+  "name": "backend-persistence-prisma",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/persistence-prisma/src",
+  "projectType": "library",
+  "tags": ["scope:backend", "type:persistence"]
+}
