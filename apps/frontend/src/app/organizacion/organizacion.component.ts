@@ -9,6 +9,7 @@ import { SelectModule } from 'primeng/select';
 
 import { EmpleadosService, Empleado, Area } from '../core/services/empleados.service';
 import { CatalogosService, EstadoArticulo } from '../core/services/catalogos.service';
+import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
 
 @Component({
   selector: 'app-organizacion',
@@ -39,6 +40,7 @@ export class OrganizacionComponent implements OnInit {
   constructor(
     private empleadosSvc: EmpleadosService,
     private catalogosSvc: CatalogosService,
+    private confirmUi: ConfirmacionUiService,
     private router: Router,
   ) {}
 
@@ -86,10 +88,13 @@ export class OrganizacionComponent implements OnInit {
     else this.empleadosSvc.createEmpleado(data).subscribe(done);
   }
   deleteEmp(e: Empleado): void {
-    if (!e.id || !confirm(`¿Eliminar a "${e.nombre}"?`)) return;
-    this.empleadosSvc.deleteEmpleado(e.id).subscribe({
-      next: () => this.loadAll(),
-      error: (x) => alert(x?.error?.message || 'No se pudo eliminar el empleado.'),
+    if (!e.id) return;
+    const id = e.id;
+    this.confirmUi.eliminar(`¿Eliminar a "${e.nombre}"?`, () => {
+      this.empleadosSvc.deleteEmpleado(id).subscribe({
+        next: () => this.loadAll(),
+        error: (x) => alert(x?.error?.message || 'No se pudo eliminar el empleado.'),
+      });
     });
   }
 
@@ -115,10 +120,13 @@ export class OrganizacionComponent implements OnInit {
     else this.empleadosSvc.createArea(nombre).subscribe(done);
   }
   deleteArea(a: Area): void {
-    if (!a.id || !confirm(`¿Eliminar el área "${a.nombre}"?`)) return;
-    this.empleadosSvc.deleteArea(a.id).subscribe({
-      next: () => this.loadAll(),
-      error: (x) => alert(x?.error?.message || 'No se pudo eliminar el área.'),
+    if (!a.id) return;
+    const id = a.id;
+    this.confirmUi.eliminar(`¿Eliminar el área "${a.nombre}"?`, () => {
+      this.empleadosSvc.deleteArea(id).subscribe({
+        next: () => this.loadAll(),
+        error: (x) => alert(x?.error?.message || 'No se pudo eliminar el área.'),
+      });
     });
   }
 
@@ -144,10 +152,13 @@ export class OrganizacionComponent implements OnInit {
     else this.catalogosSvc.createEstado(nombre).subscribe(done);
   }
   deleteEstado(s: EstadoArticulo): void {
-    if (!s.id || !confirm(`¿Eliminar el estado "${s.nombre}"?`)) return;
-    this.catalogosSvc.deleteEstado(s.id).subscribe({
-      next: () => this.loadAll(),
-      error: (x) => alert(x?.error?.message || 'No se pudo eliminar el estado.'),
+    if (!s.id) return;
+    const id = s.id;
+    this.confirmUi.eliminar(`¿Eliminar el estado "${s.nombre}"? Los artículos que lo usan lo impiden.`, () => {
+      this.catalogosSvc.deleteEstado(id).subscribe({
+        next: () => this.loadAll(),
+        error: (x) => alert(x?.error?.message || 'No se pudo eliminar el estado.'),
+      });
     });
   }
 }

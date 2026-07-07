@@ -13,6 +13,7 @@ import {
   TipoAgrupador,
   AtributoDefinicion,
 } from '../core/services/catalogos.service';
+import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
 import { DOMINIO_ICONOS, DOMINIO_COLORES } from '@inventory-system/api-contract';
 
 @Component({
@@ -57,7 +58,10 @@ export class ConfiguracionDominiosComponent implements OnInit {
     { label: 'Lista', value: 'LISTA' },
   ];
 
-  constructor(private catalogos: CatalogosService) {}
+  constructor(
+    private catalogos: CatalogosService,
+    private confirmUi: ConfirmacionUiService,
+  ) {}
 
   ngOnInit(): void {
     this.loadAll();
@@ -138,13 +142,15 @@ export class ConfiguracionDominiosComponent implements OnInit {
   deleteDominio(d: Dominio, ev?: Event): void {
     ev?.stopPropagation();
     if (!d.id) return;
-    if (!confirm(`¿Eliminar el dominio "${d.nombre}"?`)) return;
-    this.catalogos.deleteDominio(d.id).subscribe({
-      next: () => {
-        if (this.selectedId === d.id) this.selectedId = null;
-        this.loadAll();
-      },
-      error: (e) => alert(e?.error?.message || 'No se pudo eliminar el dominio.'),
+    const id = d.id;
+    this.confirmUi.eliminar(`¿Eliminar el dominio "${d.nombre}"? Se pierde su configuración de tipos y atributos.`, () => {
+      this.catalogos.deleteDominio(id).subscribe({
+        next: () => {
+          if (this.selectedId === id) this.selectedId = null;
+          this.loadAll();
+        },
+        error: (e) => alert(e?.error?.message || 'No se pudo eliminar el dominio.'),
+      });
     });
   }
 
@@ -179,11 +185,13 @@ export class ConfiguracionDominiosComponent implements OnInit {
   }
   deleteTipo(t: TipoAgrupador): void {
     if (!t.id || !this.selectedId) return;
-    if (!confirm(`¿Eliminar el tipo "${t.nombre}"?`)) return;
+    const id = t.id;
     const domId = this.selectedId;
-    this.catalogos.deleteTipoAgrupador(t.id).subscribe({
-      next: () => this.loadDominioConfig(domId),
-      error: (e) => alert(e?.error?.message || 'No se pudo eliminar el tipo.'),
+    this.confirmUi.eliminar(`¿Eliminar el tipo "${t.nombre}"?`, () => {
+      this.catalogos.deleteTipoAgrupador(id).subscribe({
+        next: () => this.loadDominioConfig(domId),
+        error: (e) => alert(e?.error?.message || 'No se pudo eliminar el tipo.'),
+      });
     });
   }
 
@@ -216,8 +224,10 @@ export class ConfiguracionDominiosComponent implements OnInit {
   }
   deleteAtributo(a: AtributoDefinicion): void {
     if (!a.id || !this.selectedId) return;
-    if (!confirm(`¿Eliminar el atributo "${a.nombre}"?`)) return;
+    const id = a.id;
     const domId = this.selectedId;
-    this.catalogos.deleteAtributo(a.id).subscribe(() => this.loadDominioConfig(domId));
+    this.confirmUi.eliminar(`¿Eliminar el atributo "${a.nombre}"?`, () => {
+      this.catalogos.deleteAtributo(id).subscribe(() => this.loadDominioConfig(domId));
+    });
   }
 }
