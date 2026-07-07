@@ -82,7 +82,9 @@ export class OrganizacionComponent implements OnInit {
     const legajo = this.empForm.legajo.trim();
     if (!nombre || !legajo || !this.empForm.areaId) return;
     const data = { nombre, legajo, areaId: this.empForm.areaId };
+    const esEdicion = !!this.editEmpId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? `Empleado "${nombre}" actualizado.` : `Empleado "${nombre}" registrado.`);
       this.showEmpDialog = false;
       this.loadAll();
     };
@@ -94,7 +96,10 @@ export class OrganizacionComponent implements OnInit {
     const id = e.id;
     this.confirmUi.eliminar(`¿Eliminar a "${e.nombre}"?`, () => {
       this.empleadosSvc.deleteEmpleado(id).subscribe({
-        next: () => this.loadAll(),
+        next: () => {
+          this.notificaciones.exito(`Empleado "${e.nombre}" eliminado.`);
+          this.loadAll();
+        },
         error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el empleado.'),
       });
     });
@@ -114,7 +119,9 @@ export class OrganizacionComponent implements OnInit {
   saveArea(): void {
     const nombre = this.areaForm.nombre.trim();
     if (!nombre) return;
+    const esEdicion = !!this.editAreaId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? `Área "${nombre}" actualizada.` : `Área "${nombre}" creada.`);
       this.showAreaDialog = false;
       this.loadAll();
     };
@@ -126,7 +133,10 @@ export class OrganizacionComponent implements OnInit {
     const id = a.id;
     this.confirmUi.eliminar(`¿Eliminar el área "${a.nombre}"?`, () => {
       this.empleadosSvc.deleteArea(id).subscribe({
-        next: () => this.loadAll(),
+        next: () => {
+          this.notificaciones.exito(`Área "${a.nombre}" eliminada.`);
+          this.loadAll();
+        },
         error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el área.'),
       });
     });
@@ -146,7 +156,9 @@ export class OrganizacionComponent implements OnInit {
   saveEstado(): void {
     const nombre = this.estadoForm.nombre.trim();
     if (!nombre) return;
+    const esEdicion = !!this.editEstadoId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? `Estado "${nombre}" actualizado.` : `Estado "${nombre}" creado.`);
       this.showEstadoDialog = false;
       this.loadAll();
     };
@@ -158,7 +170,10 @@ export class OrganizacionComponent implements OnInit {
     const id = s.id;
     this.confirmUi.eliminar(`¿Eliminar el estado "${s.nombre}"? Los artículos que lo usan lo impiden.`, () => {
       this.catalogosSvc.deleteEstado(id).subscribe({
-        next: () => this.loadAll(),
+        next: () => {
+          this.notificaciones.exito(`Estado "${s.nombre}" eliminado.`);
+          this.loadAll();
+        },
         error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el estado.'),
       });
     });

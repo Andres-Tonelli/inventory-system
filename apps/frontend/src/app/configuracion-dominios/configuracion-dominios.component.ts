@@ -131,7 +131,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
     const nombre = this.dominioForm.nombre.trim();
     if (!nombre) return;
     const data = { nombre, icono: this.dominioForm.icono, color: this.dominioForm.color };
+    const esEdicion = !!this.editingDominioId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? `Dominio "${nombre}" actualizado.` : `Dominio "${nombre}" creado.`);
       this.showDominioDialog = false;
       this.loadAll();
     };
@@ -148,6 +150,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
     this.confirmUi.eliminar(`¿Eliminar el dominio "${d.nombre}"? Se pierde su configuración de tipos y atributos.`, () => {
       this.catalogos.deleteDominio(id).subscribe({
         next: () => {
+          this.notificaciones.exito(`Dominio "${d.nombre}" eliminado.`);
           if (this.selectedId === id) this.selectedId = null;
           this.loadAll();
         },
@@ -171,7 +174,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
     const nombre = this.tipoForm.nombre.trim();
     if (!nombre || !this.selectedId) return;
     const domId = this.selectedId;
+    const esEdicion = !!this.editingTipoId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? 'Tipo de agrupador actualizado.' : 'Tipo de agrupador creado.');
       this.showTipoDialog = false;
       this.loadDominioConfig(domId);
     };
@@ -191,7 +196,10 @@ export class ConfiguracionDominiosComponent implements OnInit {
     const domId = this.selectedId;
     this.confirmUi.eliminar(`¿Eliminar el tipo "${t.nombre}"?`, () => {
       this.catalogos.deleteTipoAgrupador(id).subscribe({
-        next: () => this.loadDominioConfig(domId),
+        next: () => {
+          this.notificaciones.exito(`Tipo "${t.nombre}" eliminado.`);
+          this.loadDominioConfig(domId);
+        },
         error: (e) => this.notificaciones.errorHttp(e, 'No se pudo eliminar el tipo.'),
       });
     });
@@ -214,7 +222,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
     if (!nombre || !clave || !this.selectedId) return;
     const domId = this.selectedId;
     const data = { nombre, clave, tipoDato: this.atributoForm.tipoDato };
+    const esEdicion = !!this.editingAtributoId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? 'Atributo actualizado.' : 'Atributo creado.');
       this.showAtributoDialog = false;
       this.loadDominioConfig(domId);
     };
@@ -229,7 +239,10 @@ export class ConfiguracionDominiosComponent implements OnInit {
     const id = a.id;
     const domId = this.selectedId;
     this.confirmUi.eliminar(`¿Eliminar el atributo "${a.nombre}"?`, () => {
-      this.catalogos.deleteAtributo(id).subscribe(() => this.loadDominioConfig(domId));
+      this.catalogos.deleteAtributo(id).subscribe(() => {
+        this.notificaciones.exito(`Atributo "${a.nombre}" eliminado.`);
+        this.loadDominioConfig(domId);
+      });
     });
   }
 }

@@ -495,7 +495,9 @@ export class InventarioComponent implements OnInit {
       atributos
     };
 
+    const esEdicion = !!this.editingArticuloId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? 'Artículo actualizado.' : 'Artículo registrado en el inventario.');
       this.showNuevoDialog = false;
       this.editingArticuloId = null;
       this.loadArticulos();
@@ -539,6 +541,8 @@ export class InventarioComponent implements OnInit {
     if (!this.articuloParaEstado?.id || !this.nuevoEstadoCodigo) return;
     this.inventarioService.cambiarEstadoArticulo(this.articuloParaEstado.id, this.nuevoEstadoCodigo).subscribe({
       next: () => {
+        const nombre = this.estadosArticulo.find(s => s.codigo === this.nuevoEstadoCodigo)?.nombre;
+        this.notificaciones.exito(nombre ? `Estado cambiado a "${nombre}".` : 'Estado del artículo actualizado.');
         this.showEstadoDialog = false;
         this.articuloParaEstado = null;
         this.loadArticulos();
@@ -579,7 +583,9 @@ export class InventarioComponent implements OnInit {
   }
   saveCategoria() {
     if(!this.newCategoria.nombre) return;
+    const esEdicion = !!this.editingCategoriaId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? 'Categoría actualizada.' : 'Categoría creada.');
       this.showCategoriaDialog = false;
       this.editingCategoriaId = null;
       this.newCategoria = { nombre: '' };
@@ -604,7 +610,9 @@ export class InventarioComponent implements OnInit {
   }
   saveMarca() {
     if(!this.newMarca.nombre) return;
+    const esEdicion = !!this.editingMarcaId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? 'Marca actualizada.' : 'Marca creada.');
       this.showMarcaDialog = false;
       this.editingMarcaId = null;
       this.newMarca = { nombre: '' };
@@ -634,7 +642,9 @@ export class InventarioComponent implements OnInit {
       marcaId: this.newModelo.marcaId,
       categoriaId: this.newModelo.categoriaId
     };
+    const esEdicion = !!this.editingModeloId;
     const done = () => {
+      this.notificaciones.exito(esEdicion ? 'Modelo actualizado.' : 'Modelo creado.');
       this.showModeloDialog = false;
       this.editingModeloId = null;
       this.newModelo = { nombre: '', marcaId: null, categoriaId: null };
@@ -660,10 +670,14 @@ export class InventarioComponent implements OnInit {
     this.agrupadoresService.createAgrupador({
       nombre: this.newAgrupador.nombre,
       tipoAgrupadorId: this.newAgrupador.tipoAgrupadorId
-    }).subscribe(() => {
-      this.showAgrupadorDialog = false;
-      this.newAgrupador = { nombre: '', tipoAgrupadorId: null };
-      this.loadAgrupadores();
+    }).subscribe({
+      next: () => {
+        this.notificaciones.exito(`Agrupador "${this.newAgrupador.nombre}" creado.`);
+        this.showAgrupadorDialog = false;
+        this.newAgrupador = { nombre: '', tipoAgrupadorId: null };
+        this.loadAgrupadores();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo crear el agrupador.')
     });
   }
 
@@ -679,17 +693,25 @@ export class InventarioComponent implements OnInit {
 
   vincularArticuloAgrupador() {
     if(!this.selectedAgrupadorId || !this.selectedArticuloAgrupador) return;
-    this.agrupadoresService.addArticulo(this.selectedAgrupadorId, this.selectedArticuloAgrupador).subscribe(() => {
-      this.showArticuloAgrupadorDialog = false;
-      this.loadAgrupadores();
-      this.loadArticulos(); // Recargar articulos para ver cambios
+    this.agrupadoresService.addArticulo(this.selectedAgrupadorId, this.selectedArticuloAgrupador).subscribe({
+      next: () => {
+        this.notificaciones.exito('Artículo vinculado al agrupador.');
+        this.showArticuloAgrupadorDialog = false;
+        this.loadAgrupadores();
+        this.loadArticulos(); // Recargar articulos para ver cambios
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo vincular el artículo.')
     });
   }
 
   desvincularArticulo(articuloId: number) {
-    this.agrupadoresService.removeArticulo(articuloId).subscribe(() => {
-      this.loadAgrupadores();
-      this.loadArticulos();
+    this.agrupadoresService.removeArticulo(articuloId).subscribe({
+      next: () => {
+        this.notificaciones.exito('Artículo desvinculado del agrupador.');
+        this.loadAgrupadores();
+        this.loadArticulos();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo desvincular el artículo.')
     });
   }
 
@@ -711,15 +733,23 @@ export class InventarioComponent implements OnInit {
 
   vincularSubAgrupador() {
     if (!this.selectedParentAgrupadorId || !this.selectedSubAgrupadorId) return;
-    this.agrupadoresService.addSubAgrupador(this.selectedParentAgrupadorId, this.selectedSubAgrupadorId).subscribe(() => {
-      this.showSubAgrupadorDialog = false;
-      this.loadAgrupadores();
+    this.agrupadoresService.addSubAgrupador(this.selectedParentAgrupadorId, this.selectedSubAgrupadorId).subscribe({
+      next: () => {
+        this.notificaciones.exito(`Sub-agrupador vinculado a "${this.selectedParentAgrupadorNombre}".`);
+        this.showSubAgrupadorDialog = false;
+        this.loadAgrupadores();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo vincular el sub-agrupador.')
     });
   }
 
   desvincularSubAgrupador(childId: number) {
-    this.agrupadoresService.removeSubAgrupador(childId).subscribe(() => {
-      this.loadAgrupadores();
+    this.agrupadoresService.removeSubAgrupador(childId).subscribe({
+      next: () => {
+        this.notificaciones.exito('Sub-agrupador desvinculado.');
+        this.loadAgrupadores();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo desvincular el sub-agrupador.')
     });
   }
 
@@ -728,10 +758,14 @@ export class InventarioComponent implements OnInit {
     this.inventarioService.createLote({
       cantidadDisponible: this.newLote.cantidadDisponible,
       modeloId: this.newLote.modeloId
-    }).subscribe(() => {
-      this.showLoteDialog = false;
-      this.newLote = { cantidadDisponible: 0, modeloId: null };
-      this.loadLotes();
+    }).subscribe({
+      next: () => {
+        this.notificaciones.exito('Lote de stock registrado.');
+        this.showLoteDialog = false;
+        this.newLote = { cantidadDisponible: 0, modeloId: null };
+        this.loadLotes();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo registrar el lote.')
     });
   }
 
@@ -744,11 +778,15 @@ export class InventarioComponent implements OnInit {
   confirmarConsumoLote() {
     if (!this.selectedLoteParaConsumo || this.cantidadAConsumir <= 0 || this.cantidadAConsumir > this.selectedLoteParaConsumo.cantidadDisponible) return;
     
-    this.inventarioService.consumirLote(this.selectedLoteParaConsumo.id, this.cantidadAConsumir).subscribe(() => {
-      this.showConsumirLoteDialog = false;
-      this.selectedLoteParaConsumo = null;
-      this.cantidadAConsumir = 0;
-      this.loadLotes();
+    this.inventarioService.consumirLote(this.selectedLoteParaConsumo.id, this.cantidadAConsumir).subscribe({
+      next: () => {
+        this.notificaciones.exito(`Se consumieron ${this.cantidadAConsumir} unidades del lote.`);
+        this.showConsumirLoteDialog = false;
+        this.selectedLoteParaConsumo = null;
+        this.cantidadAConsumir = 0;
+        this.loadLotes();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo consumir el lote.')
     });
   }
 
@@ -761,11 +799,15 @@ export class InventarioComponent implements OnInit {
   confirmarAdicionLote() {
     if (!this.selectedLoteParaAdicion || this.cantidadAAdicionar <= 0) return;
     
-    this.inventarioService.adicionarLote(this.selectedLoteParaAdicion.id, this.cantidadAAdicionar).subscribe(() => {
-      this.showAdicionarLoteDialog = false;
-      this.selectedLoteParaAdicion = null;
-      this.cantidadAAdicionar = 0;
-      this.loadLotes();
+    this.inventarioService.adicionarLote(this.selectedLoteParaAdicion.id, this.cantidadAAdicionar).subscribe({
+      next: () => {
+        this.notificaciones.exito(`Se adicionaron ${this.cantidadAAdicionar} unidades al lote.`);
+        this.showAdicionarLoteDialog = false;
+        this.selectedLoteParaAdicion = null;
+        this.cantidadAAdicionar = 0;
+        this.loadLotes();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo adicionar stock.')
     });
   }
 

@@ -9,6 +9,7 @@ import { InventarioService, Articulo } from '../core/services/inventario.service
 import { AgrupadoresService, Agrupador } from '../core/services/agrupadores.service';
 import { CatalogosService, TipoAgrupador } from '../core/services/catalogos.service';
 import { DomainContextService } from '../core/domain-context.service';
+import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -146,6 +147,7 @@ export class AsignacionesComponent implements OnInit {
     private agrupadoresService: AgrupadoresService,
     private catalogosService: CatalogosService,
     private domainContext: DomainContextService,
+    private notificaciones: NotificacionesUiService,
     private router: Router
   ) {}
 
@@ -214,33 +216,32 @@ export class AsignacionesComponent implements OnInit {
   guardarAsignacion() {
     if (!this.newAsignacion.empleadoId || !this.newAsignacion.itemId) return;
 
+    const empleado = this.empleados.find(e => e.id === this.newAsignacion.empleadoId)?.nombre;
+    const done = (mensaje: string) => () => {
+      this.notificaciones.exito(empleado ? `${mensaje} a ${empleado}.` : `${mensaje}.`);
+      this.showNuevoDialog = false;
+      this.loadAll();
+    };
+    const onErr = (e: unknown) => this.notificaciones.errorHttp(e, 'No se pudo realizar la asignación.');
+
     if (this.tipoAsignacion === 'ARTICULO') {
       this.asignacionesService.createAsignacion({
         empleadoId: this.newAsignacion.empleadoId,
         articuloId: this.newAsignacion.itemId,
         observaciones: this.newAsignacion.observaciones
-      }).subscribe(res => {
-        this.showNuevoDialog = false;
-        this.loadAll();
-      });
+      }).subscribe({ next: done('Artículo asignado'), error: onErr });
     } else if (this.tipoAsignacion === 'AGRUPADOR') {
       this.asignacionesService.createAsignacionAgrupador({
         empleadoId: this.newAsignacion.empleadoId,
         agrupadorId: this.newAsignacion.itemId,
         observaciones: this.newAsignacion.observaciones
-      }).subscribe(res => {
-        this.showNuevoDialog = false;
-        this.loadAll();
-      });
+      }).subscribe({ next: done('Agrupador asignado'), error: onErr });
     } else if (this.tipoAsignacion === 'CONSUMIBLE') {
       this.asignacionesService.createAsignacionConsumible({
         empleadoId: this.newAsignacion.empleadoId,
         loteId: this.newAsignacion.itemId,
         cantidad: this.newAsignacion.cantidad
-      }).subscribe(res => {
-        this.showNuevoDialog = false;
-        this.loadAll();
-      });
+      }).subscribe({ next: done(`Se entregaron ${this.newAsignacion.cantidad} unidades`), error: onErr });
     }
   }
 }
