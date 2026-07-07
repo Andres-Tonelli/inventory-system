@@ -14,6 +14,7 @@ import {
   AtributoDefinicion,
 } from '../core/services/catalogos.service';
 import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
+import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 import { DOMINIO_ICONOS, DOMINIO_COLORES } from '@inventory-system/api-contract';
 
 @Component({
@@ -61,6 +62,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
   constructor(
     private catalogos: CatalogosService,
     private confirmUi: ConfirmacionUiService,
+    private notificaciones: NotificacionesUiService,
   ) {}
 
   ngOnInit(): void {
@@ -149,7 +151,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
           if (this.selectedId === id) this.selectedId = null;
           this.loadAll();
         },
-        error: (e) => alert(e?.error?.message || 'No se pudo eliminar el dominio.'),
+        error: (e) => this.notificaciones.errorHttp(e, 'No se pudo eliminar el dominio.'),
       });
     });
   }
@@ -190,7 +192,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
     this.confirmUi.eliminar(`¿Eliminar el tipo "${t.nombre}"?`, () => {
       this.catalogos.deleteTipoAgrupador(id).subscribe({
         next: () => this.loadDominioConfig(domId),
-        error: (e) => alert(e?.error?.message || 'No se pudo eliminar el tipo.'),
+        error: (e) => this.notificaciones.errorHttp(e, 'No se pudo eliminar el tipo.'),
       });
     });
   }

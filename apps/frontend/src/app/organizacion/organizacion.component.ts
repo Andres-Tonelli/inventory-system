@@ -10,6 +10,7 @@ import { SelectModule } from 'primeng/select';
 import { EmpleadosService, Empleado, Area } from '../core/services/empleados.service';
 import { CatalogosService, EstadoArticulo } from '../core/services/catalogos.service';
 import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
+import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 
 @Component({
   selector: 'app-organizacion',
@@ -41,6 +42,7 @@ export class OrganizacionComponent implements OnInit {
     private empleadosSvc: EmpleadosService,
     private catalogosSvc: CatalogosService,
     private confirmUi: ConfirmacionUiService,
+    private notificaciones: NotificacionesUiService,
     private router: Router,
   ) {}
 
@@ -93,7 +95,7 @@ export class OrganizacionComponent implements OnInit {
     this.confirmUi.eliminar(`¿Eliminar a "${e.nombre}"?`, () => {
       this.empleadosSvc.deleteEmpleado(id).subscribe({
         next: () => this.loadAll(),
-        error: (x) => alert(x?.error?.message || 'No se pudo eliminar el empleado.'),
+        error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el empleado.'),
       });
     });
   }
@@ -125,7 +127,7 @@ export class OrganizacionComponent implements OnInit {
     this.confirmUi.eliminar(`¿Eliminar el área "${a.nombre}"?`, () => {
       this.empleadosSvc.deleteArea(id).subscribe({
         next: () => this.loadAll(),
-        error: (x) => alert(x?.error?.message || 'No se pudo eliminar el área.'),
+        error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el área.'),
       });
     });
   }
@@ -157,7 +159,7 @@ export class OrganizacionComponent implements OnInit {
     this.confirmUi.eliminar(`¿Eliminar el estado "${s.nombre}"? Los artículos que lo usan lo impiden.`, () => {
       this.catalogosSvc.deleteEstado(id).subscribe({
         next: () => this.loadAll(),
-        error: (x) => alert(x?.error?.message || 'No se pudo eliminar el estado.'),
+        error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el estado.'),
       });
     });
   }

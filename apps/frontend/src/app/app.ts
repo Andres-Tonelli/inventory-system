@@ -3,12 +3,13 @@ import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ToastModule } from 'primeng/toast';
 import { AuthService } from './core/auth/auth.service';
 import { DomainContextService } from './core/domain-context.service';
 import { CatalogosService, Dominio } from './core/services/catalogos.service';
 
 @Component({
-  imports: [RouterModule, CommonModule, ButtonModule, ConfirmDialogModule],
+  imports: [RouterModule, CommonModule, ButtonModule, ConfirmDialogModule, ToastModule],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
