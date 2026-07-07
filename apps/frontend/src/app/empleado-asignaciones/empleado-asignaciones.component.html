@@ -69,5 +69,26 @@
         </table>
       </div>
     </div>
+
+    <!-- Historial de devoluciones -->
+    <div class="section-lbl mt">Historial de devoluciones ({{ historial.length }})</div>
+    <div class="empty-card" *ngIf="historial.length === 0">Sin devoluciones registradas.</div>
+    <div class="tablecard" *ngIf="historial.length > 0">
+      <div class="tablescroll">
+        <table>
+          <thead><tr><th>Tipo</th><th>Nombre</th><th>Detalle</th><th>Entrega</th><th>Devolución</th><th>Observaciones</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let h of historial">
+              <td><span class="pill" [class.indigo]="h.tipo === 'AGRUPADOR'" [class.slate]="h.tipo !== 'AGRUPADOR'">{{ h.tipo === 'AGRUPADOR' ? 'Agrupador' : 'Artículo' }}</span></td>
+              <td class="cell-name">{{ h.nombre }}</td>
+              <td class="mut">{{ h.detalle || '—' }}</td>
+              <td class="mut">{{ h.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+              <td class="mut">{{ h.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
+              <td class="mut">{{ h.observaciones || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </ng-container>
 </div>

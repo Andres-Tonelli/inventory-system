@@ -24,4 +24,17 @@ export class ConfirmacionUiService {
       accept: onAccept,
     });
   }
+
+  /** Confirmación genérica NO destructiva (ej. registrar una devolución): botón primario. */
+  confirmar(mensaje: string, onAccept: () => void, opciones?: { header?: string; acceptLabel?: string }): void {
+    this.confirmation.confirm({
+      header: opciones?.header ?? 'Confirmar',
+      message: mensaje,
+      icon: 'pi pi-question-circle',
+      acceptLabel: opciones?.acceptLabel ?? 'Confirmar',
+      rejectLabel: 'Cancelar',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: onAccept,
+    });
+  }
 }

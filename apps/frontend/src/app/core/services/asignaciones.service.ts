@@ -18,8 +18,20 @@ export class AsignacionesService {
     return this.http.get<ApiResponse<Asignacion[]>>(url);
   }
 
-  getAsignacionesDeEmpleado(empleadoId: number): Observable<ApiResponse<{ agrupadores: any[]; articulos: any[] }>> {
-    return this.http.get<ApiResponse<{ agrupadores: any[]; articulos: any[] }>>(`/api/asignaciones/empleado/${empleadoId}`);
+  getAsignacionesDeEmpleado(
+    empleadoId: number,
+  ): Observable<ApiResponse<{ agrupadores: any[]; articulos: any[]; historial: any[] }>> {
+    return this.http.get<ApiResponse<{ agrupadores: any[]; articulos: any[]; historial: any[] }>>(
+      `/api/asignaciones/empleado/${empleadoId}`,
+    );
+  }
+
+  devolverAsignacionArticulo(asignacionId: number) {
+    return this.http.patch(`/api/asignaciones/articulos/${asignacionId}/devolver`, {});
+  }
+
+  devolverAsignacionAgrupador(asignacionId: number) {
+    return this.http.patch(`/api/asignaciones/agrupadores/${asignacionId}/devolver`, {});
   }
 
   createAsignacion(data: { articuloId: number; empleadoId: number; observaciones?: string }) {

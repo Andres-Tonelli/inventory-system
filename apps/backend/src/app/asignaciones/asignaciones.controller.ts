@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query, Param } from '@nestjs/common';
+import { Controller, Post, Patch, Body, Get, Query, Param } from '@nestjs/common';
 import { AsignacionesService } from '@inventory-system/backend-application';
 import {
   AsignarArticuloDto,
@@ -38,5 +38,17 @@ export class AsignacionesController {
   async getAsignacionesDeEmpleado(@Param('id') id: string) {
     const resultados = await this.asignacionesService.getAsignacionesDeEmpleado(Number(id));
     return { success: true, data: resultados };
+  }
+
+  @Patch('articulos/:id/devolver')
+  async devolverArticulo(@Param('id') id: string) {
+    await this.asignacionesService.devolverArticulo(Number(id));
+    return { success: true, message: 'Artículo devuelto' };
+  }
+
+  @Patch('agrupadores/:id/devolver')
+  async devolverAgrupador(@Param('id') id: string) {
+    await this.asignacionesService.devolverAgrupador(Number(id));
+    return { success: true, message: 'Agrupador devuelto' };
   }
 }

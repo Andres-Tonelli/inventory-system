@@ -105,30 +105,95 @@ export class AsignacionesService {
     return [...asigArticulos, ...asigAgrupadores, ...entregas];
   }
 
-  /** Todo lo que "tiene" un empleado hoy: conjuntos asignados (con sus artículos) + artículos sueltos asignados. */
+  /**
+   * Lo que "tiene" un empleado hoy (agrupadores con sus artículos + artículos sueltos)
+   * y su HISTORIAL: todo lo que tuvo y ya devolvió, ordenado por devolución reciente.
+   */
   async getAsignacionesDeEmpleado(empleadoId: number) {
-    const activa = (extra: any[] = []) =>
-      new Criteria([
-        { field: 'empleadoId', operator: 'eq', value: empleadoId },
-        { field: 'fechaDevolucion', operator: 'eq', value: null },
-        ...extra,
-      ]);
+    const porEmpleado = new Criteria([{ field: 'empleadoId', operator: 'eq', value: empleadoId }]);
+    const asigAgr = (await this.asignacionAgrupadorRepo.search(porEmpleado)) as any[];
+    const asigArt = (await this.asignacionRepo.search(porEmpleado)) as any[];
 
-    const asigAgr = await this.asignacionAgrupadorRepo.search(activa());
     const agrupadores: any[] = [];
-    for (const asg of asigAgr as any[]) {
+    for (const asg of asigAgr.filter((a) => !a.fechaDevolucion)) {
       const full = await this.agrupadorRepo.findById(asg.agrupadorId);
       agrupadores.push({ ...(full as any), fechaEntrega: asg.fechaEntrega, observaciones: asg.observaciones });
     }
 
-    const asigArt = await this.asignacionRepo.search(activa());
-    const articulos = (asigArt as any[]).map((asg) => ({
-      ...(asg.articulo ?? {}),
-      fechaEntrega: asg.fechaEntrega,
-      observaciones: asg.observaciones,
-    }));
+    const articulos = asigArt
+      .filter((a) => !a.fechaDevolucion)
+      .map((asg) => ({
+        ...(asg.articulo ?? {}),
+        fechaEntrega: asg.fechaEntrega,
+        observaciones: asg.observaciones,
+      }));
 
-    return { agrupadores, articulos };
+    const historial = [
+      ...asigAgr
+        .filter((a) => a.fechaDevolucion)
+        .map((a) => ({
+          tipo: 'AGRUPADOR',
+          nombre: a.agrupador?.nombre ?? `Agrupador #${a.agrupadorId}`,
+          detalle: a.agrupador?.tipoAgrupador?.nombre ?? null,
+          fechaEntrega: a.fechaEntrega,
+          fechaDevolucion: a.fechaDevolucion,
+          observaciones: a.observaciones,
+        })),
+      ...asigArt
+        .filter((a) => a.fechaDevolucion)
+        .map((a) => ({
+          tipo: 'ARTICULO',
+          nombre: a.articulo?.alias ?? a.articulo?.nroSerie ?? `Artículo #${a.articuloId}`,
+          detalle: a.articulo?.modelo?.nombre ?? null,
+          fechaEntrega: a.fechaEntrega,
+          fechaDevolucion: a.fechaDevolucion,
+          observaciones: a.observaciones,
+        })),
+    ].sort((x, y) => new Date(y.fechaDevolucion).getTime() - new Date(x.fechaDevolucion).getTime());
+
+    return { agrupadores, articulos, historial };
+  }
+
+  /** Devolución de un artículo: estampa fechaDevolucion y el artículo vuelve a DISPONIBLE. */
+  async devolverArticulo(asignacionId: number) {
+    return this.uow.execute(async () => {
+      const asig: any = await this.asignacionRepo.findById(asignacionId);
+      if (!asig) throw new BadRequestException('Asignación no encontrada');
+      if (asig.fechaDevolucion) throw new BadRequestException('La asignación ya fue devuelta');
+
+      await this.asignacionRepo.save({ id: asig.id, fechaDevolucion: new Date() } as any);
+      await this.articuloRepo.save({ id: asig.articuloId, estadoCodigo: EstadoCodigo.DISPONIBLE } as any);
+      return { success: true };
+    });
+  }
+
+  /**
+   * Devolución de un agrupador (imagen espejo de asignarAgrupador, ver ADR-0004 D2/D5):
+   * estampa la fecha, el agrupador vuelve a DISPONIBLE (único escritor del estado
+   * denormalizado) y sus artículos DIRECTOS que estaban EN_USO vuelven a DISPONIBLE.
+   * La condición (EN_REPARACION/BAJA) se respeta y no hay cascada a sub-agrupadores.
+   */
+  async devolverAgrupador(asignacionId: number) {
+    return this.uow.execute(async () => {
+      const asig: any = await this.asignacionAgrupadorRepo.findById(asignacionId);
+      if (!asig) throw new BadRequestException('Asignación no encontrada');
+      if (asig.fechaDevolucion) throw new BadRequestException('La asignación ya fue devuelta');
+
+      await this.asignacionAgrupadorRepo.save({ id: asig.id, fechaDevolucion: new Date() } as any);
+
+      const agrupador: any = await this.agrupadorRepo.findById(asig.agrupadorId);
+      if (agrupador) {
+        agrupador.estado = 'DISPONIBLE';
+        await this.agrupadorRepo.save(agrupador);
+
+        for (const art of agrupador.articulos ?? []) {
+          if (art.estado?.codigo === EstadoCodigo.EN_USO) {
+            await this.articuloRepo.save({ id: art.id, estadoCodigo: EstadoCodigo.DISPONIBLE } as any);
+          }
+        }
+      }
+      return { success: true };
+    });
   }
 
   async asignarConsumible(loteId: number, empleadoId: number, cantidad: number) {

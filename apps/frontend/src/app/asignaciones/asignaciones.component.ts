@@ -10,6 +10,7 @@ import { AgrupadoresService, Agrupador } from '../core/services/agrupadores.serv
 import { CatalogosService, TipoAgrupador } from '../core/services/catalogos.service';
 import { DomainContextService } from '../core/domain-context.service';
 import { NotificacionesUiService } from '../core/notificaciones-ui.service';
+import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -36,6 +37,8 @@ export class AsignacionesComponent implements OnInit {
 
   showNuevoDialog = false;
   activeTab: 'articulos' | 'agrupadores' | 'consumibles' = 'articulos';
+  /** Activas = fechaDevolucion null; Historial = lo ya devuelto. */
+  vista: 'activas' | 'historial' = 'activas';
   tipoAsignacion: 'ARTICULO' | 'AGRUPADOR' | 'CONSUMIBLE' = 'ARTICULO';
 
   // Conjuntos: hay que elegir un tipo de conjunto antes de listar.
@@ -50,15 +53,15 @@ export class AsignacionesComponent implements OnInit {
   };
 
   get totalAsignaciones(): number {
-    return this.asignaciones.length;
+    return this.totalArticulos + this.totalAgrupadores + this.totalConsumibles;
   }
 
   get totalArticulos(): number {
-    return this.asignaciones.filter(a => a.articuloId).length;
+    return this.asignaciones.filter(a => a.articuloId && !a.fechaDevolucion).length;
   }
 
   get totalAgrupadores(): number {
-    return this.asignaciones.filter(a => a.agrupadorId).length;
+    return this.asignaciones.filter(a => a.agrupadorId && !a.fechaDevolucion).length;
   }
 
   get totalConsumibles(): number {
@@ -82,8 +85,13 @@ export class AsignacionesComponent implements OnInit {
   searchAgrupador = '';
   searchConsumible = '';
 
+  /** Aplica la vista Activas | Historial sobre una lista de asignaciones. */
+  private porVista(list: any[]): any[] {
+    return list.filter(a => (this.vista === 'historial' ? !!a.fechaDevolucion : !a.fechaDevolucion));
+  }
+
   get filteredAsignacionesArticulos(): any[] {
-    const list = this.asignacionesArticulos;
+    const list = this.porVista(this.asignacionesArticulos);
     const query = this.searchArticulo.toLowerCase().trim();
     if (!query) return list;
     return list.filter(asig => {
@@ -105,7 +113,7 @@ export class AsignacionesComponent implements OnInit {
   get filteredAsignacionesAgrupadores(): any[] {
     // Requiere elegir un tipo de conjunto primero.
     if (!this.selectedTipoConjunto) return [];
-    const list = this.asignacionesAgrupadores.filter(
+    const list = this.porVista(this.asignacionesAgrupadores).filter(
       asig => asig.agrupador?.tipoAgrupador?.id === this.selectedTipoConjunto
     );
     const query = this.searchAgrupador.toLowerCase().trim();
@@ -148,8 +156,35 @@ export class AsignacionesComponent implements OnInit {
     private catalogosService: CatalogosService,
     private domainContext: DomainContextService,
     private notificaciones: NotificacionesUiService,
+    private confirmUi: ConfirmacionUiService,
     private router: Router
   ) {}
+
+  /** Registra la devolución de una asignación activa (artículo o agrupador). */
+  devolver(asig: any): void {
+    const esAgrupador = asig.agrupadorId != null;
+    const nombre = esAgrupador
+      ? asig.agrupador?.nombre || 'el agrupador'
+      : asig.articulo?.alias || asig.articulo?.nroSerie || 'el artículo';
+    const empleado = asig.empleado?.nombre || 'el empleado';
+
+    this.confirmUi.confirmar(
+      `¿Registrar la devolución de "${nombre}" por ${empleado}?`,
+      () => {
+        const req = esAgrupador
+          ? this.asignacionesService.devolverAsignacionAgrupador(asig.id)
+          : this.asignacionesService.devolverAsignacionArticulo(asig.id);
+        req.subscribe({
+          next: () => {
+            this.notificaciones.exito(`Devolución de "${nombre}" registrada.`);
+            this.loadAll();
+          },
+          error: (e) => this.notificaciones.errorHttp(e, 'No se pudo registrar la devolución.'),
+        });
+      },
+      { header: 'Registrar devolución', acceptLabel: 'Devolver' },
+    );
+  }
 
   ngOnInit() {
     if (!this.domainContext.domainId) {

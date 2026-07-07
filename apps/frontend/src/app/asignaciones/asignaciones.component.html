@@ -5,7 +5,13 @@
       <h1>Asignaciones</h1>
       <p>Control de entregas y asignación de activos a las personas de la organización.</p>
     </div>
-    <button class="btn primary" (click)="abrirDialogo()"><i class="pi pi-plus"></i>Nueva asignación</button>
+    <div class="head-actions">
+      <div class="vista-seg" role="tablist" aria-label="Vista">
+        <button class="seg-btn" [class.active]="vista === 'activas'" (click)="vista = 'activas'"><i class="pi pi-check-circle"></i>Activas</button>
+        <button class="seg-btn" [class.active]="vista === 'historial'" (click)="vista = 'historial'"><i class="pi pi-history"></i>Historial</button>
+      </div>
+      <button class="btn primary" (click)="abrirDialogo()"><i class="pi pi-plus"></i>Nueva asignación</button>
+    </div>
   </div>
 
   <!-- Resumen -->
@@ -41,10 +47,16 @@
       <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArticulo" placeholder="Serie, alias, modelo, empleado, área…" /></span>
     </div>
     <div class="tablecard"><div class="tablescroll"><table>
-      <thead><tr><th>Entrega</th><th>Artículo</th><th>Modelo</th><th>Empleado</th><th>Área</th><th>Observaciones</th></tr></thead>
+      <thead><tr>
+        <th>Entrega</th>
+        <th *ngIf="vista === 'historial'">Devolución</th>
+        <th>Artículo</th><th>Modelo</th><th>Empleado</th><th>Área</th><th>Observaciones</th>
+        <th class="ta-right" *ngIf="vista === 'activas'"></th>
+      </tr></thead>
       <tbody>
         <tr *ngFor="let asig of filteredAsignacionesArticulos">
           <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+          <td class="mut" *ngIf="vista === 'historial'">{{ asig.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
           <td>
             <div class="art">
               <span class="alias">{{ asig.articulo?.alias || 'Sin alias' }}</span>
@@ -55,8 +67,13 @@
           <td class="cell-name">{{ asig.empleado?.nombre }}</td>
           <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
           <td class="mut">{{ asig.observaciones || '—' }}</td>
+          <td *ngIf="vista === 'activas'">
+            <div class="row-actions">
+              <button class="btn ghost sm" (click)="devolver(asig)"><i class="pi pi-reply"></i>Devolver</button>
+            </div>
+          </td>
         </tr>
-        <tr *ngIf="filteredAsignacionesArticulos.length === 0"><td colspan="6" class="empty">No hay asignaciones de artículos en este dominio.</td></tr>
+        <tr *ngIf="filteredAsignacionesArticulos.length === 0"><td colspan="8" class="empty">{{ vista === 'historial' ? 'Sin devoluciones registradas.' : 'No hay asignaciones de artículos en este dominio.' }}</td></tr>
       </tbody>
     </table></div></div>
   </div>
@@ -73,17 +90,28 @@
 
     <ng-container *ngIf="selectedTipoConjunto; else pickTipo">
       <div class="tablecard"><div class="tablescroll"><table>
-        <thead><tr><th>Entrega</th><th>Agrupador</th><th>Tipo</th><th>Empleado</th><th>Área</th><th>Observaciones</th></tr></thead>
+        <thead><tr>
+          <th>Entrega</th>
+          <th *ngIf="vista === 'historial'">Devolución</th>
+          <th>Agrupador</th><th>Tipo</th><th>Empleado</th><th>Área</th><th>Observaciones</th>
+          <th class="ta-right" *ngIf="vista === 'activas'"></th>
+        </tr></thead>
         <tbody>
           <tr *ngFor="let asig of filteredAsignacionesAgrupadores">
             <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+            <td class="mut" *ngIf="vista === 'historial'">{{ asig.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
             <td class="cell-name">{{ asig.agrupador?.nombre }}</td>
             <td><span class="pill indigo">{{ asig.agrupador?.tipoAgrupador?.nombre }}</span></td>
             <td class="cell-name">{{ asig.empleado?.nombre }}</td>
             <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
             <td class="mut">{{ asig.observaciones || '—' }}</td>
+            <td *ngIf="vista === 'activas'">
+              <div class="row-actions">
+                <button class="btn ghost sm" (click)="devolver(asig)"><i class="pi pi-reply"></i>Devolver</button>
+              </div>
+            </td>
           </tr>
-          <tr *ngIf="filteredAsignacionesAgrupadores.length === 0"><td colspan="6" class="empty">No hay agrupadores asignados de este tipo.</td></tr>
+          <tr *ngIf="filteredAsignacionesAgrupadores.length === 0"><td colspan="8" class="empty">{{ vista === 'historial' ? 'Sin devoluciones registradas de este tipo.' : 'No hay agrupadores asignados de este tipo.' }}</td></tr>
         </tbody>
       </table></div></div>
     </ng-container>

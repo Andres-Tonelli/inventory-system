@@ -17,6 +17,7 @@ export class EmpleadoAsignacionesComponent implements OnInit {
   empleado: any = null;
   agrupadores: any[] = [];
   articulos: any[] = [];
+  historial: any[] = [];
   loading = true;
 
   constructor(
@@ -45,6 +46,7 @@ export class EmpleadoAsignacionesComponent implements OnInit {
         if (res.success) {
           this.agrupadores = res.data.agrupadores ?? [];
           this.articulos = res.data.articulos ?? [];
+          this.historial = res.data.historial ?? [];
         }
         this.loading = false;
       },

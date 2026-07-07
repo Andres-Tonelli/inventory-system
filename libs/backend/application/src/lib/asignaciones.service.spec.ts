@@ -155,6 +155,55 @@ describe('AsignacionesService', () => {
       expect(res.agrupadores[0].articulos).toHaveLength(2); // enriquecido con findById
       expect(res.articulos).toHaveLength(1);
       expect(res.articulos[0]).toMatchObject({ id: 5, alias: 'NB-1' });
+      // La asignación devuelta del empleado 7 aparece en su historial (no en lo activo).
+      expect(res.historial).toHaveLength(1);
+      expect(res.historial[0].tipo).toBe('AGRUPADOR');
+      expect(res.historial[0].fechaDevolucion).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('devolverArticulo', () => {
+    it('rechaza asignación inexistente y doble devolución', async () => {
+      await expect(service.devolverArticulo(99)).rejects.toThrow(/no encontrada/i);
+
+      asignacionRepo.seed({ id: 1, articuloId: 5, empleadoId: 7, fechaDevolucion: new Date() });
+      await expect(service.devolverArticulo(1)).rejects.toThrow(/ya fue devuelta/i);
+    });
+
+    it('camino feliz: estampa fechaDevolucion y el artículo vuelve a DISPONIBLE', async () => {
+      asignacionRepo.seed({ id: 1, articuloId: 5, empleadoId: 7 });
+
+      await service.devolverArticulo(1);
+
+      expect(asignacionRepo.items.get(1).fechaDevolucion).toBeInstanceOf(Date);
+      expect(articuloRepo.savedWith[0]).toMatchObject({ id: 5, estadoCodigo: 'DISPONIBLE' });
+    });
+  });
+
+  describe('devolverAgrupador', () => {
+    it('rechaza doble devolución', async () => {
+      asignacionAgrupadorRepo.seed({ id: 1, agrupadorId: 10, empleadoId: 7, fechaDevolucion: new Date() });
+      await expect(service.devolverAgrupador(1)).rejects.toThrow(/ya fue devuelta/i);
+    });
+
+    it('imagen espejo de asignar: DISPONIBLE + artículos EN_USO liberados, condición respetada', async () => {
+      agrupadorRepo.seed({
+        id: 10, estado: 'ASIGNADO',
+        tipoAgrupador: { asignable: true },
+        articulos: [
+          { id: 1, estado: { codigo: 'EN_USO' } },
+          { id: 2, estado: { codigo: 'EN_REPARACION' } }, // la condición NO se pisa al devolver
+        ],
+      });
+      asignacionAgrupadorRepo.seed({ id: 1, agrupadorId: 10, empleadoId: 7 });
+
+      await service.devolverAgrupador(1);
+
+      expect(asignacionAgrupadorRepo.items.get(1).fechaDevolucion).toBeInstanceOf(Date);
+      expect(agrupadorRepo.savedWith[0].estado).toBe('DISPONIBLE');
+      // Sólo el artículo EN_USO vuelve a DISPONIBLE; el que está en reparación queda como está.
+      expect(articuloRepo.savedWith).toHaveLength(1);
+      expect(articuloRepo.savedWith[0]).toMatchObject({ id: 1, estadoCodigo: 'DISPONIBLE' });
     });
   });
 });

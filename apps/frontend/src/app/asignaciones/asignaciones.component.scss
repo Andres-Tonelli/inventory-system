@@ -119,6 +119,12 @@ tbody tr:hover { background: #fafbff; }
 .form label.mt { margin-top: 12px; }
 .form input { width: 100%; }
 
+/* Toggle Activas | Historial (header) */
+.head-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.vista-seg { display: inline-flex; gap: 4px; background: #eceef6; border: 1px solid var(--border); padding: 4px; border-radius: 10px; }
+.vista-seg .seg-btn { padding: 7px 13px; }
+.vista-seg .seg-btn i { font-size: 12px; }
+
 /* Segmented control */
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #eceef6; border: 1px solid var(--border); padding: 4px; border-radius: 10px; }
 .seg-btn {
