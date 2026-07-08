@@ -90,6 +90,16 @@ export class EmpleadoAsignacionesComponent implements OnInit {
     };
   }
 
+  expandedAgrupadores: Record<number, boolean> = {};
+
+  toggleAgrupador(id: number) {
+    this.expandedAgrupadores[id] = !this.expandedAgrupadores[id];
+  }
+
+  isAgrupadorExpanded(id: number): boolean {
+    return !!this.expandedAgrupadores[id];
+  }
+
   volver() {
     this.router.navigate(['/configuracion/organizacion']);
   }

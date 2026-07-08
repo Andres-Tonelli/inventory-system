@@ -1,7 +1,21 @@
 <div class="app-container" *ngIf="isAuthenticated(); else unauthenticated">
-  <!-- Sidebar -->
-  <aside class="app-sidebar">
+  <!-- Mobile Header -->
+  <header class="mobile-header">
     <div class="sidebar-logo">
+      <i class="pi pi-box"></i>
+      <span>StockFlow</span>
+    </div>
+    <button class="menu-toggle" (click)="toggleSidebar()">
+      <i class="pi" [ngClass]="isSidebarOpen ? 'pi-times' : 'pi-bars'"></i>
+    </button>
+  </header>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" [class.show]="isSidebarOpen" (click)="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar" [class.open]="isSidebarOpen">
+    <div class="sidebar-logo desktop-logo">
       <i class="pi pi-box"></i>
       <span>StockFlow</span>
     </div>

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { filter } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
@@ -17,6 +18,7 @@ import { CatalogosService, Dominio } from './core/services/catalogos.service';
 export class App implements OnInit {
   protected title = 'frontend';
   dominios: Dominio[] = [];
+  isSidebarOpen: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -31,6 +33,12 @@ export class App implements OnInit {
       if (res.success) {
         this.dominios = res.data;
       }
+    });
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.closeSidebar();
     });
   }
 
@@ -89,5 +97,13 @@ export class App implements OnInit {
 
   isDomainActive(): boolean {
     return this.router.url.startsWith('/dominios/');
+  }
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  closeSidebar() {
+    this.isSidebarOpen = false;
   }
 }

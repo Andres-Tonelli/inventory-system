@@ -27,14 +27,17 @@
     <div class="empty-card" *ngIf="agrupadores.length === 0">Este empleado no tiene agrupadores asignados.</div>
 
     <div class="ag-card" *ngFor="let ag of paginatedAgrupadores">
-      <div class="ag-head">
+      <div class="ag-head" (click)="toggleAgrupador(ag.id)">
         <div class="ag-title">
           <span class="pill indigo">{{ ag.tipoAgrupador?.nombre || 'Agrupador' }}</span>
           <span class="ag-name">{{ ag.nombre }}</span>
         </div>
-        <span class="ag-date" *ngIf="ag.fechaEntrega">Desde {{ ag.fechaEntrega | date:'dd/MM/yyyy' }}</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="ag-date" *ngIf="ag.fechaEntrega">Desde {{ ag.fechaEntrega | date:'dd/MM/yyyy' }}</span>
+          <i class="pi" [ngClass]="isAgrupadorExpanded(ag.id) ? 'pi-chevron-up' : 'pi-chevron-down'" style="color: var(--muted-2); font-size: 13px;"></i>
+        </div>
       </div>
-      <div class="tablescroll">
+      <div class="tablescroll" *ngIf="isAgrupadorExpanded(ag.id)">
         <table>
           <thead><tr><th>Artículo</th><th>Modelo</th><th>Nº serie</th><th>Estado</th></tr></thead>
           <tbody>

@@ -209,3 +209,15 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 650; }
 
 :host ::ng-deep .p-dialog .p-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }
 :host ::ng-deep .w-full { width: 100%; }
+
+@media (max-width: 768px) {
+  .workspace { padding: 12px 14px 30px; }
+  .ws-head { flex-direction: column; gap: 8px; }
+  .ws-head h1 { font-size: 20px; }
+  .filters .field { min-width: 100%; }
+  .inp.search { min-width: 100%; }
+  .stabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; margin-bottom: 12px; }
+  .stab { white-space: nowrap; }
+  .ptabs { display: flex; overflow-x: auto; padding-bottom: 4px; }
+  .ptab { white-space: nowrap; }
+}
