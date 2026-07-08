@@ -11,6 +11,7 @@ import { CatalogosService, TipoAgrupador } from '../core/services/catalogos.serv
 import { DomainContextService } from '../core/domain-context.service';
 import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
+import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -23,7 +24,8 @@ import { InputTextModule } from 'primeng/inputtext';
   standalone: true,
   imports: [
     CommonModule, FormsModule,
-    TableModule, ButtonModule, DialogModule, SelectModule, InputTextModule
+    TableModule, ButtonModule, DialogModule, SelectModule, InputTextModule,
+    PaginadorComponent
   ],
   templateUrl: './asignaciones.component.html',
   styleUrl: './asignaciones.component.scss'
@@ -44,6 +46,11 @@ export class AsignacionesComponent implements OnInit {
   // Conjuntos: hay que elegir un tipo de conjunto antes de listar.
   tiposAgrupador: TipoAgrupador[] = [];
   selectedTipoConjunto: number | null = null;
+
+  // Variables de paginación
+  paginaArticulos = 1;
+  paginaAgrupadores = 1;
+  paginaConsumibles = 1;
 
   newAsignacion = {
     empleadoId: null as number | null,
@@ -146,6 +153,18 @@ export class AsignacionesComponent implements OnInit {
              empleado.includes(query) ||
              area.includes(query);
     });
+  }
+
+  get paginatedAsignacionesArticulos(): any[] {
+    return paginar(this.filteredAsignacionesArticulos, this.paginaArticulos);
+  }
+
+  get paginatedAsignacionesAgrupadores(): any[] {
+    return paginar(this.filteredAsignacionesAgrupadores, this.paginaAgrupadores);
+  }
+
+  get paginatedEntregasConsumibles(): any[] {
+    return paginar(this.filteredEntregasConsumibles, this.paginaConsumibles);
   }
 
   constructor(

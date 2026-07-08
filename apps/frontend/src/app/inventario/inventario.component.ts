@@ -14,13 +14,15 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { Agrupador, AgrupadoresService } from '../core/services/agrupadores.service';
+import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
-    TableModule, ButtonModule, DialogModule, InputTextModule, SelectModule
+    TableModule, ButtonModule, DialogModule, InputTextModule, SelectModule,
+    PaginadorComponent
   ],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.scss'
@@ -98,6 +100,14 @@ export class InventarioComponent implements OnInit {
   alias = '';
   detalle = '';
   editingArticuloId: number | null = null;
+
+  // Variables de paginación
+  paginaArticulos = 1;
+  paginaLotes = 1;
+  paginaAgrupadores = 1;
+  paginaCategorias = 1;
+  paginaMarcas = 1;
+  paginaModelos = 1;
 
   // Filtros de búsqueda
   searchArticulo = '';
@@ -227,10 +237,35 @@ export class InventarioComponent implements OnInit {
     );
   }
 
+  get paginatedArticulos(): Articulo[] {
+    return paginar(this.filteredArticulos, this.paginaArticulos);
+  }
+
+  get paginatedLotes(): any[] {
+    return paginar(this.filteredLotes, this.paginaLotes);
+  }
+
+  get paginatedCategorias(): Categoria[] {
+    return paginar(this.filteredCategorias, this.paginaCategorias);
+  }
+
+  get paginatedMarcas(): Marca[] {
+    return paginar(this.filteredMarcas, this.paginaMarcas);
+  }
+
+  get paginatedModelos(): Modelo[] {
+    return paginar(this.filteredModelos, this.paginaModelos);
+  }
+
+  getPaginatedAgrupadoresPorTipo(tipoId: number): Agrupador[] {
+    return paginar(this.getAgrupadoresPorTipo(tipoId), this.paginaAgrupadores);
+  }
+
   selectSubTab(tab: string): void {
     this.activeSubTab = tab;
     this.selectedAgrupadorId = null;
     this.detailTop = 0;
+    this.paginaAgrupadores = 1;
   }
   selectAgrupador(a: Agrupador, ev?: MouseEvent): void {
     this.selectedAgrupadorId = a.id ?? null;

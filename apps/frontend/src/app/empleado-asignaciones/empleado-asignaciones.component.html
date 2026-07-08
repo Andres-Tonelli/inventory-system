@@ -26,7 +26,7 @@
     <div class="section-lbl">Agrupadores asignados</div>
     <div class="empty-card" *ngIf="agrupadores.length === 0">Este empleado no tiene agrupadores asignados.</div>
 
-    <div class="ag-card" *ngFor="let ag of agrupadores">
+    <div class="ag-card" *ngFor="let ag of paginatedAgrupadores">
       <div class="ag-head">
         <div class="ag-title">
           <span class="pill indigo">{{ ag.tipoAgrupador?.nombre || 'Agrupador' }}</span>
@@ -49,6 +49,7 @@
         </table>
       </div>
     </div>
+    <app-paginador *ngIf="agrupadores.length > 0" [total]="agrupadores.length" [pagina]="paginaAgrupadores" (paginaChange)="paginaAgrupadores = $event"></app-paginador>
 
     <!-- Artículos sueltos -->
     <div class="section-lbl mt">Artículos asignados directamente</div>
@@ -58,7 +59,7 @@
         <table>
           <thead><tr><th>Artículo</th><th>Modelo</th><th>Nº serie</th><th>Estado</th><th>Desde</th></tr></thead>
           <tbody>
-            <tr *ngFor="let art of articulos">
+            <tr *ngFor="let art of paginatedArticulos">
               <td class="cell-name">{{ art.alias || 'Sin alias' }}</td>
               <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
               <td class="mono">{{ art.nroSerie || '—' }}</td>
@@ -69,6 +70,7 @@
         </table>
       </div>
     </div>
+    <app-paginador *ngIf="articulos.length > 0" [total]="articulos.length" [pagina]="paginaArticulos" (paginaChange)="paginaArticulos = $event"></app-paginador>
 
     <!-- Historial de devoluciones -->
     <div class="section-lbl mt">Historial de devoluciones ({{ historial.length }})</div>
@@ -78,7 +80,7 @@
         <table>
           <thead><tr><th>Tipo</th><th>Nombre</th><th>Detalle</th><th>Entrega</th><th>Devolución</th><th>Observaciones</th></tr></thead>
           <tbody>
-            <tr *ngFor="let h of historial">
+            <tr *ngFor="let h of paginatedHistorial">
               <td><span class="pill" [class.indigo]="h.tipo === 'AGRUPADOR'" [class.slate]="h.tipo !== 'AGRUPADOR'">{{ h.tipo === 'AGRUPADOR' ? 'Agrupador' : 'Artículo' }}</span></td>
               <td class="cell-name">{{ h.nombre }}</td>
               <td class="mut">{{ h.detalle || '—' }}</td>
@@ -90,5 +92,6 @@
         </table>
       </div>
     </div>
+    <app-paginador *ngIf="historial.length > 0" [total]="historial.length" [pagina]="paginaHistorial" (paginaChange)="paginaHistorial = $event"></app-paginador>
   </ng-container>
 </div>

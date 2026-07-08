@@ -7,8 +7,8 @@
     </div>
     <div class="head-actions">
       <div class="vista-seg" role="tablist" aria-label="Vista">
-        <button class="seg-btn" [class.active]="vista === 'activas'" (click)="vista = 'activas'"><i class="pi pi-check-circle"></i>Activas</button>
-        <button class="seg-btn" [class.active]="vista === 'historial'" (click)="vista = 'historial'"><i class="pi pi-history"></i>Historial</button>
+        <button class="seg-btn" [class.active]="vista === 'activas'" (click)="vista = 'activas'; paginaArticulos = 1; paginaAgrupadores = 1; paginaConsumibles = 1;"><i class="pi pi-check-circle"></i>Activas</button>
+        <button class="seg-btn" [class.active]="vista === 'historial'" (click)="vista = 'historial'; paginaArticulos = 1; paginaAgrupadores = 1; paginaConsumibles = 1;"><i class="pi pi-history"></i>Historial</button>
       </div>
       <button class="btn primary" (click)="abrirDialogo()"><i class="pi pi-plus"></i>Nueva asignación</button>
     </div>
@@ -36,46 +36,51 @@
 
   <!-- Pestañas -->
   <div class="stabs">
-    <button class="stab" [class.active]="activeTab === 'articulos'" (click)="activeTab = 'articulos'"><i class="pi pi-box"></i>Artículos <span class="badge">{{ totalArticulos }}</span></button>
-    <button class="stab" [class.active]="activeTab === 'agrupadores'" (click)="activeTab = 'agrupadores'"><i class="pi pi-sitemap"></i>Agrupadores <span class="badge">{{ totalAgrupadores }}</span></button>
-    <button class="stab" [class.active]="activeTab === 'consumibles'" (click)="activeTab = 'consumibles'"><i class="pi pi-database"></i>Consumibles <span class="badge">{{ totalConsumibles }}</span></button>
+    <button class="stab" [class.active]="activeTab === 'articulos'" (click)="activeTab = 'articulos'; paginaArticulos = 1; paginaAgrupadores = 1; paginaConsumibles = 1;"><i class="pi pi-box"></i>Artículos <span class="badge">{{ totalArticulos }}</span></button>
+    <button class="stab" [class.active]="activeTab === 'agrupadores'" (click)="activeTab = 'agrupadores'; paginaArticulos = 1; paginaAgrupadores = 1; paginaConsumibles = 1;"><i class="pi pi-sitemap"></i>Agrupadores <span class="badge">{{ totalAgrupadores }}</span></button>
+    <button class="stab" [class.active]="activeTab === 'consumibles'" (click)="activeTab = 'consumibles'; paginaArticulos = 1; paginaAgrupadores = 1; paginaConsumibles = 1;"><i class="pi pi-database"></i>Consumibles <span class="badge">{{ totalConsumibles }}</span></button>
   </div>
 
   <!-- ARTÍCULOS -->
   <div class="panel-block" *ngIf="activeTab === 'articulos'">
     <div class="toolbar">
-      <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArticulo" placeholder="Serie, alias, modelo, empleado, área…" /></span>
+      <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArticulo" (ngModelChange)="paginaArticulos = 1" placeholder="Serie, alias, modelo, empleado, área…" /></span>
     </div>
-    <div class="tablecard"><div class="tablescroll"><table>
-      <thead><tr>
-        <th>Entrega</th>
-        <th *ngIf="vista === 'historial'">Devolución</th>
-        <th>Artículo</th><th>Modelo</th><th>Empleado</th><th>Área</th><th>Observaciones</th>
-        <th class="ta-right" *ngIf="vista === 'activas'"></th>
-      </tr></thead>
-      <tbody>
-        <tr *ngFor="let asig of filteredAsignacionesArticulos">
-          <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
-          <td class="mut" *ngIf="vista === 'historial'">{{ asig.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <div class="art">
-              <span class="alias">{{ asig.articulo?.alias || 'Sin alias' }}</span>
-              <span class="sn" *ngIf="asig.articulo?.nroSerie">{{ asig.articulo.nroSerie }}</span>
-            </div>
-          </td>
-          <td class="mut">{{ asig.articulo?.modelo?.nombre || 'Sin modelo' }}</td>
-          <td class="cell-name">{{ asig.empleado?.nombre }}</td>
-          <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
-          <td class="mut">{{ asig.observaciones || '—' }}</td>
-          <td *ngIf="vista === 'activas'">
-            <div class="row-actions">
-              <button class="btn ghost sm" (click)="devolver(asig)"><i class="pi pi-reply"></i>Devolver</button>
-            </div>
-          </td>
-        </tr>
-        <tr *ngIf="filteredAsignacionesArticulos.length === 0"><td colspan="8" class="empty">{{ vista === 'historial' ? 'Sin devoluciones registradas.' : 'No hay asignaciones de artículos en este dominio.' }}</td></tr>
-      </tbody>
-    </table></div></div>
+    <div class="tablecard">
+      <div class="tablescroll">
+        <table>
+          <thead><tr>
+            <th>Entrega</th>
+            <th *ngIf="vista === 'historial'">Devolución</th>
+            <th>Artículo</th><th>Modelo</th><th>Empleado</th><th>Área</th><th>Observaciones</th>
+            <th class="ta-right" *ngIf="vista === 'activas'"></th>
+          </tr></thead>
+          <tbody>
+            <tr *ngFor="let asig of paginatedAsignacionesArticulos">
+              <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+              <td class="mut" *ngIf="vista === 'historial'">{{ asig.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <div class="art">
+                  <span class="alias">{{ asig.articulo?.alias || 'Sin alias' }}</span>
+                  <span class="sn" *ngIf="asig.articulo?.nroSerie">{{ asig.articulo.nroSerie }}</span>
+                </div>
+              </td>
+              <td class="mut">{{ asig.articulo?.modelo?.nombre || 'Sin modelo' }}</td>
+              <td class="cell-name">{{ asig.empleado?.nombre }}</td>
+              <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
+              <td class="mut">{{ asig.observaciones || '—' }}</td>
+              <td *ngIf="vista === 'activas'">
+                <div class="row-actions">
+                  <button class="btn ghost sm" (click)="devolver(asig)"><i class="pi pi-reply"></i>Devolver</button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredAsignacionesArticulos.length === 0"><td colspan="8" class="empty">{{ vista === 'historial' ? 'Sin devoluciones registradas.' : 'No hay asignaciones de artículos en este dominio.' }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <app-paginador [total]="filteredAsignacionesArticulos.length" [pagina]="paginaArticulos" (paginaChange)="paginaArticulos = $event"></app-paginador>
   </div>
 
   <!-- CONJUNTOS -->
@@ -83,37 +88,42 @@
     <div class="toolbar">
       <div class="tipo-pick">
         <label>Tipo de agrupador</label>
-        <p-select [options]="tiposAgrupador" [(ngModel)]="selectedTipoConjunto" optionLabel="nombre" optionValue="id" placeholder="Elegí un tipo" [showClear]="true" appendTo="body" styleClass="w-full"></p-select>
+        <p-select [options]="tiposAgrupador" [(ngModel)]="selectedTipoConjunto" (ngModelChange)="paginaAgrupadores = 1" optionLabel="nombre" optionValue="id" placeholder="Elegí un tipo" [showClear]="true" appendTo="body" styleClass="w-full"></p-select>
       </div>
-      <span class="inp search" *ngIf="selectedTipoConjunto"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchAgrupador" placeholder="Agrupador, empleado, área…" /></span>
+      <span class="inp search" *ngIf="selectedTipoConjunto"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchAgrupador" (ngModelChange)="paginaAgrupadores = 1" placeholder="Agrupador, empleado, área…" /></span>
     </div>
 
     <ng-container *ngIf="selectedTipoConjunto; else pickTipo">
-      <div class="tablecard"><div class="tablescroll"><table>
-        <thead><tr>
-          <th>Entrega</th>
-          <th *ngIf="vista === 'historial'">Devolución</th>
-          <th>Agrupador</th><th>Tipo</th><th>Empleado</th><th>Área</th><th>Observaciones</th>
-          <th class="ta-right" *ngIf="vista === 'activas'"></th>
-        </tr></thead>
-        <tbody>
-          <tr *ngFor="let asig of filteredAsignacionesAgrupadores">
-            <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
-            <td class="mut" *ngIf="vista === 'historial'">{{ asig.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
-            <td class="cell-name">{{ asig.agrupador?.nombre }}</td>
-            <td><span class="pill indigo">{{ asig.agrupador?.tipoAgrupador?.nombre }}</span></td>
-            <td class="cell-name">{{ asig.empleado?.nombre }}</td>
-            <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
-            <td class="mut">{{ asig.observaciones || '—' }}</td>
-            <td *ngIf="vista === 'activas'">
-              <div class="row-actions">
-                <button class="btn ghost sm" (click)="devolver(asig)"><i class="pi pi-reply"></i>Devolver</button>
-              </div>
-            </td>
-          </tr>
-          <tr *ngIf="filteredAsignacionesAgrupadores.length === 0"><td colspan="8" class="empty">{{ vista === 'historial' ? 'Sin devoluciones registradas de este tipo.' : 'No hay agrupadores asignados de este tipo.' }}</td></tr>
-        </tbody>
-      </table></div></div>
+      <div class="tablecard">
+        <div class="tablescroll">
+          <table>
+            <thead><tr>
+              <th>Entrega</th>
+              <th *ngIf="vista === 'historial'">Devolución</th>
+              <th>Agrupador</th><th>Tipo</th><th>Empleado</th><th>Área</th><th>Observaciones</th>
+              <th class="ta-right" *ngIf="vista === 'activas'"></th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let asig of paginatedAsignacionesAgrupadores">
+                <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+                <td class="mut" *ngIf="vista === 'historial'">{{ asig.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
+                <td class="cell-name">{{ asig.agrupador?.nombre }}</td>
+                <td><span class="pill indigo">{{ asig.agrupador?.tipoAgrupador?.nombre }}</span></td>
+                <td class="cell-name">{{ asig.empleado?.nombre }}</td>
+                <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
+                <td class="mut">{{ asig.observaciones || '—' }}</td>
+                <td *ngIf="vista === 'activas'">
+                  <div class="row-actions">
+                    <button class="btn ghost sm" (click)="devolver(asig)"><i class="pi pi-reply"></i>Devolver</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filteredAsignacionesAgrupadores.length === 0"><td colspan="8" class="empty">{{ vista === 'historial' ? 'Sin devoluciones registradas de este tipo.' : 'No hay agrupadores asignados de este tipo.' }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <app-paginador [total]="filteredAsignacionesAgrupadores.length" [pagina]="paginaAgrupadores" (paginaChange)="paginaAgrupadores = $event"></app-paginador>
     </ng-container>
     <ng-template #pickTipo>
       <div class="pick-prompt">
@@ -126,21 +136,26 @@
   <!-- CONSUMIBLES -->
   <div class="panel-block" *ngIf="activeTab === 'consumibles'">
     <div class="toolbar">
-      <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchConsumible" placeholder="Consumible, empleado, área…" /></span>
+      <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchConsumible" (ngModelChange)="paginaConsumibles = 1" placeholder="Consumible, empleado, área…" /></span>
     </div>
-    <div class="tablecard"><div class="tablescroll"><table>
-      <thead><tr><th>Entrega</th><th>Consumible</th><th>Cantidad</th><th>Empleado</th><th>Área</th></tr></thead>
-      <tbody>
-        <tr *ngFor="let asig of filteredEntregasConsumibles">
-          <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
-          <td class="cell-name">{{ asig.lote?.modelo?.nombre }}</td>
-          <td><span class="pill teal">{{ asig.cantidadEntregada }} u.</span></td>
-          <td class="cell-name">{{ asig.empleado?.nombre }}</td>
-          <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
-        </tr>
-        <tr *ngIf="filteredEntregasConsumibles.length === 0"><td colspan="5" class="empty">No hay entregas de consumibles en este dominio.</td></tr>
-      </tbody>
-    </table></div></div>
+    <div class="tablecard">
+      <div class="tablescroll">
+        <table>
+          <thead><tr><th>Entrega</th><th>Consumible</th><th>Cantidad</th><th>Empleado</th><th>Área</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let asig of paginatedEntregasConsumibles">
+              <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+              <td class="cell-name">{{ asig.lote?.modelo?.nombre }}</td>
+              <td><span class="pill teal">{{ asig.cantidadEntregada }} u.</span></td>
+              <td class="cell-name">{{ asig.empleado?.nombre }}</td>
+              <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
+            </tr>
+            <tr *ngIf="filteredEntregasConsumibles.length === 0"><td colspan="5" class="empty">No hay entregas de consumibles en este dominio.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <app-paginador [total]="filteredEntregasConsumibles.length" [pagina]="paginaConsumibles" (paginaChange)="paginaConsumibles = $event"></app-paginador>
   </div>
 </div>
 

@@ -4,11 +4,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { AsignacionesService } from '../core/services/asignaciones.service';
 import { EmpleadosService } from '../core/services/empleados.service';
+import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
 
 @Component({
   selector: 'app-empleado-asignaciones',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PaginadorComponent],
   templateUrl: './empleado-asignaciones.component.html',
   styleUrl: './empleado-asignaciones.component.scss',
 })
@@ -19,6 +20,23 @@ export class EmpleadoAsignacionesComponent implements OnInit {
   articulos: any[] = [];
   historial: any[] = [];
   loading = true;
+
+  // Variables de paginación
+  paginaAgrupadores = 1;
+  paginaArticulos = 1;
+  paginaHistorial = 1;
+
+  get paginatedAgrupadores(): any[] {
+    return paginar(this.agrupadores, this.paginaAgrupadores);
+  }
+
+  get paginatedArticulos(): any[] {
+    return paginar(this.articulos, this.paginaArticulos);
+  }
+
+  get paginatedHistorial(): any[] {
+    return paginar(this.historial, this.paginaHistorial);
+  }
 
   constructor(
     private route: ActivatedRoute,

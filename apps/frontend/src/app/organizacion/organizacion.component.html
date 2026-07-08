@@ -7,13 +7,13 @@
 
   <section class="panel">
     <div class="tabs" role="tablist">
-      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'empleados'" (click)="activeTab = 'empleados'">
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'empleados'" (click)="activeTab = 'empleados'; paginaEmpleados = 1; paginaAreas = 1; paginaEstados = 1;">
         Empleados <span class="count">{{ empleados.length }}</span>
       </button>
-      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'areas'" (click)="activeTab = 'areas'">
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'areas'" (click)="activeTab = 'areas'; paginaEmpleados = 1; paginaAreas = 1; paginaEstados = 1;">
         Áreas <span class="count">{{ areas.length }}</span>
       </button>
-      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'estados'" (click)="activeTab = 'estados'">
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'estados'" (click)="activeTab = 'estados'; paginaEmpleados = 1; paginaAreas = 1; paginaEstados = 1;">
         Estados de artículo <span class="count">{{ estados.length }}</span>
       </button>
     </div>
@@ -27,7 +27,7 @@
       <table *ngIf="empleados.length > 0; else emptyEmp">
         <thead><tr><th>Nombre</th><th>Legajo</th><th>Área</th><th class="ta-right"></th></tr></thead>
         <tbody>
-          <tr *ngFor="let e of empleados">
+          <tr *ngFor="let e of paginatedEmpleados">
             <td class="cell-name">{{ e.nombre }}</td>
             <td><code>{{ e.legajo }}</code></td>
             <td>{{ e.area?.nombre || '—' }}</td>
@@ -41,6 +41,7 @@
           </tr>
         </tbody>
       </table>
+      <app-paginador [total]="empleados.length" [pagina]="paginaEmpleados" (paginaChange)="paginaEmpleados = $event"></app-paginador>
       <ng-template #emptyEmp><div class="empty">Sin empleados. Agregá el primero.</div></ng-template>
     </div>
 
@@ -53,7 +54,7 @@
       <table *ngIf="areas.length > 0; else emptyArea">
         <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
         <tbody>
-          <tr *ngFor="let a of areas">
+          <tr *ngFor="let a of paginatedAreas">
             <td class="cell-name">{{ a.nombre }}</td>
             <td>
               <div class="row-actions">
@@ -64,6 +65,7 @@
           </tr>
         </tbody>
       </table>
+      <app-paginador [total]="areas.length" [pagina]="paginaAreas" (paginaChange)="paginaAreas = $event"></app-paginador>
       <ng-template #emptyArea><div class="empty">Sin áreas. Agregá la primera.</div></ng-template>
     </div>
 
@@ -80,7 +82,7 @@
       <table *ngIf="estados.length > 0; else emptyEstado">
         <thead><tr><th>Nombre</th><th>Código</th><th class="ta-right"></th></tr></thead>
         <tbody>
-          <tr *ngFor="let s of estados">
+          <tr *ngFor="let s of paginatedEstados">
             <td class="cell-name">{{ s.nombre }}</td>
             <td><code>{{ s.codigo }}</code></td>
             <td>
@@ -92,6 +94,7 @@
           </tr>
         </tbody>
       </table>
+      <app-paginador [total]="estados.length" [pagina]="paginaEstados" (paginaChange)="paginaEstados = $event"></app-paginador>
       <ng-template #emptyEstado><div class="empty">Sin estados. Agregá el primero.</div></ng-template>
     </div>
   </section>

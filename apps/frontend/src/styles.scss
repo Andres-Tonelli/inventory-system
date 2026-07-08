@@ -26,9 +26,19 @@
   --state-baja-color: #991b1b;
 }
 
-body {
+html, body {
+  height: 100vh;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+}
+
+app-root {
+  display: block;
+  height: 100%;
+}
+
+body {
   font-family: var(--font-family);
   background: var(--bg-gradient);
   background-attachment: fixed;
@@ -40,26 +50,37 @@ body {
   font-family: var(--font-family) !important;
 }
 
-// Global Layout Structures
+// Global Layout Structures.
+// El contenedor ocupa EXACTAMENTE el viewport y el scroll vive DENTRO del contenido:
+// así el sidebar mantiene altura constante y su menú queda siempre visible,
+// sin importar cuán larga sea la página (antes, con listas largas, el menú
+// se iba de pantalla al scrollear).
 .app-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .app-content {
   flex: 1;
+  min-width: 0;
+  height: 100vh;
+  box-sizing: border-box;
   padding: 2.5rem;
   overflow-y: auto;
   transition: all 0.3s ease;
 }
 
-// Sidebar Navigation
+// Sidebar Navigation (altura fija = viewport; si no entra, scrollea por dentro)
 .app-sidebar {
   width: 280px;
+  flex-shrink: 0;
+  height: 100vh;
+  box-sizing: border-box;
+  overflow-y: auto;
   background: var(--sidebar-bg);
   color: #ffffff;
   display: flex;
-  flex-column: column;
   flex-direction: column;
   padding: 2rem 1.5rem;
   box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15);

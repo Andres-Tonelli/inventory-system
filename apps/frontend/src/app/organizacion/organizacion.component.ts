@@ -11,11 +11,12 @@ import { EmpleadosService, Empleado, Area } from '../core/services/empleados.ser
 import { CatalogosService, EstadoArticulo } from '../core/services/catalogos.service';
 import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
 import { NotificacionesUiService } from '../core/notificaciones-ui.service';
+import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
 
 @Component({
   selector: 'app-organizacion',
   standalone: true,
-  imports: [CommonModule, FormsModule, DialogModule, InputTextModule, SelectModule],
+  imports: [CommonModule, FormsModule, DialogModule, InputTextModule, SelectModule, PaginadorComponent],
   templateUrl: './organizacion.component.html',
   styleUrl: './organizacion.component.scss',
 })
@@ -25,6 +26,23 @@ export class OrganizacionComponent implements OnInit {
   empleados: Empleado[] = [];
   areas: Area[] = [];
   estados: EstadoArticulo[] = [];
+
+  // Variables de paginación
+  paginaEmpleados = 1;
+  paginaAreas = 1;
+  paginaEstados = 1;
+
+  get paginatedEmpleados(): Empleado[] {
+    return paginar(this.empleados, this.paginaEmpleados);
+  }
+
+  get paginatedAreas(): Area[] {
+    return paginar(this.areas, this.paginaAreas);
+  }
+
+  get paginatedEstados(): EstadoArticulo[] {
+    return paginar(this.estados, this.paginaEstados);
+  }
 
   showEmpDialog = false;
   editEmpId: number | null = null;
