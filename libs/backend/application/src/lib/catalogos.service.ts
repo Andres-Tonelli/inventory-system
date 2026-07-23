@@ -137,9 +137,10 @@ export class CatalogosService {
     await this.marcaRepo.save({ id, nombre } as any);
   }
 
-  async updateModelo(id: number, data: { nombre?: string; marcaId?: number; categoriaId?: number }) {
+  async updateModelo(id: number, data: { nombre?: string; detalle?: string; marcaId?: number; categoriaId?: number }) {
     const patch: any = { id };
     if (data.nombre !== undefined) patch.nombre = data.nombre;
+    if (data.detalle !== undefined) patch.detalle = data.detalle;
     if (data.marcaId !== undefined) patch.marcaId = Number(data.marcaId);
     if (data.categoriaId !== undefined) patch.categoriaId = Number(data.categoriaId);
     await this.modeloRepo.save(patch);

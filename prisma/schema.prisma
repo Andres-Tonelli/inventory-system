@@ -73,6 +73,7 @@ model Marca {
 model Modelo {
   id          Int         @id @default(autoincrement())
   nombre      String
+  detalle     String?
   marcaId     Int
   categoriaId Int
   createdAt   DateTime    @default(now())

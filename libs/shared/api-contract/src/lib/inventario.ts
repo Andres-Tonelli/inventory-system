@@ -36,6 +36,8 @@ export interface StockLote {
   referencia?: string | null;
   fechaIngreso?: string;
   modelo?: Modelo;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // --- Write DTOs ---

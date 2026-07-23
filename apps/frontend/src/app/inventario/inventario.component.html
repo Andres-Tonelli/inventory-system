@@ -35,19 +35,19 @@
       <div class="filters">
         <div class="field grow">
           <label>Búsqueda general</label>
-          <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArticulo" (ngModelChange)="paginaArticulos = 1" placeholder="Alias, nº serie, modelo, asignatario…" /></span>
+          <span class="inp search"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArticulo" placeholder="Alias, nº serie, modelo, asignatario…" /></span>
         </div>
         <div class="field">
           <label>Categoría</label>
-          <p-select [options]="categorias" [(ngModel)]="filterCategoriaId" (onChange)="onFilterCategoriaChange(); paginaArticulos = 1" optionLabel="nombre" optionValue="id" placeholder="Elegí una categoría" [showClear]="true" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar…" [resetFilterOnHide]="true"></p-select>
+          <p-select [options]="categorias" [(ngModel)]="filterCategoriaId" (onChange)="onFilterCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Elegí una categoría" [showClear]="true" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar…" [resetFilterOnHide]="true"></p-select>
         </div>
         <div class="field">
           <label>Modelo</label>
-          <p-select [options]="modelosFiltradosBusqueda" [(ngModel)]="filterModeloId" (onChange)="paginaArticulos = 1" optionLabel="nombre" optionValue="id" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar…" [resetFilterOnHide]="true"></p-select>
+          <p-select [options]="modelosFiltradosBusqueda" [(ngModel)]="filterModeloId" optionLabel="nombre" optionValue="id" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar…" [resetFilterOnHide]="true"></p-select>
         </div>
         <div class="field">
           <label>Estado</label>
-          <p-select [options]="estadosArticulo" [(ngModel)]="filterEstadoId" (onChange)="paginaArticulos = 1" optionLabel="nombre" optionValue="id" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full"></p-select>
+          <p-select [options]="estadosArticulo" [(ngModel)]="filterEstadoId" optionLabel="nombre" optionValue="id" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full"></p-select>
         </div>
       </div>
 
@@ -55,7 +55,7 @@
       <div class="toolbar">
         <span class="cap"><b>{{ filteredArticulos.length }}</b> artículos</span>
         <div class="tools">
-          <button class="btn ghost sm" (click)="limpiarFiltros(); paginaArticulos = 1"><i class="pi pi-filter-slash"></i>Limpiar filtros</button>
+          <button class="btn ghost sm" (click)="limpiarFiltros()"><i class="pi pi-filter-slash"></i>Limpiar filtros</button>
           <button class="btn primary sm" (click)="abrirDialogo()"><i class="pi pi-plus"></i>Nuevo artículo</button>
         </div>
       </div>
@@ -71,7 +71,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let art of paginatedArticulos">
+              <tr *ngFor="let art of filteredArticulos">
                 <td><div class="art"><span class="alias">{{ art.alias || 'Sin alias' }}</span><span class="sn" *ngIf="art.nroSerie">{{ art.nroSerie }}</span></div></td>
                 <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
                 <td *ngFor="let attr of atributosDominio">{{ getAtributoValor(art, attr.id) || '—' }}</td>
@@ -92,7 +92,6 @@
           </table>
         </div>
       </div>
-      <app-paginador [total]="filteredArticulos.length" [pagina]="paginaArticulos" (paginaChange)="paginaArticulos = $event"></app-paginador>
       <div class="note" *ngIf="atributosDominio.length > 0">
         <i class="pi pi-info-circle"></i>Las columnas resaltadas son los <b>atributos</b> definidos para este dominio en Configuración.
       </div>
@@ -109,32 +108,60 @@
     <!-- ===================== CONSUMIBLES ===================== -->
     <div class="panel-block" *ngIf="activeMainTab === 'operar' && activeSubTab === 'consumibles'">
       <div class="toolbar">
-        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchLote" (ngModelChange)="paginaLotes = 1" placeholder="Buscar consumible…" /></span>
-        <button class="btn primary sm" (click)="showLoteDialog = true"><i class="pi pi-plus"></i>Nuevo lote de stock</button>
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchLote" placeholder="Buscar consumible…" /></span>
+        <button class="btn primary sm" (click)="abrirLoteDialog()"><i class="pi pi-plus"></i>Nuevo lote de stock</button>
       </div>
       <div class="tablecard">
         <div class="tablescroll">
           <table>
             <thead><tr><th>Modelo de consumible</th><th>Categoría</th><th>Disponible</th><th>Actualizado</th><th class="ta-right"></th></tr></thead>
             <tbody>
-              <tr *ngFor="let lote of paginatedLotes">
-                <td class="cell-name">{{ lote.modelo?.nombre }}</td>
-                <td class="mut">{{ lote.modelo?.categoria?.nombre }}</td>
-                <td><span class="pill teal"><span class="dot"></span>{{ lote.cantidadDisponible }} u.</span></td>
-                <td class="mut">{{ lote.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td>
-                  <div class="row-actions">
-                    <button class="btn ghost sm" (click)="abrirAdicionarLoteDialog(lote)">Adicionar</button>
-                    <button class="btn ghost sm" (click)="abrirConsumirLoteDialog(lote)" [disabled]="lote.cantidadDisponible <= 0">Consumir</button>
-                  </div>
-                </td>
-              </tr>
-              <tr *ngIf="filteredLotes.length === 0"><td colspan="5" class="empty">Sin lotes de consumibles.</td></tr>
+              <ng-container *ngFor="let group of consumiblesAgrupados">
+                <tr>
+                  <td class="cell-name">
+                    <button class="btn ghost sm" (click)="toggleConsumibleGroup(group.modelo.id)" style="padding: 0 4px; margin-right: 8px;">
+                      <i class="pi" [ngClass]="expandedConsumibleGroups.has(group.modelo.id) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                    </button>
+                    {{ group.modelo?.nombre }}
+                  </td>
+                  <td class="mut">{{ group.modelo?.categoria?.nombre }}</td>
+                  <td><span class="pill teal"><span class="dot"></span>{{ group.totalDisponible }} u.</span></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+                <tr *ngIf="expandedConsumibleGroups.has(group.modelo.id)">
+                  <td colspan="5" style="padding: 0; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <table style="width: 100%; border: none; margin: 0; background: transparent;">
+                      <thead>
+                        <tr>
+                          <th style="padding-left: 45px; font-size: 12px; color: #64748b;">Ingreso (ID Lote)</th>
+                          <th style="font-size: 12px; color: #64748b;">Disponible</th>
+                          <th style="font-size: 12px; color: #64748b;">Actualizado</th>
+                          <th class="ta-right"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let lote of group.lotes">
+                          <td style="padding-left: 45px;" class="mut">Lote #{{ lote.id }}</td>
+                          <td><b>{{ lote.cantidadDisponible }}</b></td>
+                          <td class="mut">{{ lote.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                          <td class="ta-right">
+                            <div class="row-actions justify-end" style="justify-content: flex-end;">
+                              <button class="btn ghost sm" (click)="abrirAdicionarLoteDialog(lote)">Adicionar</button>
+                              <button class="btn ghost sm" (click)="abrirConsumirLoteDialog(lote)" [disabled]="lote.cantidadDisponible <= 0">Consumir</button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </ng-container>
+              <tr *ngIf="consumiblesAgrupados.length === 0"><td colspan="5" class="empty">Sin lotes de consumibles.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-      <app-paginador [total]="filteredLotes.length" [pagina]="paginaLotes" (paginaChange)="paginaLotes = $event"></app-paginador>
     </div>
 
     <!-- ===================== AGRUPADORES (master-detail por tipo) ===================== -->
@@ -153,7 +180,7 @@
               <table>
                 <thead><tr><th>Nombre</th><th>Estado</th><th>Asignado a</th><th class="ta-right">Art.</th></tr></thead>
                 <tbody>
-                  <tr *ngFor="let ag of getPaginatedAgrupadoresPorTipo(tipo.id!)" [class.sel]="ag.id === selectedAgrupadorId" (click)="selectAgrupador(ag, $event)">
+                  <tr *ngFor="let ag of getAgrupadoresPorTipo(tipo.id!)" [class.sel]="ag.id === selectedAgrupadorId" (click)="selectAgrupador(ag, $event)">
                     <td class="rowname">{{ ag.nombre }}</td>
                     <td><span class="pill" [class.blue]="ag.estado !== 'DISPONIBLE'" [class.green]="ag.estado === 'DISPONIBLE'"><span class="dot"></span>{{ ag.estado === 'DISPONIBLE' ? 'Disponible' : 'Asignado' }}</span></td>
                     <td class="mut">{{ getAgrupadorAsignatario(ag) || '—' }}</td>
@@ -163,7 +190,6 @@
                 </tbody>
               </table>
             </div>
-            <app-paginador [total]="getAgrupadoresPorTipo(tipo.id!).length" [pagina]="paginaAgrupadores" (paginaChange)="paginaAgrupadores = $event"></app-paginador>
           </div>
 
           <div class="md-detail-anchor">
@@ -212,70 +238,56 @@
     <!-- ===================== CATÁLOGO ===================== -->
     <div class="panel-block" *ngIf="activeMainTab === 'catalogo' && activeCatTab === 'categorias'">
       <div class="toolbar">
-        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchCategoria" (ngModelChange)="paginaCategorias = 1" placeholder="Buscar categoría…" /></span>
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchCategoria" placeholder="Buscar categoría…" /></span>
         <button class="btn primary sm" (click)="abrirNuevaCategoria()"><i class="pi pi-plus"></i>Nueva categoría</button>
       </div>
-      <div class="tablecard">
-        <div class="tablescroll">
-          <table>
-            <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
-            <tbody>
-              <tr *ngFor="let cat of paginatedCategorias">
-                <td class="cell-name">{{ cat.nombre }}</td>
-                <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarCategoria(cat)"><i class="pi pi-pencil"></i>Editar</button></div></td>
-              </tr>
-              <tr *ngIf="filteredCategorias.length === 0"><td colspan="2" class="empty">Sin categorías.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <app-paginador [total]="filteredCategorias.length" [pagina]="paginaCategorias" (paginaChange)="paginaCategorias = $event"></app-paginador>
+      <div class="tablecard"><div class="tablescroll"><table>
+        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let cat of filteredCategorias">
+            <td class="cell-name">{{ cat.nombre }}</td>
+            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarCategoria(cat)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+          </tr>
+          <tr *ngIf="filteredCategorias.length === 0"><td colspan="2" class="empty">Sin categorías.</td></tr>
+        </tbody>
+      </table></div></div>
     </div>
 
     <div class="panel-block" *ngIf="activeMainTab === 'catalogo' && activeCatTab === 'marcas'">
       <div class="toolbar">
-        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchMarca" (ngModelChange)="paginaMarcas = 1" placeholder="Buscar marca…" /></span>
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchMarca" placeholder="Buscar marca…" /></span>
         <button class="btn primary sm" (click)="abrirNuevaMarca()"><i class="pi pi-plus"></i>Nueva marca</button>
       </div>
-      <div class="tablecard">
-        <div class="tablescroll">
-          <table>
-            <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
-            <tbody>
-              <tr *ngFor="let marca of paginatedMarcas">
-                <td class="cell-name">{{ marca.nombre }}</td>
-                <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarMarca(marca)"><i class="pi pi-pencil"></i>Editar</button></div></td>
-              </tr>
-              <tr *ngIf="filteredMarcas.length === 0"><td colspan="2" class="empty">Sin marcas.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <app-paginador [total]="filteredMarcas.length" [pagina]="paginaMarcas" (paginaChange)="paginaMarcas = $event"></app-paginador>
+      <div class="tablecard"><div class="tablescroll"><table>
+        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let marca of filteredMarcas">
+            <td class="cell-name">{{ marca.nombre }}</td>
+            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarMarca(marca)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+          </tr>
+          <tr *ngIf="filteredMarcas.length === 0"><td colspan="2" class="empty">Sin marcas.</td></tr>
+        </tbody>
+      </table></div></div>
     </div>
 
     <div class="panel-block" *ngIf="activeMainTab === 'catalogo' && activeCatTab === 'modelos'">
       <div class="toolbar">
-        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchModelo" (ngModelChange)="paginaModelos = 1" placeholder="Buscar modelo, marca o categoría…" /></span>
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchModelo" placeholder="Buscar modelo, marca o categoría…" /></span>
         <button class="btn primary sm" (click)="abrirNuevoModelo()"><i class="pi pi-plus"></i>Nuevo modelo</button>
       </div>
-      <div class="tablecard">
-        <div class="tablescroll">
-          <table>
-            <thead><tr><th>Modelo</th><th>Marca</th><th>Categoría</th><th class="ta-right"></th></tr></thead>
-            <tbody>
-              <tr *ngFor="let mod of paginatedModelos">
-                <td class="cell-name">{{ mod.nombre }}</td>
-                <td class="mut">{{ mod.marca?.nombre }}</td>
-                <td><span class="pill indigo">{{ mod.categoria?.nombre }}</span></td>
-                <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarModelo(mod)"><i class="pi pi-pencil"></i>Editar</button></div></td>
-              </tr>
-              <tr *ngIf="filteredModelos.length === 0"><td colspan="4" class="empty">Sin modelos.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <app-paginador [total]="filteredModelos.length" [pagina]="paginaModelos" (paginaChange)="paginaModelos = $event"></app-paginador>
+      <div class="tablecard"><div class="tablescroll"><table>
+        <thead><tr><th>Modelo</th><th>Detalle</th><th>Marca</th><th>Categoría</th><th class="ta-right"></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let mod of filteredModelos">
+            <td class="cell-name">{{ mod.nombre }}</td>
+            <td class="mut">{{ mod.detalle || '-' }}</td>
+            <td class="mut">{{ mod.marca?.nombre }}</td>
+            <td><span class="pill indigo">{{ mod.categoria?.nombre }}</span></td>
+            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarModelo(mod)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+          </tr>
+          <tr *ngIf="filteredModelos.length === 0"><td colspan="5" class="empty">Sin modelos.</td></tr>
+        </tbody>
+      </table></div></div>
     </div>
   </div>
 </div>
@@ -285,11 +297,9 @@
 <!-- Alta de artículo (form dinámico) -->
 <p-dialog [header]="editingArticuloId ? 'Editar artículo' : 'Registrar artículo'" [(visible)]="showNuevoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '600px' }">
   <div class="form">
-    <label>Categoría</label>
-    <p-select [options]="categorias" [(ngModel)]="selectedCategoriaId" (onChange)="onCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Categoría del artículo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
     <ng-container *ngIf="selectedCategoriaId">
-      <label class="mt">Modelo</label>
-      <p-select [options]="modelosFiltrados" [(ngModel)]="selectedModeloId" optionLabel="nombre" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
+      <label>Modelo</label>
+      <p-select [options]="modelosFiltrados" [(ngModel)]="selectedModeloId" optionLabel="displayLabel" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
     </ng-container>
     <ng-container *ngIf="selectedModeloId">
       <label class="mt">Nº de serie (opcional)</label>
@@ -319,8 +329,14 @@
 <!-- Nuevo lote -->
 <p-dialog header="Nuevo lote de stock" [(visible)]="showLoteDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '460px' }">
   <div class="form">
-    <label>Modelo de consumible</label>
-    <p-select [options]="modelos" [(ngModel)]="newLote.modeloId" optionLabel="nombre" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
+    <label>Categoría</label>
+    <p-select [options]="categorias" [(ngModel)]="selectedLoteCategoriaId" (onChange)="onLoteCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Seleccionar Categoría" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
+
+    <ng-container *ngIf="selectedLoteCategoriaId">
+      <label class="mt">Modelo de consumible</label>
+      <p-select [options]="modelosFiltradosLote" [(ngModel)]="newLote.modeloId" optionLabel="displayLabel" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
+    </ng-container>
+
     <label class="mt">Cantidad a ingresar</label>
     <input pInputText type="number" [(ngModel)]="newLote.cantidadDisponible" placeholder="Ej: 50" />
   </div>
@@ -344,6 +360,7 @@
 <p-dialog [header]="editingModeloId ? 'Editar modelo' : 'Nuevo modelo'" [(visible)]="showModeloDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '480px' }">
   <div class="form">
     <label>Nombre</label><input pInputText [(ngModel)]="newModelo.nombre" />
+    <label class="mt">Detalle (opcional)</label><input pInputText [(ngModel)]="newModelo.detalle" placeholder="Nota aclaratoria sobre este modelo" />
     <label class="mt">Marca</label>
     <p-select [options]="marcas" [(ngModel)]="newModelo.marcaId" optionLabel="nombre" optionValue="id" placeholder="Marca" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar marca…" [resetFilterOnHide]="true"></p-select>
     <label class="mt">Categoría</label>
@@ -359,8 +376,13 @@
 </p-dialog>
 <p-dialog header="Vincular artículo" [(visible)]="showArticuloAgrupadorDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '480px' }">
   <div class="form">
-    <label>Artículo libre</label>
-    <p-select [options]="articulosLibres" [(ngModel)]="selectedArticuloAgrupador" optionLabel="alias" optionValue="id" placeholder="Buscar artículo…" appendTo="body" styleClass="w-full" [filter]="true" filterBy="alias,nroSerie" filterPlaceholder="Alias o serie…" [resetFilterOnHide]="true"></p-select>
+    <label>Categoría</label>
+    <p-select [options]="categorias" [(ngModel)]="selectedVincularCategoriaId" (onChange)="onVincularCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Seleccionar Categoría" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
+
+    <ng-container *ngIf="selectedVincularCategoriaId">
+      <label class="mt">Artículo libre</label>
+      <p-select [options]="articulosLibresFiltrados" [(ngModel)]="selectedArticuloAgrupador" optionLabel="displayLabel" optionValue="id" placeholder="Buscar artículo…" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar artículo…" [resetFilterOnHide]="true"></p-select>
+    </ng-container>
     <small class="hint"><i class="pi pi-info-circle"></i> Se listan artículos <b>Disponibles</b> que no están dentro de otro agrupador. Si está en otro agrupador, desvinculalo primero.</small>
   </div>
   <ng-template pTemplate="footer"><button class="btn ghost" (click)="showArticuloAgrupadorDialog = false">Cancelar</button><button class="btn primary" (click)="vincularArticuloAgrupador()" [disabled]="!selectedArticuloAgrupador">Vincular</button></ng-template>

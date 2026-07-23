@@ -45,6 +45,7 @@ export class CreateMarcaDto implements ICreateMarcaDto {
 
 export class CreateModeloDto implements ICreateModeloDto {
   @IsString() @MinLength(1) @MaxLength(100) nombre!: string;
+  @IsOptional() @IsString() @MaxLength(500) detalle?: string;
   @IsInt() marcaId!: number;
   @IsInt() categoriaId!: number;
 }
@@ -84,6 +85,7 @@ export class UpdateMarcaDto implements IUpdateMarcaDto {
 
 export class UpdateModeloDto implements IUpdateModeloDto {
   @IsOptional() @IsString() @MinLength(1) @MaxLength(100) nombre?: string;
+  @IsOptional() @IsString() @MaxLength(500) detalle?: string;
   @IsOptional() @IsInt() marcaId?: number;
   @IsOptional() @IsInt() categoriaId?: number;
 }

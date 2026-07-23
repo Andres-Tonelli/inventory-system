@@ -36,6 +36,40 @@ export class AsignacionesComponent implements OnInit {
   articulosDisponibles: Articulo[] = [];
   agrupadoresDisponibles: Agrupador[] = [];
   lotesDisponibles: any[] = [];
+  
+  // Catálogos cargados para selección escalonada
+  categorias: any[] = [];
+  modelos: any[] = [];
+
+  // Selección escalonada de consumibles
+  selectedConsumibleCategoriaId: number | null = null;
+  selectedConsumibleModeloId: number | null = null;
+  selectedConsumibleLoteId: number | null = null;
+
+  get modelosFiltradosAsignacion(): any[] {
+    if (!this.selectedConsumibleCategoriaId) return [];
+    return this.modelos.filter(m => m.categoriaId === this.selectedConsumibleCategoriaId);
+  }
+
+  get lotesFiltradosAsignacion(): any[] {
+    if (!this.selectedConsumibleModeloId) return [];
+    return this.lotesDisponibles.filter(l => l.modeloId === this.selectedConsumibleModeloId);
+  }
+
+  onConsumibleCategoriaChange() {
+    this.selectedConsumibleModeloId = null;
+    this.selectedConsumibleLoteId = null;
+    this.newAsignacion.itemId = null;
+  }
+
+  onConsumibleModeloChange() {
+    this.selectedConsumibleLoteId = null;
+    this.newAsignacion.itemId = null;
+  }
+
+  onConsumibleLoteChange() {
+    this.newAsignacion.itemId = this.selectedConsumibleLoteId;
+  }
 
   showNuevoDialog = false;
   activeTab: 'articulos' | 'agrupadores' | 'consumibles' = 'articulos';
@@ -220,25 +254,39 @@ export class AsignacionesComponent implements OnInit {
       if(res.success) this.asignaciones = res.data;
     });
     this.empleadosService.getEmpleados().subscribe(res => {
-      if(res.success) this.empleados = res.data;
+      if(res.success) {
+        this.empleados = res.data.map((e: any) => ({
+          ...e,
+          displayLabel: `[${e.legajo || 'Sin Legajo'}] - ${e.nombre} - ${e.area?.nombre || 'Sin Área'}`
+        }));
+      }
     });
     if (dominioId) {
       this.catalogosService.getTiposAgrupador(dominioId).subscribe(res => {
         if(res.success) this.tiposAgrupador = res.data;
       });
+      this.catalogosService.getCategorias(dominioId).subscribe(res => {
+        if (res.success) this.categorias = res.data;
+      });
+      this.catalogosService.getModelos(undefined, dominioId).subscribe(res => {
+        if (res.success) {
+          this.modelos = res.data.map((m: any) => ({
+            ...m,
+            displayLabel: m.marca?.nombre ? `${m.nombre} - ${m.marca.nombre}` : m.nombre
+          }));
+        }
+      });
     }
     this.inventarioService.getArticulos(dominioId || undefined, 'Disponible').subscribe(res => {
       if(res.success) this.articulosDisponibles = res.data.map(art => ({
         ...art,
-        displayLabel: art.alias 
-          ? `[Alias: ${art.alias}] - [S/N: ${art.nroSerie || 'Sin Serie'}] - ${art.modelo?.nombre || 'Sin modelo'}`
-          : `[S/N: ${art.nroSerie || 'Sin Serie'}] - ${art.modelo?.nombre || 'Sin modelo'}`
+        displayLabel: `${art.alias || 'Sin Alias'} - ${art.modelo?.nombre || 'Sin Modelo'} - ${art.modelo?.marca?.nombre || 'Sin Marca'} (S/N: ${art.nroSerie || 'Sin Serie'})`
       }));
     });
     this.agrupadoresService.getAgrupadores(dominioId || undefined).subscribe(res => {
       if(res.success) {
         this.agrupadoresDisponibles = res.data
-          .filter((a: any) => a.estado === 'DISPONIBLE')
+          .filter((a: any) => a.estado === 'DISPONIBLE' && a.tipoAgrupador?.asignable === true)
           .map((a: any) => ({
             ...a,
             displayLabel: a.tipoAgrupador?.nombre ? `${a.tipoAgrupador.nombre} - ${a.nombre}` : a.nombre
@@ -251,7 +299,7 @@ export class AsignacionesComponent implements OnInit {
           .filter(l => l.cantidadDisponible > 0)
           .map(l => ({
             ...l,
-            displayLabel: `${l.modelo?.nombre || 'Sin modelo'} (Disponible: ${l.cantidadDisponible})`
+            displayLabel: `Lote #${l.id} (Disponible: ${l.cantidadDisponible} u.) - Creado: ${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : 'Sin fecha'}`
           }));
       }
     });
@@ -264,6 +312,9 @@ export class AsignacionesComponent implements OnInit {
   abrirDialogo() {
     this.newAsignacion = { empleadoId: null, itemId: null, observaciones: '', cantidad: 1 };
     this.tipoAsignacion = 'ARTICULO';
+    this.selectedConsumibleCategoriaId = null;
+    this.selectedConsumibleModeloId = null;
+    this.selectedConsumibleLoteId = null;
     this.showNuevoDialog = true;
   }
 

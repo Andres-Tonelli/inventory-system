@@ -163,8 +163,8 @@
 <p-dialog header="Registrar asignación" [(visible)]="showNuevoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '560px' }">
   <div class="form">
     <label>Empleado receptor</label>
-    <p-select [options]="empleados" [(ngModel)]="newAsignacion.empleadoId" optionLabel="nombre" optionValue="id" placeholder="Seleccioná el empleado" appendTo="body" styleClass="w-full"
-      [filter]="true" filterBy="nombre,legajo" filterPlaceholder="Buscar empleado…" [resetFilterOnHide]="true"></p-select>
+    <p-select [options]="empleados" [(ngModel)]="newAsignacion.empleadoId" optionLabel="displayLabel" optionValue="id" placeholder="Seleccioná el empleado" appendTo="body" styleClass="w-full"
+      [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar empleado…" [resetFilterOnHide]="true"></p-select>
 
     <label class="mt">¿Qué se entrega?</label>
     <div class="seg">
@@ -176,7 +176,7 @@
     <ng-container *ngIf="tipoAsignacion === 'ARTICULO'">
       <label class="mt">Artículo disponible</label>
       <p-select [options]="articulosDisponibles" [(ngModel)]="newAsignacion.itemId" optionLabel="displayLabel" optionValue="id" placeholder="Buscar artículo…" appendTo="body" styleClass="w-full"
-        [filter]="true" filterBy="displayLabel" filterPlaceholder="Serie, alias o modelo…" [resetFilterOnHide]="true"></p-select>
+        [filter]="true" filterBy="displayLabel" filterPlaceholder="Serie, alias, modelo o marca…" [resetFilterOnHide]="true"></p-select>
     </ng-container>
 
     <ng-container *ngIf="tipoAsignacion === 'AGRUPADOR'">
@@ -186,9 +186,19 @@
     </ng-container>
 
     <ng-container *ngIf="tipoAsignacion === 'CONSUMIBLE'">
-      <label class="mt">Lote de consumible</label>
-      <p-select [options]="lotesDisponibles" [(ngModel)]="newAsignacion.itemId" optionLabel="displayLabel" optionValue="id" placeholder="Buscar lote…" appendTo="body" styleClass="w-full"
-        [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar consumible…" [resetFilterOnHide]="true"></p-select>
+      <label class="mt">Categoría</label>
+      <p-select [options]="categorias" [(ngModel)]="selectedConsumibleCategoriaId" (onChange)="onConsumibleCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Seleccionar Categoría" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
+
+      <ng-container *ngIf="selectedConsumibleCategoriaId">
+        <label class="mt">Modelo - Marca</label>
+        <p-select [options]="modelosFiltradosAsignacion" [(ngModel)]="selectedConsumibleModeloId" (onChange)="onConsumibleModeloChange()" optionLabel="displayLabel" optionValue="id" placeholder="Seleccionar Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar modelo o marca…" [resetFilterOnHide]="true"></p-select>
+      </ng-container>
+
+      <ng-container *ngIf="selectedConsumibleModeloId">
+        <label class="mt">Lote de consumible</label>
+        <p-select [options]="lotesFiltradosAsignacion" [(ngModel)]="selectedConsumibleLoteId" (onChange)="onConsumibleLoteChange()" optionLabel="displayLabel" optionValue="id" placeholder="Buscar lote…" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar lote…" [resetFilterOnHide]="true"></p-select>
+      </ng-container>
+
       <ng-container *ngIf="newAsignacion.itemId">
         <label class="mt">Cantidad a entregar</label>
         <input pInputText type="number" [(ngModel)]="newAsignacion.cantidad" [min]="1" placeholder="Ej: 5" />

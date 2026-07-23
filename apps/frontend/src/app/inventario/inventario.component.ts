@@ -6,7 +6,6 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { CatalogosService, Categoria, Modelo, AtributoDefinicion, Marca, TipoAgrupador, EstadoArticulo } from '../core/services/catalogos.service';
 import { InventarioService, Articulo } from '../core/services/inventario.service';
 import { DomainContextService } from '../core/domain-context.service';
-import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -14,15 +13,13 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { Agrupador, AgrupadoresService } from '../core/services/agrupadores.service';
-import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
-    TableModule, ButtonModule, DialogModule, InputTextModule, SelectModule,
-    PaginadorComponent
+    TableModule, ButtonModule, DialogModule, InputTextModule, SelectModule
   ],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.scss'
@@ -76,7 +73,7 @@ export class InventarioComponent implements OnInit {
   editingCategoriaId: number | null = null;
   newMarca = { nombre: '' };
   editingMarcaId: number | null = null;
-  newModelo = { nombre: '', marcaId: null as number | null, categoriaId: null as number | null };
+  newModelo = { nombre: '', detalle: '', marcaId: null as number | null, categoriaId: null as number | null };
   editingModeloId: number | null = null;
   newAgrupador = { nombre: '', tipoAgrupadorId: null as number | null };
   newLote = { cantidadDisponible: 0, modeloId: null as number | null };
@@ -86,12 +83,43 @@ export class InventarioComponent implements OnInit {
   selectedLoteParaAdicion: any = null;
   cantidadAAdicionar = 0;
 
+  // Filtros internos de diálogos
+  selectedVincularCategoriaId: number | null = null;
+  selectedLoteCategoriaId: number | null = null;
+
+  get modelosFiltradosLote(): Modelo[] {
+    if (!this.selectedLoteCategoriaId) return [];
+    return this.modelos.filter(m => m.categoriaId === this.selectedLoteCategoriaId);
+  }
+
+  get articulosLibresFiltrados(): any[] {
+    if (!this.selectedVincularCategoriaId) return [];
+    return this.articulosLibres.filter((a: any) => a.modelo?.categoriaId === this.selectedVincularCategoriaId);
+  }
+
+  onLoteCategoriaChange() {
+    this.newLote.modeloId = null;
+  }
+
+  onVincularCategoriaChange() {
+    this.selectedArticuloAgrupador = null;
+  }
+
+  abrirLoteDialog() {
+    this.selectedLoteCategoriaId = null;
+    this.newLote = { cantidadDisponible: 0, modeloId: null };
+    this.showLoteDialog = true;
+  }
+
   // Sub-agrupadores state
   showSubAgrupadorDialog = false;
   selectedParentAgrupadorId: number | null = null;
   selectedParentAgrupadorNombre = '';
   selectedSubAgrupadorId: number | null = null;
   agrupadoresDisponibles: any[] = [];
+
+  // Expanded consumibles models
+  expandedConsumibleGroups = new Set<number>();
 
   // Seleccion básica
   selectedCategoriaId: number | null = null;
@@ -100,14 +128,6 @@ export class InventarioComponent implements OnInit {
   alias = '';
   detalle = '';
   editingArticuloId: number | null = null;
-
-  // Variables de paginación
-  paginaArticulos = 1;
-  paginaLotes = 1;
-  paginaAgrupadores = 1;
-  paginaCategorias = 1;
-  paginaMarcas = 1;
-  paginaModelos = 1;
 
   // Filtros de búsqueda
   searchArticulo = '';
@@ -140,7 +160,6 @@ export class InventarioComponent implements OnInit {
     private inventarioService: InventarioService,
     private agrupadoresService: AgrupadoresService,
     private domainContext: DomainContextService,
-    private notificaciones: NotificacionesUiService,
     private fb: FormBuilder
   ) {
     this.dynamicForm = this.fb.group({});
@@ -215,6 +234,37 @@ export class InventarioComponent implements OnInit {
     });
   }
 
+  get consumiblesAgrupados(): any[] {
+    const result = this.filteredLotes; 
+    
+    const map = new Map<number, any>();
+    for (const lote of result) {
+      if (!lote.modelo) continue;
+      
+      const mId = lote.modeloId;
+      if (!map.has(mId)) {
+        map.set(mId, {
+          modelo: lote.modelo,
+          totalDisponible: 0,
+          lotes: [],
+          expanded: false
+        });
+      }
+      const group = map.get(mId);
+      group.totalDisponible += lote.cantidadDisponible;
+      group.lotes.push(lote);
+    }
+    return Array.from(map.values());
+  }
+
+  toggleConsumibleGroup(modeloId: number) {
+    if (this.expandedConsumibleGroups.has(modeloId)) {
+      this.expandedConsumibleGroups.delete(modeloId);
+    } else {
+      this.expandedConsumibleGroups.add(modeloId);
+    }
+  }
+
   get filteredCategorias(): Categoria[] {
     const query = this.searchCategoria.toLowerCase().trim();
     if (!query) return this.categorias;
@@ -232,40 +282,16 @@ export class InventarioComponent implements OnInit {
     if (!query) return this.modelos;
     return this.modelos.filter(m => 
       (m.nombre || '').toLowerCase().includes(query) ||
+      ((m as any).detalle || '').toLowerCase().includes(query) ||
       (m.marca?.nombre || '').toLowerCase().includes(query) ||
       (m.categoria?.nombre || '').toLowerCase().includes(query)
     );
-  }
-
-  get paginatedArticulos(): Articulo[] {
-    return paginar(this.filteredArticulos, this.paginaArticulos);
-  }
-
-  get paginatedLotes(): any[] {
-    return paginar(this.filteredLotes, this.paginaLotes);
-  }
-
-  get paginatedCategorias(): Categoria[] {
-    return paginar(this.filteredCategorias, this.paginaCategorias);
-  }
-
-  get paginatedMarcas(): Marca[] {
-    return paginar(this.filteredMarcas, this.paginaMarcas);
-  }
-
-  get paginatedModelos(): Modelo[] {
-    return paginar(this.filteredModelos, this.paginaModelos);
-  }
-
-  getPaginatedAgrupadoresPorTipo(tipoId: number): Agrupador[] {
-    return paginar(this.getAgrupadoresPorTipo(tipoId), this.paginaAgrupadores);
   }
 
   selectSubTab(tab: string): void {
     this.activeSubTab = tab;
     this.selectedAgrupadorId = null;
     this.detailTop = 0;
-    this.paginaAgrupadores = 1;
   }
   selectAgrupador(a: Agrupador, ev?: MouseEvent): void {
     this.selectedAgrupadorId = a.id ?? null;
@@ -403,7 +429,12 @@ export class InventarioComponent implements OnInit {
       if(res.success) this.marcas = res.data;
     });
     this.catalogosService.getModelos(undefined, this.dominioId).subscribe(res => {
-      if(res.success) this.modelos = res.data;
+      if(res.success) {
+        this.modelos = res.data.map((m: any) => ({
+          ...m,
+          displayLabel: m.marca?.nombre ? `${m.marca.nombre} - ${m.nombre}` : m.nombre
+        }));
+      }
     });
     this.catalogosService.getAtributos(this.dominioId).subscribe(res => {
       if(res.success) {
@@ -485,7 +516,8 @@ export class InventarioComponent implements OnInit {
 
   abrirDialogo() {
     this.editingArticuloId = null;
-    this.selectedCategoriaId = null;
+    this.selectedCategoriaId = this.filterCategoriaId;
+    this.onCategoriaChange();
     this.selectedModeloId = null;
     this.nroSerie = '';
     this.alias = '';
@@ -530,15 +562,13 @@ export class InventarioComponent implements OnInit {
       atributos
     };
 
-    const esEdicion = !!this.editingArticuloId;
     const done = () => {
-      this.notificaciones.exito(esEdicion ? 'Artículo actualizado.' : 'Artículo registrado en el inventario.');
       this.showNuevoDialog = false;
       this.editingArticuloId = null;
       this.loadArticulos();
       this.loadAgrupadores();
     };
-    const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar el artículo.');
+    const onErr = (e: any) => alert(e?.error?.message || 'No se pudo guardar el artículo.');
 
     if (this.editingArticuloId) {
       this.inventarioService.updateArticulo(this.editingArticuloId, payload).subscribe({ next: done, error: onErr });
@@ -576,14 +606,12 @@ export class InventarioComponent implements OnInit {
     if (!this.articuloParaEstado?.id || !this.nuevoEstadoCodigo) return;
     this.inventarioService.cambiarEstadoArticulo(this.articuloParaEstado.id, this.nuevoEstadoCodigo).subscribe({
       next: () => {
-        const nombre = this.estadosArticulo.find(s => s.codigo === this.nuevoEstadoCodigo)?.nombre;
-        this.notificaciones.exito(nombre ? `Estado cambiado a "${nombre}".` : 'Estado del artículo actualizado.');
         this.showEstadoDialog = false;
         this.articuloParaEstado = null;
         this.loadArticulos();
         this.loadAgrupadores();
       },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo cambiar el estado.')
+      error: (e) => alert(e?.error?.message || 'No se pudo cambiar el estado.')
     });
   }
 
@@ -618,9 +646,7 @@ export class InventarioComponent implements OnInit {
   }
   saveCategoria() {
     if(!this.newCategoria.nombre) return;
-    const esEdicion = !!this.editingCategoriaId;
     const done = () => {
-      this.notificaciones.exito(esEdicion ? 'Categoría actualizada.' : 'Categoría creada.');
       this.showCategoriaDialog = false;
       this.editingCategoriaId = null;
       this.newCategoria = { nombre: '' };
@@ -645,9 +671,7 @@ export class InventarioComponent implements OnInit {
   }
   saveMarca() {
     if(!this.newMarca.nombre) return;
-    const esEdicion = !!this.editingMarcaId;
     const done = () => {
-      this.notificaciones.exito(esEdicion ? 'Marca actualizada.' : 'Marca creada.');
       this.showMarcaDialog = false;
       this.editingMarcaId = null;
       this.newMarca = { nombre: '' };
@@ -662,27 +686,26 @@ export class InventarioComponent implements OnInit {
 
   abrirNuevoModelo() {
     this.editingModeloId = null;
-    this.newModelo = { nombre: '', marcaId: null, categoriaId: null };
+    this.newModelo = { nombre: '', detalle: '', marcaId: null, categoriaId: null };
     this.showModeloDialog = true;
   }
   abrirEditarModelo(mod: any) {
     this.editingModeloId = mod.id;
-    this.newModelo = { nombre: mod.nombre, marcaId: mod.marcaId ?? null, categoriaId: mod.categoriaId ?? null };
+    this.newModelo = { nombre: mod.nombre, detalle: mod.detalle ?? '', marcaId: mod.marcaId ?? null, categoriaId: mod.categoriaId ?? null };
     this.showModeloDialog = true;
   }
   saveModelo() {
     if(!this.newModelo.nombre || !this.newModelo.marcaId || !this.newModelo.categoriaId) return;
     const data = {
       nombre: this.newModelo.nombre,
+      detalle: this.newModelo.detalle || undefined,
       marcaId: this.newModelo.marcaId,
       categoriaId: this.newModelo.categoriaId
     };
-    const esEdicion = !!this.editingModeloId;
     const done = () => {
-      this.notificaciones.exito(esEdicion ? 'Modelo actualizado.' : 'Modelo creado.');
       this.showModeloDialog = false;
       this.editingModeloId = null;
-      this.newModelo = { nombre: '', marcaId: null, categoriaId: null };
+      this.newModelo = { nombre: '', detalle: '', marcaId: null, categoriaId: null };
       this.loadCatalogos();
     };
     if (this.editingModeloId) {
@@ -705,48 +728,42 @@ export class InventarioComponent implements OnInit {
     this.agrupadoresService.createAgrupador({
       nombre: this.newAgrupador.nombre,
       tipoAgrupadorId: this.newAgrupador.tipoAgrupadorId
-    }).subscribe({
-      next: () => {
-        this.notificaciones.exito(`Agrupador "${this.newAgrupador.nombre}" creado.`);
-        this.showAgrupadorDialog = false;
-        this.newAgrupador = { nombre: '', tipoAgrupadorId: null };
-        this.loadAgrupadores();
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo crear el agrupador.')
+    }).subscribe(() => {
+      this.showAgrupadorDialog = false;
+      this.newAgrupador = { nombre: '', tipoAgrupadorId: null };
+      this.loadAgrupadores();
     });
   }
 
   abrirDialogoArticuloAgrupador(agrupadorId: number) {
     this.selectedAgrupadorId = agrupadorId;
     this.selectedArticuloAgrupador = null;
+    this.selectedVincularCategoriaId = null;
     // Cargar artículos libres (disponibles y sin agrupador) del dominio, on-demand.
     this.inventarioService.getArticulos(this.dominioId, 'Disponible').subscribe(res => {
-      this.articulosLibres = res.success ? res.data.filter((a: any) => !a.agrupadorId) : [];
+      this.articulosLibres = res.success 
+        ? res.data.filter((a: any) => !a.agrupadorId).map((a: any) => ({
+            ...a,
+            displayLabel: `${a.alias || 'Sin Alias'} - ${a.modelo?.marca?.nombre || 'Sin marca'} ${a.modelo?.nombre || 'Sin modelo'} (S/N: ${a.nroSerie || 'Sin Serie'})`
+          }))
+        : [];
     });
     this.showArticuloAgrupadorDialog = true;
   }
 
   vincularArticuloAgrupador() {
     if(!this.selectedAgrupadorId || !this.selectedArticuloAgrupador) return;
-    this.agrupadoresService.addArticulo(this.selectedAgrupadorId, this.selectedArticuloAgrupador).subscribe({
-      next: () => {
-        this.notificaciones.exito('Artículo vinculado al agrupador.');
-        this.showArticuloAgrupadorDialog = false;
-        this.loadAgrupadores();
-        this.loadArticulos(); // Recargar articulos para ver cambios
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo vincular el artículo.')
+    this.agrupadoresService.addArticulo(this.selectedAgrupadorId, this.selectedArticuloAgrupador).subscribe(() => {
+      this.showArticuloAgrupadorDialog = false;
+      this.loadAgrupadores();
+      this.loadArticulos(); // Recargar articulos para ver cambios
     });
   }
 
   desvincularArticulo(articuloId: number) {
-    this.agrupadoresService.removeArticulo(articuloId).subscribe({
-      next: () => {
-        this.notificaciones.exito('Artículo desvinculado del agrupador.');
-        this.loadAgrupadores();
-        this.loadArticulos();
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo desvincular el artículo.')
+    this.agrupadoresService.removeArticulo(articuloId).subscribe(() => {
+      this.loadAgrupadores();
+      this.loadArticulos();
     });
   }
 
@@ -768,23 +785,15 @@ export class InventarioComponent implements OnInit {
 
   vincularSubAgrupador() {
     if (!this.selectedParentAgrupadorId || !this.selectedSubAgrupadorId) return;
-    this.agrupadoresService.addSubAgrupador(this.selectedParentAgrupadorId, this.selectedSubAgrupadorId).subscribe({
-      next: () => {
-        this.notificaciones.exito(`Sub-agrupador vinculado a "${this.selectedParentAgrupadorNombre}".`);
-        this.showSubAgrupadorDialog = false;
-        this.loadAgrupadores();
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo vincular el sub-agrupador.')
+    this.agrupadoresService.addSubAgrupador(this.selectedParentAgrupadorId, this.selectedSubAgrupadorId).subscribe(() => {
+      this.showSubAgrupadorDialog = false;
+      this.loadAgrupadores();
     });
   }
 
   desvincularSubAgrupador(childId: number) {
-    this.agrupadoresService.removeSubAgrupador(childId).subscribe({
-      next: () => {
-        this.notificaciones.exito('Sub-agrupador desvinculado.');
-        this.loadAgrupadores();
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo desvincular el sub-agrupador.')
+    this.agrupadoresService.removeSubAgrupador(childId).subscribe(() => {
+      this.loadAgrupadores();
     });
   }
 
@@ -793,14 +802,10 @@ export class InventarioComponent implements OnInit {
     this.inventarioService.createLote({
       cantidadDisponible: this.newLote.cantidadDisponible,
       modeloId: this.newLote.modeloId
-    }).subscribe({
-      next: () => {
-        this.notificaciones.exito('Lote de stock registrado.');
-        this.showLoteDialog = false;
-        this.newLote = { cantidadDisponible: 0, modeloId: null };
-        this.loadLotes();
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo registrar el lote.')
+    }).subscribe(() => {
+      this.showLoteDialog = false;
+      this.newLote = { cantidadDisponible: 0, modeloId: null };
+      this.loadLotes();
     });
   }
 
@@ -813,15 +818,11 @@ export class InventarioComponent implements OnInit {
   confirmarConsumoLote() {
     if (!this.selectedLoteParaConsumo || this.cantidadAConsumir <= 0 || this.cantidadAConsumir > this.selectedLoteParaConsumo.cantidadDisponible) return;
     
-    this.inventarioService.consumirLote(this.selectedLoteParaConsumo.id, this.cantidadAConsumir).subscribe({
-      next: () => {
-        this.notificaciones.exito(`Se consumieron ${this.cantidadAConsumir} unidades del lote.`);
-        this.showConsumirLoteDialog = false;
-        this.selectedLoteParaConsumo = null;
-        this.cantidadAConsumir = 0;
-        this.loadLotes();
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo consumir el lote.')
+    this.inventarioService.consumirLote(this.selectedLoteParaConsumo.id, this.cantidadAConsumir).subscribe(() => {
+      this.showConsumirLoteDialog = false;
+      this.selectedLoteParaConsumo = null;
+      this.cantidadAConsumir = 0;
+      this.loadLotes();
     });
   }
 
@@ -834,15 +835,11 @@ export class InventarioComponent implements OnInit {
   confirmarAdicionLote() {
     if (!this.selectedLoteParaAdicion || this.cantidadAAdicionar <= 0) return;
     
-    this.inventarioService.adicionarLote(this.selectedLoteParaAdicion.id, this.cantidadAAdicionar).subscribe({
-      next: () => {
-        this.notificaciones.exito(`Se adicionaron ${this.cantidadAAdicionar} unidades al lote.`);
-        this.showAdicionarLoteDialog = false;
-        this.selectedLoteParaAdicion = null;
-        this.cantidadAAdicionar = 0;
-        this.loadLotes();
-      },
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo adicionar stock.')
+    this.inventarioService.adicionarLote(this.selectedLoteParaAdicion.id, this.cantidadAAdicionar).subscribe(() => {
+      this.showAdicionarLoteDialog = false;
+      this.selectedLoteParaAdicion = null;
+      this.cantidadAAdicionar = 0;
+      this.loadLotes();
     });
   }
 

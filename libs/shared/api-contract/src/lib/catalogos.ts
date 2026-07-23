@@ -54,6 +54,7 @@ export interface Marca {
 export interface Modelo {
   id?: number;
   nombre: string;
+  detalle?: string;
   marcaId: number;
   categoriaId: number;
   marca?: Marca;
@@ -104,6 +105,7 @@ export interface CreateMarcaDto {
 
 export interface CreateModeloDto {
   nombre: string;
+  detalle?: string;
   marcaId: number;
   categoriaId: number;
 }
@@ -147,6 +149,7 @@ export interface UpdateMarcaDto {
 
 export interface UpdateModeloDto {
   nombre?: string;
+  detalle?: string;
   marcaId?: number;
   categoriaId?: number;
 }
