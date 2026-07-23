@@ -263,7 +263,9 @@ export class AsignacionesComponent implements OnInit {
     });
     if (dominioId) {
       this.catalogosService.getTiposAgrupador(dominioId).subscribe(res => {
-        if(res.success) this.tiposAgrupador = res.data;
+        if(res.success) {
+          this.tiposAgrupador = res.data.filter((t: any) => t.asignable === true);
+        }
       });
       this.catalogosService.getCategorias(dominioId).subscribe(res => {
         if (res.success) this.categorias = res.data;
