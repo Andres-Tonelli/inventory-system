@@ -56,7 +56,6 @@ export class ConfiguracionDominiosComponent implements OnInit {
     { label: 'Número', value: 'NUMERO' },
     { label: 'Fecha', value: 'FECHA' },
     { label: 'Booleano', value: 'BOOLEANO' },
-    { label: 'Lista', value: 'LISTA' },
   ];
 
   constructor(
