@@ -46,13 +46,15 @@ export class AuthService {
 
     return {
       success: true,
-      token: this.jwtService.sign(payload),
-      user: {
-        id: admin.id,
-        username: admin.username,
-        nombre: admin.nombre,
-        rol: admin.rol,
-        dominios: allowedDomains
+      data: {
+        token: this.jwtService.sign(payload),
+        user: {
+          id: admin.id,
+          username: admin.username,
+          nombre: admin.nombre,
+          rol: admin.rol,
+          dominios: allowedDomains
+        }
       }
     };
   }
