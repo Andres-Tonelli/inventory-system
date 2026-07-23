@@ -42,6 +42,7 @@ model DominioInventario {
   categorias     Categoria[]
   marcas         Marca[]
   tiposAgrupador TipoAgrupador[]
+  administradores AdministradorDominio[]
 }
 
 model Categoria {
@@ -249,3 +250,31 @@ enum EstadoAgrupador {
   DISPONIBLE
   ASIGNADO
 }
+
+enum RolAdministrador {
+  SISTEMA
+  DOMINIO
+}
+
+model Administrador {
+  id        Int                   @id @default(autoincrement())
+  username  String                @unique
+  nombre    String
+  rol       RolAdministrador      @default(DOMINIO)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  dominios  AdministradorDominio[]
+}
+
+model AdministradorDominio {
+  id              Int               @id @default(autoincrement())
+  administradorId Int
+  dominioId       Int
+  administrador   Administrador     @relation(fields: [administradorId], references: [id], onDelete: Cascade)
+  dominio         DominioInventario @relation(fields: [dominioId], references: [id], onDelete: Cascade)
+
+  @@unique([administradorId, dominioId])
+  @@index([administradorId])
+  @@index([dominioId])
+}
+

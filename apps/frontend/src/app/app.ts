@@ -51,7 +51,11 @@ export class App implements OnInit {
   }
 
   getLegajo(): string {
-    return this.authService.currentUser()?.legajo || '';
+    return this.authService.currentUser()?.username || '';
+  }
+
+  isSystemAdmin(): boolean {
+    return this.authService.isSystemAdmin();
   }
 
   onLogout() {

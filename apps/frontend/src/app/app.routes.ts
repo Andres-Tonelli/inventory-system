@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
+import { authGuard, systemAdminGuard, domainGuard } from './core/auth/auth.guard';
 
 export const appRoutes: Route[] = [
   {
@@ -20,14 +20,17 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'configuracion/organizacion',
+        canActivate: [systemAdminGuard],
         loadComponent: () => import('./organizacion/organizacion.component').then(m => m.OrganizacionComponent)
       },
       {
         path: 'configuracion/organizacion/empleados/:id',
+        canActivate: [systemAdminGuard],
         loadComponent: () => import('./empleado-asignaciones/empleado-asignaciones.component').then(m => m.EmpleadoAsignacionesComponent)
       },
       {
         path: 'dominios/:dominioId',
+        canActivate: [domainGuard],
         loadComponent: () => import('./inventario/inventario.component').then(m => m.InventarioComponent)
       },
       {

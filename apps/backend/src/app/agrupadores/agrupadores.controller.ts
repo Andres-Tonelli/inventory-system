@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Body, Param, Query, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
 import { AgrupadoresService } from '@inventory-system/backend-application';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DomainAdminGuard } from '../auth/domain-admin.guard';
 import {
   CreateAgrupadorDto,
   AddArticuloAgrupadorDto,
@@ -7,6 +9,7 @@ import {
 } from './dto/agrupadores.dto';
 
 @Controller('agrupadores')
+@UseGuards(JwtAuthGuard, DomainAdminGuard)
 export class AgrupadoresController {
   constructor(private readonly agrupadoresService: AgrupadoresService) {}
 

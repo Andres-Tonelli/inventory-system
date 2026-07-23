@@ -13,6 +13,7 @@ import {
   TipoAgrupador,
   AtributoDefinicion,
 } from '../core/services/catalogos.service';
+import { AuthService } from '../core/auth/auth.service';
 import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
 import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 import { DOMINIO_ICONOS, DOMINIO_COLORES } from '@inventory-system/api-contract';
@@ -62,10 +63,15 @@ export class ConfiguracionDominiosComponent implements OnInit {
     private catalogos: CatalogosService,
     private confirmUi: ConfirmacionUiService,
     private notificaciones: NotificacionesUiService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
     this.loadAll();
+  }
+
+  isSystemAdmin(): boolean {
+    return this.authService.isSystemAdmin();
   }
 
   get selected(): Dominio | null {
@@ -90,7 +96,13 @@ export class ConfiguracionDominiosComponent implements OnInit {
   loadAll(): void {
     this.catalogos.getDominios().subscribe((res) => {
       if (!res.success) return;
-      this.dominios = res.data;
+      const allDomains = res.data;
+      const user = this.authService.currentUser();
+      if (user && user.rol !== 'SISTEMA') {
+        this.dominios = allDomains.filter(d => d.id && user.dominios.includes(d.id));
+      } else {
+        this.dominios = allDomains;
+      }
       if (this.selectedId == null && this.dominios.length) {
         this.selectedId = this.dominios[0].id ?? null;
       }

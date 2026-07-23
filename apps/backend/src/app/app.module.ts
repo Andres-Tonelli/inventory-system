@@ -7,9 +7,18 @@ import { InventarioModule } from './inventario/inventario.module';
 import { AsignacionesModule } from './asignaciones/asignaciones.module';
 import { EmpleadosModule } from './empleados/empleados.module';
 import { AgrupadoresModule } from './agrupadores/agrupadores.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, CatalogosModule, InventarioModule, AsignacionesModule, EmpleadosModule, AgrupadoresModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    CatalogosModule,
+    InventarioModule,
+    AsignacionesModule,
+    EmpleadosModule,
+    AgrupadoresModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

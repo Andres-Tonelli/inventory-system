@@ -10,7 +10,7 @@
     <section class="rail" aria-label="Lista de dominios">
       <div class="rail-head">
         <span class="lbl">Dominios</span>
-        <button class="btn primary sm" (click)="openNewDominio()"><i class="pi pi-plus"></i>Nuevo</button>
+        <button class="btn primary sm" *ngIf="isSystemAdmin()" (click)="openNewDominio()"><i class="pi pi-plus"></i>Nuevo</button>
       </div>
       <div class="rail-list">
         <button
@@ -25,7 +25,7 @@
             <span class="dname">{{ d.nombre }}</span>
             <span class="dsub">{{ countTipos(d) }} tipos · {{ countAtrs(d) }} atributos</span>
           </span>
-          <span class="dom-actions">
+          <span class="dom-actions" *ngIf="isSystemAdmin()">
             <button class="icon-btn" title="Renombrar" (click)="openEditDominio(d, $event)"><i class="pi pi-pencil"></i></button>
             <button class="icon-btn danger" title="Eliminar" (click)="deleteDominio(d, $event)"><i class="pi pi-trash"></i></button>
           </span>
@@ -45,7 +45,7 @@
               <p class="desc">Tipos de agrupador y atributos de los artículos de este dominio.</p>
             </div>
           </div>
-          <div class="head-actions">
+          <div class="head-actions" *ngIf="isSystemAdmin()">
             <button class="btn sm" (click)="openEditDominio(dom)"><i class="pi pi-pencil"></i>Renombrar</button>
             <button class="btn ghost sm" (click)="deleteDominio(dom)"><i class="pi pi-trash"></i>Eliminar</button>
           </div>

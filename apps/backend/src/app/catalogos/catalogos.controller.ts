@@ -1,5 +1,8 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards } from '@nestjs/common';
 import { CatalogosService } from '@inventory-system/backend-application';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DomainAdminGuard } from '../auth/domain-admin.guard';
+import { SystemAdminGuard } from '../auth/system-admin.guard';
 import {
   CreateAtributoDto,
   CreateCategoriaDto,
@@ -18,10 +21,12 @@ import {
 } from './dto/catalogos.dto';
 
 @Controller('catalogos')
+@UseGuards(JwtAuthGuard, DomainAdminGuard)
 export class CatalogosController {
   constructor(private readonly catalogosService: CatalogosService) {}
 
   @Post('dominios')
+  @UseGuards(SystemAdminGuard)
   async createDominio(@Body() body: CreateDominioDto) {
     await this.catalogosService.createDominio(body);
     return { success: true, message: 'Dominio de inventario creado exitosamente' };
@@ -136,12 +141,14 @@ export class CatalogosController {
   }
 
   @Put('dominios/:id')
+  @UseGuards(SystemAdminGuard)
   async updateDominio(@Param('id') id: string, @Body() body: UpdateDominioDto) {
     await this.catalogosService.updateDominio(Number(id), body);
     return { success: true, message: 'Dominio actualizado' };
   }
 
   @Delete('dominios/:id')
+  @UseGuards(SystemAdminGuard)
   async deleteDominio(@Param('id') id: string) {
     await this.catalogosService.deleteDominio(Number(id));
     return { success: true, message: 'Dominio eliminado' };

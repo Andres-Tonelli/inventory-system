@@ -1,5 +1,7 @@
-import { Controller, Post, Patch, Body, Get, Query, Param } from '@nestjs/common';
+import { Controller, Post, Patch, Body, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { AsignacionesService } from '@inventory-system/backend-application';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DomainAdminGuard } from '../auth/domain-admin.guard';
 import {
   AsignarArticuloDto,
   AsignarAgrupadorDto,
@@ -7,6 +9,7 @@ import {
 } from './dto/asignaciones.dto';
 
 @Controller('asignaciones')
+@UseGuards(JwtAuthGuard, DomainAdminGuard)
 export class AsignacionesController {
   constructor(private readonly asignacionesService: AsignacionesService) {}
 

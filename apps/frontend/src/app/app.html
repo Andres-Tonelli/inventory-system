@@ -43,7 +43,7 @@
         <a routerLink="/configuracion/dominios"><i class="pi pi-cog"></i>Configuración</a>
       </li>
 
-      <li class="menu-item" [class.active]="isOrganizacionActive()">
+      <li class="menu-item" [class.active]="isOrganizacionActive()" *ngIf="isSystemAdmin()">
         <a routerLink="/configuracion/organizacion"><i class="pi pi-sliders-h"></i>Organización</a>
       </li>
     </ul>
@@ -53,7 +53,7 @@
         <i class="pi pi-user text-primary" style="font-size: 1.25rem; color: #818cf8 !important;"></i>
         <div class="flex flex-column" style="min-width: 0; line-height: 1.2;">
           <span class="font-bold text-white text-sm" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ getUsername() }}</span>
-          <span class="text-xs text-400" style="color: #a5b4fc;">Legajo: {{ getLegajo() }}</span>
+          <span class="text-xs text-400" style="color: #a5b4fc;">Usuario: {{ getLegajo() }}</span>
         </div>
       </div>
       <button pButton label="Cerrar Sesión" icon="pi pi-sign-out" styleClass="p-button-danger p-button-outlined w-full mt-2" (click)="onLogout()"></button>

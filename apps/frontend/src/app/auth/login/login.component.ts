@@ -18,28 +18,33 @@ import { AuthService } from '../../core/auth/auth.service';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
-  legajo = '';
+  username = '';
+  password = '';
   loading = false;
   errorMsg: string | null = null;
 
   constructor(private authService: AuthService, private router: Router) {}
 
   onLogin() {
-    if (!this.legajo.trim()) {
-      this.errorMsg = 'Por favor ingresa tu legajo.';
+    if (!this.username.trim()) {
+      this.errorMsg = 'Por favor ingresa tu usuario de red.';
+      return;
+    }
+    if (!this.password.trim()) {
+      this.errorMsg = 'Por favor ingresa tu contraseña.';
       return;
     }
 
     this.loading = true;
     this.errorMsg = null;
 
-    this.authService.login(this.legajo).subscribe((res) => {
+    this.authService.login(this.username, this.password).subscribe((res) => {
       this.loading = false;
       if (res.success) {
         // Redirigir a la pantalla principal (selector de dominio)
         this.router.navigate(['/']);
       } else {
-        this.errorMsg = res.message || 'Legajo incorrecto.';
+        this.errorMsg = res.message || 'Usuario o contraseña incorrectos.';
       }
     });
   }

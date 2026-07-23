@@ -46,7 +46,13 @@ export class DomainSelectionComponent implements OnInit {
     this.domainContext.clearDomain();
     this.catalogosService.getDominios().subscribe({
       next: (res) => {
-        this.dominios = res.success ? res.data : [];
+        const allDomains = res.success ? res.data : [];
+        const user = this.authService.currentUser();
+        if (user && user.rol !== 'SISTEMA') {
+          this.dominios = allDomains.filter(d => d.id && user.dominios.includes(d.id));
+        } else {
+          this.dominios = allDomains;
+        }
         this.loading = false;
         this.loadStats();
       },
@@ -55,6 +61,10 @@ export class DomainSelectionComponent implements OnInit {
         this.loadingStats = false;
       }
     });
+  }
+
+  isSystemAdmin(): boolean {
+    return this.authService.isSystemAdmin();
   }
 
   private loadStats() {

@@ -42,8 +42,9 @@
     <div *ngIf="dominios.length === 0" class="empty-card">
       <i class="pi pi-inbox"></i>
       <h3>Todavía no hay dominios</h3>
-      <p>Creá tu primer dominio de inventario en Configuración para empezar a cargar artículos y agrupadores.</p>
-      <a class="btn primary" routerLink="/configuracion/dominios"><i class="pi pi-plus"></i>Crear un dominio</a>
+      <p *ngIf="isSystemAdmin()">Creá tu primer dominio de inventario en Configuración para empezar a cargar artículos y agrupadores.</p>
+      <p *ngIf="!isSystemAdmin()">No tienes ningún dominio de inventario asignado. Por favor, contacta a un administrador del sistema.</p>
+      <a class="btn primary" routerLink="/configuracion/dominios" *ngIf="isSystemAdmin()"><i class="pi pi-plus"></i>Crear un dominio</a>
     </div>
 
     <!-- Tarjetas de dominio -->
