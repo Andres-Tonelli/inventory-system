@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Logger } from '@nestjs/common';
 import { EmpleadosService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SystemAdminGuard } from '../auth/system-admin.guard';
+import { LdapService } from '../auth/ldap.service';
+import { PrismaService } from '@inventory-system/backend-persistence';
 import {
   CreateAreaDto,
   CreateEmpleadoDto,
@@ -12,7 +14,13 @@ import {
 
 @Controller('empleados')
 export class EmpleadosController {
-  constructor(private readonly empleadosService: EmpleadosService) {}
+  private readonly logger = new Logger(EmpleadosController.name);
+
+  constructor(
+    private readonly empleadosService: EmpleadosService,
+    private readonly ldapService: LdapService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   // ---- AREAS ----
   @Post('areas')
@@ -58,6 +66,29 @@ export class EmpleadosController {
     @Query('nombre') nombre?: string,
     @Query('areaId') areaId?: number,
   ) {
+    try {
+      const adMembers = await this.ldapService.getGroupMembers();
+      for (const member of adMembers) {
+        let matchedAreaId = 1; // Fallback area
+        if (member.area) {
+          const areaObj = await this.prisma.area.upsert({
+            where: { nombre: member.area },
+            update: {},
+            create: { nombre: member.area }
+          });
+          matchedAreaId = areaObj.id;
+        }
+
+        await this.prisma.empleado.upsert({
+          where: { legajo: member.username },
+          update: { nombre: member.nombre, areaId: matchedAreaId },
+          create: { legajo: member.username, nombre: member.nombre, areaId: matchedAreaId }
+        });
+      }
+    } catch (err: any) {
+      this.logger.error(`Error al sincronizar empleados de AD/LDAP: ${err.message}`);
+    }
+
     const resultados = await this.empleadosService.getEmpleados({ legajo, nombre, areaId });
     return { success: true, data: resultados };
   }

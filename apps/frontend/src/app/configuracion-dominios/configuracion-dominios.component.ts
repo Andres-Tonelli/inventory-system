@@ -14,6 +14,7 @@ import {
   AtributoDefinicion,
 } from '../core/services/catalogos.service';
 import { AuthService } from '../core/auth/auth.service';
+import { EmpleadosService } from '../core/services/empleados.service';
 import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
 import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 import { DOMINIO_ICONOS, DOMINIO_COLORES } from '@inventory-system/api-contract';
@@ -31,6 +32,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
   tiposByDom: Record<number, TipoAgrupador[]> = {};
   atrsByDom: Record<number, AtributoDefinicion[]> = {};
   adminsByDom: Record<number, any[]> = {};
+  empleadosRed: any[] = [];
   activeTab: 'tipos' | 'atributos' | 'administradores' = 'tipos';
 
   // Diálogos
@@ -50,7 +52,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
   atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
 
   showAdminDialog = false;
-  adminForm = { username: '', nombre: '', rol: 'DOMINIO' };
+  adminForm: { selectedEmpleado: any; rol: 'DOMINIO' | 'SISTEMA' } = { selectedEmpleado: null, rol: 'DOMINIO' };
 
   readonly asignableOptions = [
     { label: 'Asignable a persona', value: true },
@@ -72,6 +74,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
     private confirmUi: ConfirmacionUiService,
     private notificaciones: NotificacionesUiService,
     private authService: AuthService,
+    private empleadosService: EmpleadosService,
   ) {}
 
   ngOnInit(): void {
@@ -275,13 +278,17 @@ export class ConfiguracionDominiosComponent implements OnInit {
     return this.selectedId ? this.adminsByDom[this.selectedId] ?? [] : [];
   }
   openNewAdmin(): void {
-    this.adminForm = { username: '', nombre: '', rol: 'DOMINIO' };
+    this.adminForm = { selectedEmpleado: null, rol: 'DOMINIO' };
+    this.empleadosService.getEmpleados().subscribe((res) => {
+      if (res.success) this.empleadosRed = res.data;
+    });
     this.showAdminDialog = true;
   }
   saveAdmin(): void {
-    const username = this.adminForm.username.trim();
-    const nombre = this.adminForm.nombre.trim();
-    if (!username || !nombre || !this.selectedId) return;
+    const emp = this.adminForm.selectedEmpleado;
+    if (!emp || !this.selectedId) return;
+    const username = emp.legajo; // sAMAccountName mapea a legajo
+    const nombre = emp.nombre;
     const domId = this.selectedId;
     this.catalogos.asociarAdministradorADominio(domId, { username, nombre, rol: this.adminForm.rol }).subscribe({
       next: () => {

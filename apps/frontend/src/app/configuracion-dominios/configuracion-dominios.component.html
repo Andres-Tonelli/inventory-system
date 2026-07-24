@@ -248,16 +248,21 @@
 <p-dialog [(visible)]="showAdminDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
   [style]="{ width: '460px' }" header="Asociar administrador al dominio">
   <div class="form">
-    <label>Usuario de Red (Zentyal/AD)</label>
-    <input pInputText [(ngModel)]="adminForm.username" placeholder="Ej: jdoe" />
-    <label class="mt">Nombre visible</label>
-    <input pInputText [(ngModel)]="adminForm.nombre" placeholder="Ej: John Doe" />
+    <label>Seleccionar Usuario de Red</label>
+    <p-select [options]="empleadosRed" [(ngModel)]="adminForm.selectedEmpleado" optionLabel="nombre" filter="true" placeholder="Seleccionar usuario..." appendTo="body" styleClass="w-full"></p-select>
+    <div class="panel-note mt" *ngIf="adminForm.selectedEmpleado" style="margin-top: 1rem; margin-bottom: 1rem;">
+      <i class="pi pi-user"></i>
+      <span>
+        <b>Usuario de Red:</b> <code>{{ adminForm.selectedEmpleado.legajo }}</code><br/>
+        <b>Área:</b> {{ adminForm.selectedEmpleado.area?.nombre || 'Sin Área' }}
+      </span>
+    </div>
     <label class="mt">Rol de Administrador</label>
     <p-select [options]="rolOptions" [(ngModel)]="adminForm.rol" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
     <small class="hint">Administrador de Dominio = acceso restringido a este dominio · Administrador de Sistema = acceso global.</small>
   </div>
   <ng-template pTemplate="footer">
     <button class="btn ghost" (click)="showAdminDialog = false">Cancelar</button>
-    <button class="btn primary" (click)="saveAdmin()">Asociar</button>
+    <button class="btn primary" [disabled]="!adminForm.selectedEmpleado" (click)="saveAdmin()">Asociar</button>
   </ng-template>
 </p-dialog>
