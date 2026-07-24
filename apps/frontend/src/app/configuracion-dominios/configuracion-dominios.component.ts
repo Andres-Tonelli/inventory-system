@@ -30,7 +30,8 @@ export class ConfiguracionDominiosComponent implements OnInit {
   selectedId: number | null = null;
   tiposByDom: Record<number, TipoAgrupador[]> = {};
   atrsByDom: Record<number, AtributoDefinicion[]> = {};
-  activeTab: 'tipos' | 'atributos' = 'tipos';
+  adminsByDom: Record<number, any[]> = {};
+  activeTab: 'tipos' | 'atributos' | 'administradores' = 'tipos';
 
   // Diálogos
   showDominioDialog = false;
@@ -48,6 +49,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
   editingAtributoId: number | null = null;
   atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
 
+  showAdminDialog = false;
+  adminForm = { username: '', nombre: '', rol: 'DOMINIO' };
+
   readonly asignableOptions = [
     { label: 'Asignable a persona', value: true },
     { label: 'Contenedor / ubicación', value: false },
@@ -57,6 +61,10 @@ export class ConfiguracionDominiosComponent implements OnInit {
     { label: 'Número', value: 'NUMERO' },
     { label: 'Fecha', value: 'FECHA' },
     { label: 'Booleano', value: 'BOOLEANO' },
+  ];
+  readonly rolOptions = [
+    { label: 'Administrador de Dominio', value: 'DOMINIO' },
+    { label: 'Administrador de Sistema', value: 'SISTEMA' },
   ];
 
   constructor(
@@ -119,6 +127,11 @@ export class ConfiguracionDominiosComponent implements OnInit {
     this.catalogos.getAtributos(id).subscribe((r) => {
       if (r.success) this.atrsByDom = { ...this.atrsByDom, [id]: r.data };
     });
+    if (this.isSystemAdmin()) {
+      this.catalogos.getAdministradoresDelDominio(id).subscribe((r) => {
+        if (r.success) this.adminsByDom = { ...this.adminsByDom, [id]: r.data };
+      });
+    }
   }
 
   select(d: Dominio): void {
@@ -253,6 +266,43 @@ export class ConfiguracionDominiosComponent implements OnInit {
       this.catalogos.deleteAtributo(id).subscribe(() => {
         this.notificaciones.exito(`Atributo "${a.nombre}" eliminado.`);
         this.loadDominioConfig(domId);
+      });
+    });
+  }
+
+  // ---- Administradores ----
+  get administradores(): any[] {
+    return this.selectedId ? this.adminsByDom[this.selectedId] ?? [] : [];
+  }
+  openNewAdmin(): void {
+    this.adminForm = { username: '', nombre: '', rol: 'DOMINIO' };
+    this.showAdminDialog = true;
+  }
+  saveAdmin(): void {
+    const username = this.adminForm.username.trim();
+    const nombre = this.adminForm.nombre.trim();
+    if (!username || !nombre || !this.selectedId) return;
+    const domId = this.selectedId;
+    this.catalogos.asociarAdministradorADominio(domId, { username, nombre, rol: this.adminForm.rol }).subscribe({
+      next: () => {
+        this.notificaciones.exito(`Administrador "${nombre}" asociado al dominio.`);
+        this.showAdminDialog = false;
+        this.loadDominioConfig(domId);
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo asociar el administrador.')
+    });
+  }
+  deleteAdmin(admin: any): void {
+    if (!admin.id || !this.selectedId) return;
+    const adminId = admin.id;
+    const domId = this.selectedId;
+    this.confirmUi.eliminar(`¿Desvincular a "${admin.nombre}" como administrador de este dominio?`, () => {
+      this.catalogos.desvincularAdministradorDeDominio(domId, adminId).subscribe({
+        next: () => {
+          this.notificaciones.exito(`Administrador "${admin.nombre}" desvinculado.`);
+          this.loadDominioConfig(domId);
+        },
+        error: (e) => this.notificaciones.errorHttp(e, 'No se pudo desvincular al administrador.')
       });
     });
   }

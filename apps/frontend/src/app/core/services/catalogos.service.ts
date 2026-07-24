@@ -122,4 +122,15 @@ export class CatalogosService {
   deleteEstado(id: number) {
     return this.http.delete(`/api/catalogos/estados/${id}`);
   }
+
+  // ---- ADMINISTRADORES ----
+  getAdministradoresDelDominio(dominioId: number): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`/api/auth/dominios/${dominioId}/administradores`);
+  }
+  asociarAdministradorADominio(dominioId: number, data: { username: string; nombre: string; rol?: string }) {
+    return this.http.post(`/api/auth/dominios/${dominioId}/administradores`, data);
+  }
+  desvincularAdministradorDeDominio(dominioId: number, adminId: number) {
+    return this.http.delete(`/api/auth/dominios/${dominioId}/administradores/${adminId}`);
+  }
 }

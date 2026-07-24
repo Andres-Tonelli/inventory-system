@@ -58,6 +58,9 @@
           <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'atributos'" (click)="activeTab = 'atributos'">
             Atributos <span class="count">{{ atributos.length }}</span>
           </button>
+          <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'administradores'" (click)="activeTab = 'administradores'" *ngIf="isSystemAdmin()">
+            Administradores <span class="count">{{ administradores.length }}</span>
+          </button>
         </div>
 
         <!-- Tipos de agrupador -->
@@ -100,12 +103,12 @@
             <span>Campos extra que tendrá cada artículo de <b>{{ dom.nombre }}</b>. La <b>clave</b> es el identificador interno; el <b>nombre</b> es lo que ve el usuario.</span>
           </div>
           <div class="toolbar">
-            <span class="cap">{{ atributos.length }} atributos definidos.</span>
+            <span class="cap">Atributos adicionales para catalogar artículos.</span>
             <button class="btn primary sm" (click)="openNewAtributo()"><i class="pi pi-plus"></i>Nuevo atributo</button>
           </div>
 
           <table *ngIf="atributos.length > 0; else emptyAtrs">
-            <thead><tr><th>Nombre</th><th>Clave</th><th>Tipo de dato</th><th class="ta-right"></th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Clave interna</th><th>Tipo de dato</th><th class="ta-right"></th></tr></thead>
             <tbody>
               <tr *ngFor="let a of atributos">
                 <td class="cell-name">{{ a.nombre }}</td>
@@ -129,6 +132,39 @@
             </tbody>
           </table>
           <ng-template #emptyAtrs><div class="empty">Sin atributos. Agregá el primero.</div></ng-template>
+        </div>
+
+        <!-- Administradores -->
+        <div class="tabpanel" *ngIf="activeTab === 'administradores' && isSystemAdmin()">
+          <div class="panel-note">
+            <i class="pi pi-info-circle"></i>
+            <span>Administradores de red que tienen privilegios para gestionar este dominio. Los Administradores de Sistema acceden automáticamente a todo.</span>
+          </div>
+          <div class="toolbar">
+            <span class="cap">Quiénes gestionan las existencias y agrupadores de este dominio.</span>
+            <button class="btn primary sm" (click)="openNewAdmin()"><i class="pi pi-plus"></i>Asociar administrador</button>
+          </div>
+
+          <table *ngIf="administradores.length > 0; else emptyAdmins">
+            <thead><tr><th>Usuario de Red</th><th>Nombre visible</th><th>Rol</th><th class="ta-right"></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let a of administradores">
+                <td class="cell-name"><code>{{ a.username }}</code></td>
+                <td>{{ a.nombre }}</td>
+                <td>
+                  <span class="pill" [class.green]="a.rol === 'SISTEMA'" [class.blue]="a.rol === 'DOMINIO'">
+                    <span class="dot"></span>{{ a.rol === 'SISTEMA' ? 'Sistema' : 'Dominio' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button class="btn ghost sm text-danger" (click)="deleteAdmin(a)">Quitar acceso</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyAdmins><div class="empty">Este dominio no tiene administradores asignados.</div></ng-template>
         </div>
       </ng-container>
 
@@ -205,5 +241,23 @@
   <ng-template pTemplate="footer">
     <button class="btn ghost" (click)="showAtributoDialog = false">Cancelar</button>
     <button class="btn primary" (click)="saveAtributo()">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo Administrador -->
+<p-dialog [(visible)]="showAdminDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '460px' }" header="Asociar administrador al dominio">
+  <div class="form">
+    <label>Usuario de Red (Zentyal/AD)</label>
+    <input pInputText [(ngModel)]="adminForm.username" placeholder="Ej: jdoe" />
+    <label class="mt">Nombre visible</label>
+    <input pInputText [(ngModel)]="adminForm.nombre" placeholder="Ej: John Doe" />
+    <label class="mt">Rol de Administrador</label>
+    <p-select [options]="rolOptions" [(ngModel)]="adminForm.rol" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+    <small class="hint">Administrador de Dominio = acceso restringido a este dominio · Administrador de Sistema = acceso global.</small>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showAdminDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveAdmin()">Asociar</button>
   </ng-template>
 </p-dialog>
