@@ -76,7 +76,9 @@ export class LdapService {
         const bindDN = process.env.LDAP_BIND_DN || '';
         const bindPassword = process.env.LDAP_BIND_PASSWORD || '';
         const groupDN = process.env.LDAP_GROUP_DN;
-        const filter = groupDN ? `(&(objectClass=user)(memberOf=${groupDN}))` : `(&(objectClass=user)(sAMAccountName=*))`;
+        const filter = groupDN
+          ? `(&(objectCategory=person)(objectClass=user)(memberOf=${groupDN}))`
+          : `(&(objectClass=user)(sAMAccountName=*))`;
         
         const performSearch = () => {
           const searchBase = process.env.LDAP_SEARCH_BASE || 'CN=Users,DC=empresa,DC=local';
@@ -97,12 +99,17 @@ export class LdapService {
             const users: any[] = [];
 
             res.on('searchEntry', (entry: any) => {
-              const user = entry.object;
-              // Extract AD fields (sometimes attributes are arrays or empty)
-              const username = user.sAMAccountName;
-              const nombre = user.displayName || user.cn || username;
-              const area = user.department || 'Sin Área';
-              const mail = user.mail || '';
+              const user: any = {};
+              if (entry.attributes) {
+                entry.attributes.forEach((attr: any) => {
+                  user[attr.type] = attr.values.length === 1 ? attr.values[0] : attr.values;
+                });
+              }
+
+              const username = user.sAMAccountName || user.samaccountname;
+              const nombre = user.displayName || user.displayname || user.cn || username;
+              const area = user.department || user.Department || 'Sin Área';
+              const mail = user.mail || user.Mail || '';
 
               if (username) {
                 users.push({ username, nombre, area, mail });

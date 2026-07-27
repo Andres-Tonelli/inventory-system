@@ -1,0 +1,153 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="title-section">
+      <h1>Administradores de Roles</h1>
+      <p class="subtitle">Gestioná los permisos del sistema y asigná administradores a cada dominio de inventario.</p>
+    </div>
+    <div class="actions-section">
+      <button class="btn primary" (click)="openNewAdmin()">
+        <i class="pi pi-plus"></i>Nuevo Administrador
+      </button>
+    </div>
+  </header>
+
+  <div class="card main-card">
+    <table class="data-table" *ngIf="admins.length > 0; else emptyState">
+      <thead>
+        <tr>
+          <th>Usuario de Red</th>
+          <th>Nombre Completo</th>
+          <th>Rol de Sistema</th>
+          <th>Dominios Autorizados</th>
+          <th class="ta-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of admins">
+          <td class="cell-username">
+            <code>{{ a.username }}</code>
+          </td>
+          <td class="cell-name">{{ a.nombre }}</td>
+          <td>
+            <span class="pill" [class.green]="a.rol === 'SISTEMA'" [class.blue]="a.rol === 'DOMINIO'">
+              <span class="dot"></span>
+              {{ a.rol === 'SISTEMA' ? 'Sistema' : 'Dominio' }}
+            </span>
+          </td>
+          <td class="cell-domains">
+            <span class="domains-list">{{ getAdminDomainsLabel(a) }}</span>
+          </td>
+          <td>
+            <div class="row-actions justify-end">
+              <button class="btn ghost sm" (click)="openEditAdmin(a)">
+                <i class="pi pi-pencil"></i>Editar
+              </button>
+              <button class="btn ghost sm text-danger" (click)="deleteAdmin(a)">
+                <i class="pi pi-trash"></i>Quitar
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyState>
+      <div class="empty-panel">
+        <i class="pi pi-users empty-icon"></i>
+        <h3>No hay administradores registrados</h3>
+        <p>Los usuarios de red no podrán ingresar al panel administrativo hasta que los registres y les asignes un rol.</p>
+        <button class="btn primary mt-4" (click)="openNewAdmin()">Registrar Primer Administrador</button>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Diálogo de Gestión de Administrador -->
+<p-dialog
+  [(visible)]="showDialog"
+  [modal]="true"
+  [draggable]="false"
+  [dismissableMask]="true"
+  [style]="{ width: '500px' }"
+  [header]="editingAdminId ? 'Editar Administrador' : 'Nuevo Administrador de Red'"
+>
+  <div class="form">
+    <!-- Selección de Empleado (Solo nuevo) -->
+    <ng-container *ngIf="!editingAdminId">
+      <label>Usuario de Red (Active Directory / Zentyal)</label>
+      <p-select
+        [options]="empleadosRed"
+        [(ngModel)]="adminForm.selectedEmpleado"
+        optionLabel="nombre"
+        filter="true"
+        placeholder="Seleccionar usuario de red..."
+        (onChange)="onEmpleadoSelect($event.value)"
+        appendTo="body"
+        styleClass="w-full"
+      ></p-select>
+      <small class="hint">Buscá por nombre los usuarios importados automáticamente de tu AD.</small>
+    </ng-container>
+
+    <!-- Usuario bloqueado (Solo edición) -->
+    <ng-container *ngIf="editingAdminId">
+      <label>Usuario de Red</label>
+      <div class="locked-username">
+        <code>{{ adminForm.selectedEmpleado?.legajo || 'Cargando...' }}</code>
+        <span class="muted"> (El identificador de red no se puede modificar)</span>
+      </div>
+    </ng-container>
+
+    <!-- Nombre Visible -->
+    <label class="mt">Nombre Completo (Visible en Pantalla)</label>
+    <input
+      pInputText
+      [(ngModel)]="adminForm.nombre"
+      placeholder="Ej: Ing. Juan Pérez"
+      class="w-full"
+    />
+
+    <!-- Rol -->
+    <label class="mt">Rol de Acceso</label>
+    <p-select
+      [options]="rolOptions"
+      [(ngModel)]="adminForm.rol"
+      optionLabel="label"
+      optionValue="value"
+      appendTo="body"
+      styleClass="w-full"
+    ></p-select>
+
+    <!-- Dominios Asignados (Visible si Rol es DOMINIO) -->
+    <div class="domains-selection-section mt" *ngIf="adminForm.rol === 'DOMINIO'">
+      <label class="mb-2 block font-semibold">Dominios que puede Administrar:</label>
+      <div class="domains-checklist">
+        <div
+          *ngFor="let dom of dominios"
+          class="domain-check-item"
+          [class.selected]="isDomainSelected(dom.id)"
+          (click)="toggleDomain(dom.id)"
+        >
+          <input
+            type="checkbox"
+            [checked]="isDomainSelected(dom.id)"
+            (click)="$event.stopPropagation(); toggleDomain(dom.id)"
+          />
+          <span class="dico sm ml-2" [ngClass]="dom.color"><i [ngClass]="'pi pi-' + dom.icono"></i></span>
+          <span class="domain-name ml-2">{{ dom.nombre }}</span>
+        </div>
+      </div>
+      <small class="hint mt-1 block">El administrador solo verá las existencias y asignaciones de los dominios marcados.</small>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showDialog = false">Cancelar</button>
+    <button
+      class="btn primary"
+      [disabled]="(!editingAdminId && !adminForm.selectedEmpleado) || !adminForm.nombre.trim()"
+      (click)="saveAdmin()"
+    >
+      {{ editingAdminId ? 'Guardar Cambios' : 'Registrar Acceso' }}
+    </button>
+  </ng-template>
+</p-dialog>

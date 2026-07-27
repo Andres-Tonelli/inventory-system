@@ -133,4 +133,18 @@ export class CatalogosService {
   desvincularAdministradorDeDominio(dominioId: number, adminId: number) {
     return this.http.delete(`/api/auth/dominios/${dominioId}/administradores/${adminId}`);
   }
+
+  // ---- GLOBAL ADMINISTRATORS ----
+  getAllAdministradores(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>('/api/auth/administradores');
+  }
+  createAdministrador(data: { username: string; nombre: string; rol: string; dominios?: number[] }) {
+    return this.http.post('/api/auth/administradores', data);
+  }
+  updateAdministrador(id: number, data: { nombre: string; rol: string; dominios?: number[] }) {
+    return this.http.put(`/api/auth/administradores/${id}`, data);
+  }
+  deleteAdministrador(id: number) {
+    return this.http.delete(`/api/auth/administradores/${id}`);
+  }
 }

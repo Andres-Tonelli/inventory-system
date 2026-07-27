@@ -43,6 +43,10 @@
         <a routerLink="/configuracion/dominios"><i class="pi pi-cog"></i>Configuración</a>
       </li>
 
+      <li class="menu-item" [class.active]="isAdministradoresActive()" *ngIf="isSystemAdmin()">
+        <a routerLink="/configuracion/administradores"><i class="pi pi-users"></i>Administradores</a>
+      </li>
+
       <li class="menu-item" [class.active]="isOrganizacionActive()" *ngIf="isSystemAdmin()">
         <a routerLink="/configuracion/organizacion"><i class="pi pi-sliders-h"></i>Organización</a>
       </li>

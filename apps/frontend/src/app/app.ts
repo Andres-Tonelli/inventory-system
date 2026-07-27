@@ -99,6 +99,10 @@ export class App implements OnInit {
     return this.router.url.startsWith('/asignaciones');
   }
 
+  isAdministradoresActive(): boolean {
+    return this.router.url.startsWith('/configuracion/administradores');
+  }
+
   isDomainActive(): boolean {
     return this.router.url.startsWith('/dominios/');
   }

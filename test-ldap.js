@@ -43,7 +43,7 @@ client.bind(bindDN, bindPassword, (err) => {
   console.log('¡Autenticación exitosa! Acceso concedido al directorio.\n');
   console.log('3. Realizando búsqueda de usuarios...');
 
-  const filter = groupDN ? `(&(objectClass=user)(memberOf=${groupDN}))` : `(&(objectClass=user)(sAMAccountName=*))`;
+  const filter = groupDN ? `(&(objectCategory=person)(objectClass=user)(memberOf=${groupDN}))` : `(&(objectClass=user)(sAMAccountName=*))`;
   console.log(`- Filtro utilizado: ${filter}`);
 
   const opts = {
@@ -62,14 +62,36 @@ client.bind(bindDN, bindPassword, (err) => {
 
     let count = 0;
 
-    res.on('searchEntry', (entry) => {
+res.on('searchEntry', (entry) => {
       count++;
-      const user = entry.object;
-      console.log(`\n[Usuario #${count}]`);
-      console.log(`- Username (sAMAccountName): ${user.sAMAccountName}`);
-      console.log(`- Nombre Completo (displayName): ${user.displayName || user.cn}`);
-      console.log(`- Área (department): ${user.department || 'No especificada'}`);
-      console.log(`- Email: ${user.mail || 'No especificado'}`);
+      
+      // 1. Creamos un objeto vacío
+      const user = {};
+
+      // 2. Extraemos los atributos de la forma correcta para ldapjs moderno
+      if (entry.attributes) {
+        entry.attributes.forEach(attr => {
+          // Guardamos el tipo de atributo (ej. 'mail') y su valor
+          // Si tiene un solo valor lo guardamos como texto, si tiene varios como array
+          user[attr.type] = attr.values.length === 1 ? attr.values[0] : attr.values;
+        });
+      }
+
+      // 3. Revisión cruda del objeto que acabamos de armar
+      console.log(`\n=== [Usuario #${count}] REVISIÓN CRUDA ===`);
+      console.log(user); 
+      console.log('-----------------------------------------');
+
+      // 4. Asignamos variables atajando posibles mayúsculas/minúsculas
+      const username = user.sAMAccountName || user.samaccountname || 'Sin Username';
+      const fullname = user.displayName || user.displayname || user.cn || 'Sin Nombre';
+      const area = user.department || user.Department || 'No especificada';
+      const email = user.mail || user.Mail || 'No especificado';
+
+      console.log(`- Username: ${username}`);
+      console.log(`- Nombre Completo: ${fullname}`);
+      console.log(`- Área: ${area}`);
+      console.log(`- Email: ${email}`);
     });
 
     res.on('error', (err) => {

@@ -19,6 +19,11 @@ export const appRoutes: Route[] = [
         loadComponent: () => import('./configuracion-dominios/configuracion-dominios.component').then(m => m.ConfiguracionDominiosComponent)
       },
       {
+        path: 'configuracion/administradores',
+        canActivate: [systemAdminGuard],
+        loadComponent: () => import('./configuracion-administradores/configuracion-administradores.component').then(m => m.ConfiguracionAdministradoresComponent)
+      },
+      {
         path: 'configuracion/organizacion',
         canActivate: [systemAdminGuard],
         loadComponent: () => import('./organizacion/organizacion.component').then(m => m.OrganizacionComponent)
