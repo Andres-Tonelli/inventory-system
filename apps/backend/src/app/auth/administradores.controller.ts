@@ -36,12 +36,13 @@ export class AdministradoresController {
     @Body() body: { username: string; nombre: string; rol?: 'DOMINIO' | 'SISTEMA' }
   ) {
     const rol = body.rol || 'DOMINIO';
+    const normalizedUsername = body.username.toLowerCase().trim();
 
     // 1. Create or update the administrator
     const admin = await this.prisma.administrador.upsert({
-      where: { username: body.username },
+      where: { username: normalizedUsername },
       update: { nombre: body.nombre, rol },
-      create: { username: body.username, nombre: body.nombre, rol },
+      create: { username: normalizedUsername, nombre: body.nombre, rol },
     });
 
     // 2. If it's a domain admin, link it to the domain
@@ -106,12 +107,13 @@ export class AdministradoresController {
     @Body() body: { username: string; nombre: string; rol: 'DOMINIO' | 'SISTEMA'; dominios?: number[] }
   ) {
     const rol = body.rol || 'DOMINIO';
+    const normalizedUsername = body.username.toLowerCase().trim();
 
     // 1. Create or update the admin record
     const admin = await this.prisma.administrador.upsert({
-      where: { username: body.username },
+      where: { username: normalizedUsername },
       update: { nombre: body.nombre, rol },
-      create: { username: body.username, nombre: body.nombre, rol },
+      create: { username: normalizedUsername, nombre: body.nombre, rol },
     });
 
     // 2. Clear old domain connections

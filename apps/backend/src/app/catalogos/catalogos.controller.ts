@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Req } from '@nestjs/common';
 import { CatalogosService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DomainAdminGuard } from '../auth/domain-admin.guard';
@@ -33,8 +33,14 @@ export class CatalogosController {
   }
 
   @Get('dominios')
-  async getDominios(@Query('nombre') nombre?: string) {
-    const resultados = await this.catalogosService.getDominios({ nombre });
+  async getDominios(@Req() req: any, @Query('nombre') nombre?: string) {
+    const user = req.user;
+    let resultados = await this.catalogosService.getDominios({ nombre });
+    
+    if (user && user.rol !== 'SISTEMA') {
+      resultados = resultados.filter((d: any) => user.dominios && user.dominios.includes(d.id));
+    }
+    
     return { success: true, data: resultados };
   }
 

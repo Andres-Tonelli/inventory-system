@@ -12,15 +12,17 @@ export class AuthService {
   ) {}
 
   async login(username: string, password: string) {
+    const normalizedUsername = username.toLowerCase().trim();
+
     // 1. Authenticate against Zentyal LDAP
-    const isValid = await this.ldapService.authenticate(username, password);
+    const isValid = await this.ldapService.authenticate(normalizedUsername, password);
     if (!isValid) {
       throw new UnauthorizedException('Credenciales inválidas en Active Directory');
     }
 
     // 2. Fetch admin user from Database
     const admin = await this.prisma.administrador.findUnique({
-      where: { username },
+      where: { username: normalizedUsername },
       include: {
         dominios: {
           select: { dominioId: true }
