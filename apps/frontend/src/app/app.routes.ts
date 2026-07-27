@@ -1,9 +1,10 @@
 import { Route } from '@angular/router';
-import { authGuard, systemAdminGuard, domainGuard } from './core/auth/auth.guard';
+import { authGuard, systemAdminGuard, domainGuard, guestGuard } from './core/auth/auth.guard';
 
 export const appRoutes: Route[] = [
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent)
   },
   {

@@ -13,13 +13,13 @@ export class DomainAdminGuard implements CanActivate {
     let dominioId: number | undefined;
 
     // Detect dominioId from route params, query string, or body payload
-    if (request.params.dominioId) {
+    if (request.params?.dominioId) {
       dominioId = Number(request.params.dominioId);
-    } else if (request.params.id && (request.url.includes('/dominios/') || request.url.includes('/catalogos/dominios/'))) {
+    } else if (request.params?.id && (request.url.includes('/dominios/') || request.url.includes('/catalogos/dominios/'))) {
       dominioId = Number(request.params.id);
-    } else if (request.query.dominioId) {
+    } else if (request.query?.dominioId) {
       dominioId = Number(request.query.dominioId);
-    } else if (request.body.dominioId) {
+    } else if (request.body?.dominioId) {
       dominioId = Number(request.body.dominioId);
     }
 

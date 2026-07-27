@@ -47,3 +47,14 @@ export const domainGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
   return router.parseUrl('/');
 };
+
+export const guestGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (!authService.isAuthenticated()) {
+    return true;
+  }
+
+  return router.parseUrl('/');
+};
