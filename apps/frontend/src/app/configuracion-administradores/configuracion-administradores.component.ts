@@ -27,6 +27,57 @@ export class ConfiguracionAdministradoresComponent implements OnInit {
   showDialog = false;
   editingAdminId: number | null = null;
 
+  // Filtros de búsqueda
+  searchAdmin = '';
+
+  // Ordenamiento
+  sortAdminCol = '';
+  sortAdminAsc = true;
+
+  toggleSort(col: string) {
+    if (this.sortAdminCol === col) {
+      this.sortAdminAsc = !this.sortAdminAsc;
+    } else {
+      this.sortAdminCol = col;
+      this.sortAdminAsc = true;
+    }
+  }
+
+  getSortIcon(col: string): string {
+    if (this.sortAdminCol !== col) return 'pi-sort';
+    return this.sortAdminAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  get filteredAndSortedAdmins(): any[] {
+    let result = [...this.admins];
+    const search = this.searchAdmin.toLowerCase().trim();
+    if (search) {
+      result = result.filter(a => 
+        (a.username || '').toLowerCase().includes(search) ||
+        (a.nombre || '').toLowerCase().includes(search) ||
+        (a.rol || '').toLowerCase().includes(search) ||
+        this.getAdminDomainsLabel(a).toLowerCase().includes(search)
+      );
+    }
+    if (this.sortAdminCol) {
+      result.sort((a, b) => {
+        let valA: any;
+        let valB: any;
+        if (this.sortAdminCol === 'dominios') {
+          valA = this.getAdminDomainsLabel(a);
+          valB = this.getAdminDomainsLabel(b);
+        } else {
+          valA = a[this.sortAdminCol];
+          valB = b[this.sortAdminCol];
+        }
+        valA = valA ? String(valA).toLowerCase() : '';
+        valB = valB ? String(valB).toLowerCase() : '';
+        return this.sortAdminAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+    return result;
+  }
+
   // Formulario
   adminForm = {
     selectedEmpleado: null as any,

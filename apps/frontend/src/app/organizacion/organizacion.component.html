@@ -21,11 +21,24 @@
     <!-- Empleados -->
     <div class="tabpanel" *ngIf="activeTab === 'empleados'">
       <div class="toolbar">
-        <span class="cap">Personas del sistema. Se identifican por legajo.</span>
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchEmpleado" placeholder="Buscar por nombre, legajo o área…" (ngModelChange)="paginaEmpleados = 1" /></span>
         <button class="btn primary sm" (click)="openNewEmp()"><i class="pi pi-plus"></i>Nuevo empleado</button>
       </div>
-      <table *ngIf="empleados.length > 0; else emptyEmp">
-        <thead><tr><th>Nombre</th><th>Legajo</th><th>Área</th><th class="ta-right"></th></tr></thead>
+      <table *ngIf="filteredAndSortedEmpleados.length > 0; else emptyEmp">
+        <thead>
+          <tr>
+            <th (click)="toggleSortEmp('nombre')" style="cursor: pointer; user-select: none;">
+              Nombre <i class="pi" [ngClass]="getSortEmpIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th (click)="toggleSortEmp('legajo')" style="cursor: pointer; user-select: none;">
+              Legajo <i class="pi" [ngClass]="getSortEmpIcon('legajo')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th (click)="toggleSortEmp('area')" style="cursor: pointer; user-select: none;">
+              Área <i class="pi" [ngClass]="getSortEmpIcon('area')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th class="ta-right"></th>
+          </tr>
+        </thead>
         <tbody>
           <tr *ngFor="let e of paginatedEmpleados">
             <td class="cell-name">{{ e.nombre }}</td>
@@ -41,18 +54,25 @@
           </tr>
         </tbody>
       </table>
-      <app-paginador [total]="empleados.length" [pagina]="paginaEmpleados" (paginaChange)="paginaEmpleados = $event"></app-paginador>
-      <ng-template #emptyEmp><div class="empty">Sin empleados. Agregá el primero.</div></ng-template>
+      <app-paginador [total]="filteredAndSortedEmpleados.length" [pagina]="paginaEmpleados" (paginaChange)="paginaEmpleados = $event"></app-paginador>
+      <ng-template #emptyEmp><div class="empty">Sin empleados.</div></ng-template>
     </div>
 
     <!-- Áreas -->
     <div class="tabpanel" *ngIf="activeTab === 'areas'">
       <div class="toolbar">
-        <span class="cap">Sectores a los que pertenecen los empleados.</span>
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchArea" placeholder="Buscar área…" (ngModelChange)="paginaAreas = 1" /></span>
         <button class="btn primary sm" (click)="openNewArea()"><i class="pi pi-plus"></i>Nueva área</button>
       </div>
-      <table *ngIf="areas.length > 0; else emptyArea">
-        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+      <table *ngIf="filteredAndSortedAreas.length > 0; else emptyArea">
+        <thead>
+          <tr>
+            <th (click)="toggleSortArea('nombre')" style="cursor: pointer; user-select: none;">
+              Nombre <i class="pi" [ngClass]="getSortAreaIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th class="ta-right"></th>
+          </tr>
+        </thead>
         <tbody>
           <tr *ngFor="let a of paginatedAreas">
             <td class="cell-name">{{ a.nombre }}</td>
@@ -65,8 +85,8 @@
           </tr>
         </tbody>
       </table>
-      <app-paginador [total]="areas.length" [pagina]="paginaAreas" (paginaChange)="paginaAreas = $event"></app-paginador>
-      <ng-template #emptyArea><div class="empty">Sin áreas. Agregá la primera.</div></ng-template>
+      <app-paginador [total]="filteredAndSortedAreas.length" [pagina]="paginaAreas" (paginaChange)="paginaAreas = $event"></app-paginador>
+      <ng-template #emptyArea><div class="empty">Sin áreas.</div></ng-template>
     </div>
 
     <!-- Estados -->
@@ -76,11 +96,21 @@
         <span>La condición de cada artículo (Disponible, En uso, etc.). El <b>código</b> es estable e interno; sólo se edita el nombre visible.</span>
       </div>
       <div class="toolbar">
-        <span class="cap">{{ estados.length }} estados definidos.</span>
+        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchEstado" placeholder="Buscar por nombre o código…" (ngModelChange)="paginaEstados = 1" /></span>
         <button class="btn primary sm" (click)="openNewEstado()"><i class="pi pi-plus"></i>Nuevo estado</button>
       </div>
-      <table *ngIf="estados.length > 0; else emptyEstado">
-        <thead><tr><th>Nombre</th><th>Código</th><th class="ta-right"></th></tr></thead>
+      <table *ngIf="filteredAndSortedEstados.length > 0; else emptyEstado">
+        <thead>
+          <tr>
+            <th (click)="toggleSortEst('nombre')" style="cursor: pointer; user-select: none;">
+              Nombre <i class="pi" [ngClass]="getSortEstIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th (click)="toggleSortEst('codigo')" style="cursor: pointer; user-select: none;">
+              Código <i class="pi" [ngClass]="getSortEstIcon('codigo')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th class="ta-right"></th>
+          </tr>
+        </thead>
         <tbody>
           <tr *ngFor="let s of paginatedEstados">
             <td class="cell-name">{{ s.nombre }}</td>
@@ -94,8 +124,8 @@
           </tr>
         </tbody>
       </table>
-      <app-paginador [total]="estados.length" [pagina]="paginaEstados" (paginaChange)="paginaEstados = $event"></app-paginador>
-      <ng-template #emptyEstado><div class="empty">Sin estados. Agregá el primero.</div></ng-template>
+      <app-paginador [total]="filteredAndSortedEstados.length" [pagina]="paginaEstados" (paginaChange)="paginaEstados = $event"></app-paginador>
+      <ng-template #emptyEstado><div class="empty">Sin estados.</div></ng-template>
     </div>
   </section>
 </div>

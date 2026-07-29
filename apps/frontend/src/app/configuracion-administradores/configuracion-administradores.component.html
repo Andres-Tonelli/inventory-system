@@ -12,18 +12,31 @@
   </header>
 
   <div class="card main-card">
-    <table class="data-table" *ngIf="admins.length > 0; else emptyState">
+    <!-- Barra de búsqueda -->
+    <div class="toolbar" style="margin-bottom: 1.5rem; display: flex; padding: 0.25rem 0.5rem;" *ngIf="admins.length > 0">
+      <span class="inp search sm" style="width: 320px; max-width: 100%;"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchAdmin" placeholder="Buscar administrador…" /></span>
+    </div>
+
+    <table class="data-table" *ngIf="filteredAndSortedAdmins.length > 0; else emptyState">
       <thead>
         <tr>
-          <th>Usuario de Red</th>
-          <th>Nombre Completo</th>
-          <th>Rol de Sistema</th>
-          <th>Dominios Autorizados</th>
+          <th (click)="toggleSort('username')" style="cursor: pointer; user-select: none;">
+            Usuario de Red <i class="pi" [ngClass]="getSortIcon('username')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+          </th>
+          <th (click)="toggleSort('nombre')" style="cursor: pointer; user-select: none;">
+            Nombre Completo <i class="pi" [ngClass]="getSortIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+          </th>
+          <th (click)="toggleSort('rol')" style="cursor: pointer; user-select: none;">
+            Rol de Sistema <i class="pi" [ngClass]="getSortIcon('rol')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+          </th>
+          <th (click)="toggleSort('dominios')" style="cursor: pointer; user-select: none;">
+            Dominios Autorizados <i class="pi" [ngClass]="getSortIcon('dominios')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+          </th>
           <th class="ta-right">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let a of admins">
+        <tr *ngFor="let a of filteredAndSortedAdmins">
           <td class="cell-username">
             <code>{{ a.username }}</code>
           </td>
@@ -54,9 +67,10 @@
     <ng-template #emptyState>
       <div class="empty-panel">
         <i class="pi pi-users empty-icon"></i>
-        <h3>No hay administradores registrados</h3>
-        <p>Los usuarios de red no podrán ingresar al panel administrativo hasta que los registres y les asignes un rol.</p>
-        <button class="btn primary mt-4" (click)="openNewAdmin()">Registrar Primer Administrador</button>
+        <h3>No hay administradores</h3>
+        <p *ngIf="admins.length === 0">Los usuarios de red no podrán ingresar al panel administrativo hasta que los registres y les asignes un rol.</p>
+        <p *ngIf="admins.length > 0">Ningún administrador coincide con tu búsqueda.</p>
+        <button class="btn primary mt-4" (click)="openNewAdmin()" *ngIf="admins.length === 0">Registrar Primer Administrador</button>
       </div>
     </ng-template>
   </div>

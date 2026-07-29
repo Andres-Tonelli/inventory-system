@@ -15,18 +15,28 @@ async function main() {
 
   console.log(`Buscando o creando administrador de sistema para el usuario de red: "${username}"...`);
 
-  const admin = await prisma.administrador.upsert({
-    where: { username },
-    update: {
-      rol: 'SISTEMA',
-      nombre: nombre
-    },
-    create: {
-      username,
-      nombre,
-      rol: 'SISTEMA'
-    }
-  });
+  let admin;
+  try {
+    admin = await prisma.administrador.upsert({
+      where: { username },
+      update: {
+        rol: 'SISTEMA',
+        nombre: nombre
+      },
+      create: {
+        username,
+        nombre,
+        rol: 'SISTEMA'
+      }
+    });
+  } catch (err) {
+    console.error("\n--- DETALLES DEL ERROR DE PRISMA ---");
+    console.error("Código:", err.code);
+    console.error("Mensaje:", err.message);
+    console.error("Meta:", err.meta);
+    console.error("------------------------------------\n");
+    throw err;
+  }
 
   console.log('\n¡Éxito! Administrador configurado en base de datos:');
   console.log(`- ID: ${admin.id}`);

@@ -65,9 +65,23 @@
           <table>
             <thead>
               <tr>
-                <th>Artículo</th><th>Modelo</th>
+                <th (click)="toggleSortArt('alias')" style="cursor: pointer; user-select: none;">
+                  Artículo <i class="pi" [ngClass]="getSortArtIcon('alias')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
+                <th (click)="toggleSortArt('modelo')" style="cursor: pointer; user-select: none;">
+                  Modelo <i class="pi" [ngClass]="getSortArtIcon('modelo')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
                 <th class="attr" *ngFor="let attr of atributosDominio">{{ attr.nombre }}</th>
-                <th>Detalle</th><th>Estado</th><th>Asignado a</th><th class="ta-right"></th>
+                <th (click)="toggleSortArt('detalle')" style="cursor: pointer; user-select: none;">
+                  Detalle <i class="pi" [ngClass]="getSortArtIcon('detalle')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
+                <th (click)="toggleSortArt('estado')" style="cursor: pointer; user-select: none;">
+                  Estado <i class="pi" [ngClass]="getSortArtIcon('estado')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
+                <th (click)="toggleSortArt('asignatario')" style="cursor: pointer; user-select: none;">
+                  Asignado a <i class="pi" [ngClass]="getSortArtIcon('asignatario')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
+                <th class="ta-right"></th>
               </tr>
             </thead>
             <tbody>
@@ -114,7 +128,21 @@
       <div class="tablecard">
         <div class="tablescroll">
           <table>
-            <thead><tr><th>Modelo de consumible</th><th>Categoría</th><th>Disponible</th><th>Actualizado</th><th class="ta-right"></th></tr></thead>
+            <thead>
+              <tr>
+                <th (click)="toggleSortCons('modelo')" style="cursor: pointer; user-select: none;">
+                  Modelo de consumible <i class="pi" [ngClass]="getSortConsIcon('modelo')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
+                <th (click)="toggleSortCons('categoria')" style="cursor: pointer; user-select: none;">
+                  Categoría <i class="pi" [ngClass]="getSortConsIcon('categoria')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
+                <th (click)="toggleSortCons('totalDisponible')" style="cursor: pointer; user-select: none;">
+                  Disponible <i class="pi" [ngClass]="getSortConsIcon('totalDisponible')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                </th>
+                <th>Actualizado</th>
+                <th class="ta-right"></th>
+              </tr>
+            </thead>
             <tbody>
               <ng-container *ngFor="let group of consumiblesAgrupados">
                 <tr>
@@ -178,7 +206,22 @@
           <div class="md-list tablecard">
             <div class="tablescroll">
               <table>
-                <thead><tr><th>Nombre</th><th>Estado</th><th>Asignado a</th><th class="ta-right">Art.</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th (click)="toggleSortAgr('nombre')" style="cursor: pointer; user-select: none;">
+                      Nombre <i class="pi" [ngClass]="getSortAgrIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                    </th>
+                    <th (click)="toggleSortAgr('estado')" style="cursor: pointer; user-select: none;">
+                      Estado <i class="pi" [ngClass]="getSortAgrIcon('estado')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                    </th>
+                    <th (click)="toggleSortAgr('asignatario')" style="cursor: pointer; user-select: none;">
+                      Asignado a <i class="pi" [ngClass]="getSortAgrIcon('asignatario')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                    </th>
+                    <th (click)="toggleSortAgr('articulos')" class="ta-right" style="cursor: pointer; user-select: none;">
+                      Art. <i class="pi" [ngClass]="getSortAgrIcon('articulos')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                    </th>
+                  </tr>
+                </thead>
                 <tbody>
                   <tr *ngFor="let ag of getAgrupadoresPorTipo(tipo.id!)" [class.sel]="ag.id === selectedAgrupadorId" (click)="selectAgrupador(ag, $event)">
                     <td class="rowname">{{ ag.nombre }}</td>
@@ -242,7 +285,14 @@
         <button class="btn primary sm" (click)="abrirNuevaCategoria()"><i class="pi pi-plus"></i>Nueva categoría</button>
       </div>
       <div class="tablecard"><div class="tablescroll"><table>
-        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+        <thead>
+          <tr>
+            <th (click)="toggleSortCat('nombre')" style="cursor: pointer; user-select: none;">
+              Nombre <i class="pi" [ngClass]="getSortCatIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th class="ta-right"></th>
+          </tr>
+        </thead>
         <tbody>
           <tr *ngFor="let cat of filteredCategorias">
             <td class="cell-name">{{ cat.nombre }}</td>
@@ -259,7 +309,14 @@
         <button class="btn primary sm" (click)="abrirNuevaMarca()"><i class="pi pi-plus"></i>Nueva marca</button>
       </div>
       <div class="tablecard"><div class="tablescroll"><table>
-        <thead><tr><th>Nombre</th><th class="ta-right"></th></tr></thead>
+        <thead>
+          <tr>
+            <th (click)="toggleSortMarca('nombre')" style="cursor: pointer; user-select: none;">
+              Nombre <i class="pi" [ngClass]="getSortMarcaIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th class="ta-right"></th>
+          </tr>
+        </thead>
         <tbody>
           <tr *ngFor="let marca of filteredMarcas">
             <td class="cell-name">{{ marca.nombre }}</td>
@@ -276,7 +333,23 @@
         <button class="btn primary sm" (click)="abrirNuevoModelo()"><i class="pi pi-plus"></i>Nuevo modelo</button>
       </div>
       <div class="tablecard"><div class="tablescroll"><table>
-        <thead><tr><th>Modelo</th><th>Detalle</th><th>Marca</th><th>Categoría</th><th class="ta-right"></th></tr></thead>
+        <thead>
+          <tr>
+            <th (click)="toggleSortMod('nombre')" style="cursor: pointer; user-select: none;">
+              Modelo <i class="pi" [ngClass]="getSortModIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th (click)="toggleSortMod('detalle')" style="cursor: pointer; user-select: none;">
+              Detalle <i class="pi" [ngClass]="getSortModIcon('detalle')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th (click)="toggleSortMod('marca')" style="cursor: pointer; user-select: none;">
+              Marca <i class="pi" [ngClass]="getSortModIcon('marca')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th (click)="toggleSortMod('categoria')" style="cursor: pointer; user-select: none;">
+              Categoría <i class="pi" [ngClass]="getSortModIcon('categoria')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+            </th>
+            <th class="ta-right"></th>
+          </tr>
+        </thead>
         <tbody>
           <tr *ngFor="let mod of filteredModelos">
             <td class="cell-name">{{ mod.nombre }}</td>

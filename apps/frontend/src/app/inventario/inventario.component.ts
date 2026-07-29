@@ -137,6 +137,98 @@ export class InventarioComponent implements OnInit {
   searchMarca = '';
   searchModelo = '';
 
+  // Variables de ordenamiento
+  sortArtCol = '';
+  sortArtAsc = true;
+  sortCatCol = '';
+  sortCatAsc = true;
+  sortMarcaCol = '';
+  sortMarcaAsc = true;
+  sortModCol = '';
+  sortModAsc = true;
+  sortConsCol = '';
+  sortConsAsc = true;
+  sortAgrCol = '';
+  sortAgrAsc = true;
+
+  toggleSortArt(col: string) {
+    if (this.sortArtCol === col) {
+      this.sortArtAsc = !this.sortArtAsc;
+    } else {
+      this.sortArtCol = col;
+      this.sortArtAsc = true;
+    }
+  }
+  getSortArtIcon(col: string): string {
+    if (this.sortArtCol !== col) return 'pi-sort';
+    return this.sortArtAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  toggleSortCat(col: string) {
+    if (this.sortCatCol === col) {
+      this.sortCatAsc = !this.sortCatAsc;
+    } else {
+      this.sortCatCol = col;
+      this.sortCatAsc = true;
+    }
+  }
+  getSortCatIcon(col: string): string {
+    if (this.sortCatCol !== col) return 'pi-sort';
+    return this.sortCatAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  toggleSortMarca(col: string) {
+    if (this.sortMarcaCol === col) {
+      this.sortMarcaAsc = !this.sortMarcaAsc;
+    } else {
+      this.sortMarcaCol = col;
+      this.sortMarcaAsc = true;
+    }
+  }
+  getSortMarcaIcon(col: string): string {
+    if (this.sortMarcaCol !== col) return 'pi-sort';
+    return this.sortMarcaAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  toggleSortMod(col: string) {
+    if (this.sortModCol === col) {
+      this.sortModAsc = !this.sortModAsc;
+    } else {
+      this.sortModCol = col;
+      this.sortModAsc = true;
+    }
+  }
+  getSortModIcon(col: string): string {
+    if (this.sortModCol !== col) return 'pi-sort';
+    return this.sortModAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  toggleSortCons(col: string) {
+    if (this.sortConsCol === col) {
+      this.sortConsAsc = !this.sortConsAsc;
+    } else {
+      this.sortConsCol = col;
+      this.sortConsAsc = true;
+    }
+  }
+  getSortConsIcon(col: string): string {
+    if (this.sortConsCol !== col) return 'pi-sort';
+    return this.sortConsAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  toggleSortAgr(col: string) {
+    if (this.sortAgrCol === col) {
+      this.sortAgrAsc = !this.sortAgrAsc;
+    } else {
+      this.sortAgrCol = col;
+      this.sortAgrAsc = true;
+    }
+  }
+  getSortAgrIcon(col: string): string {
+    if (this.sortAgrCol !== col) return 'pi-sort';
+    return this.sortAgrAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
   filterCategoriaId: number | null = null;
   filterModeloId: number | null = null;
   filterEstadoId: number | null = null;
@@ -221,6 +313,36 @@ export class InventarioComponent implements OnInit {
       });
     }
 
+    // 6. Ordenar
+    if (this.sortArtCol) {
+      result = [...result].sort((a, b) => {
+        let valA: any;
+        let valB: any;
+        if (this.sortArtCol === 'modelo') {
+          valA = a.modelo?.nombre || '';
+          valB = b.modelo?.nombre || '';
+        } else if (this.sortArtCol === 'categoria') {
+          valA = a.modelo?.categoria?.nombre || '';
+          valB = b.modelo?.categoria?.nombre || '';
+        } else if (this.sortArtCol === 'estado') {
+          valA = a.estado?.nombre || a.estado || '';
+          valB = b.estado?.nombre || b.estado || '';
+        } else if (this.sortArtCol === 'asignatario') {
+          valA = this.getArticuloAsignatario(a);
+          valB = this.getArticuloAsignatario(b);
+        } else if (this.sortArtCol === 'agrupador') {
+          valA = a.agrupador?.nombre || '';
+          valB = b.agrupador?.nombre || '';
+        } else {
+          valA = (a as any)[this.sortArtCol];
+          valB = (b as any)[this.sortArtCol];
+        }
+        valA = valA ? String(valA).toLowerCase() : '';
+        valB = valB ? String(valB).toLowerCase() : '';
+        return this.sortArtAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+
     return result;
   }
 
@@ -254,7 +376,33 @@ export class InventarioComponent implements OnInit {
       group.totalDisponible += lote.cantidadDisponible;
       group.lotes.push(lote);
     }
-    return Array.from(map.values());
+    
+    let groups = Array.from(map.values());
+    if (this.sortConsCol) {
+      groups.sort((a, b) => {
+        let valA: any;
+        let valB: any;
+        if (this.sortConsCol === 'modelo') {
+          valA = a.modelo?.nombre || '';
+          valB = b.modelo?.nombre || '';
+        } else if (this.sortConsCol === 'categoria') {
+          valA = a.modelo?.categoria?.nombre || '';
+          valB = b.modelo?.categoria?.nombre || '';
+        } else if (this.sortConsCol === 'totalDisponible') {
+          valA = a.totalDisponible;
+          valB = b.totalDisponible;
+        }
+        
+        if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = String(valB).toLowerCase();
+          return this.sortConsAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+          return this.sortConsAsc ? (valA - valB) : (valB - valA);
+        }
+      });
+    }
+    return groups;
   }
 
   toggleConsumibleGroup(modeloId: number) {
@@ -266,26 +414,75 @@ export class InventarioComponent implements OnInit {
   }
 
   get filteredCategorias(): Categoria[] {
+    let result = this.categorias;
     const query = this.searchCategoria.toLowerCase().trim();
-    if (!query) return this.categorias;
-    return this.categorias.filter(c => (c.nombre || '').toLowerCase().includes(query));
+    if (query) {
+      result = result.filter(c => (c.nombre || '').toLowerCase().includes(query));
+    }
+    if (this.sortCatCol) {
+      result = [...result].sort((a, b) => {
+        const valA = (a.nombre || '').toLowerCase();
+        const valB = (b.nombre || '').toLowerCase();
+        return this.sortCatAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+    return result;
   }
 
   get filteredMarcas(): Marca[] {
+    let result = this.marcas;
     const query = this.searchMarca.toLowerCase().trim();
-    if (!query) return this.marcas;
-    return this.marcas.filter(m => (m.nombre || '').toLowerCase().includes(query));
+    if (query) {
+      result = result.filter(m => (m.nombre || '').toLowerCase().includes(query));
+    }
+    if (this.sortMarcaCol) {
+      result = [...result].sort((a, b) => {
+        const valA = (a.nombre || '').toLowerCase();
+        const valB = (b.nombre || '').toLowerCase();
+        return this.sortMarcaAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+    return result;
   }
 
   get filteredModelos(): Modelo[] {
+    let result = this.modelos;
     const query = this.searchModelo.toLowerCase().trim();
-    if (!query) return this.modelos;
-    return this.modelos.filter(m => 
-      (m.nombre || '').toLowerCase().includes(query) ||
-      ((m as any).detalle || '').toLowerCase().includes(query) ||
-      (m.marca?.nombre || '').toLowerCase().includes(query) ||
-      (m.categoria?.nombre || '').toLowerCase().includes(query)
-    );
+    if (query) {
+      const keywords = query.split(/\s+/);
+      result = result.filter(m => {
+        const nombre = (m.nombre || '').toLowerCase();
+        const detalle = ((m as any).detalle || '').toLowerCase();
+        const marca = (m.marca?.nombre || '').toLowerCase();
+        const categoria = (m.categoria?.nombre || '').toLowerCase();
+
+        return keywords.every(kw => 
+          nombre.includes(kw) || 
+          detalle.includes(kw) || 
+          marca.includes(kw) || 
+          categoria.includes(kw)
+        );
+      });
+    }
+    if (this.sortModCol) {
+      result = [...result].sort((a, b) => {
+        let valA: any = (a as any)[this.sortModCol];
+        let valB: any = (b as any)[this.sortModCol];
+        
+        if (this.sortModCol === 'marca') {
+          valA = a.marca?.nombre || '';
+          valB = b.marca?.nombre || '';
+        } else if (this.sortModCol === 'categoria') {
+          valA = a.categoria?.nombre || '';
+          valB = b.categoria?.nombre || '';
+        }
+        
+        valA = valA ? String(valA).toLowerCase() : '';
+        valB = valB ? String(valB).toLowerCase() : '';
+        return this.sortModAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+    return result;
   }
 
   selectSubTab(tab: string): void {
@@ -384,6 +581,32 @@ export class InventarioComponent implements OnInit {
           empName.toLowerCase().includes(kw) ||
           empLegajo.toLowerCase().includes(kw)
         );
+      });
+    }
+
+    // 4. Ordenar
+    if (this.sortAgrCol) {
+      list = [...list].sort((a, b) => {
+        let valA: any;
+        let valB: any;
+        if (this.sortAgrCol === 'asignatario') {
+          valA = this.getAgrupadorAsignatario(a);
+          valB = this.getAgrupadorAsignatario(b);
+        } else if (this.sortAgrCol === 'articulos') {
+          valA = a.articulos?.length || 0;
+          valB = b.articulos?.length || 0;
+        } else {
+          valA = (a as any)[this.sortAgrCol];
+          valB = (b as any)[this.sortAgrCol];
+        }
+
+        if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = String(valB).toLowerCase();
+          return this.sortAgrAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+          return this.sortAgrAsc ? (valA - valB) : (valB - valA);
+        }
       });
     }
 

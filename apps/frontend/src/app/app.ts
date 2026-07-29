@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -25,20 +25,30 @@ export class App implements OnInit {
     private domainContext: DomainContextService,
     private catalogosService: CatalogosService,
     private router: Router
-  ) {}
-
-  ngOnInit() {
-    // Cargar los dominios disponibles para mapear nombres en el Sidebar
-    this.catalogosService.getDominios().subscribe(res => {
-      if (res.success) {
-        this.dominios = res.data;
+  ) {
+    // Escuchar el estado de autenticación. Si el usuario se loguea y no tenemos
+    // cargados los dominios, los cargamos para que se mapeen bien en el Sidebar.
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user && this.dominios.length === 0) {
+        this.cargarDominios();
       }
     });
+  }
 
+  ngOnInit() {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
       this.closeSidebar();
+    });
+  }
+
+  cargarDominios() {
+    this.catalogosService.getDominios().subscribe(res => {
+      if (res.success) {
+        this.dominios = res.data;
+      }
     });
   }
 
@@ -61,6 +71,7 @@ export class App implements OnInit {
   onLogout() {
     this.authService.logout();
     this.domainContext.clearDomain();
+    this.dominios = []; // Limpiar dominios al cerrar sesión para el próximo login
     this.router.navigate(['/login']);
   }
 

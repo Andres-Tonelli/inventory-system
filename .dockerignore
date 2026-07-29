@@ -1,0 +1,23 @@
+# Ignorar carpetas de dependencias y compilación local
+node_modules
+dist
+.nx
+.angular
+
+# Ignorar control de versiones e IDEs
+.git
+.github
+.vscode
+.editorconfig
+.prettierrc
+.prettierignore
+
+# Ignorar archivos locales de configuración y variables de entorno
+.env
+*.log
+npm-debug.log*
+
+# Ignorar documentación
+docs
+*.md
+LICENSE

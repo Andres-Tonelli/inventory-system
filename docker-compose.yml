@@ -1,0 +1,55 @@
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-tagsa}
+      POSTGRES_DB: inventory_system
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inventory_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: inventory-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-tagsa}@database:5432/inventory_system?schema=public
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-super_secret_key_de_firmas}
+      LDAP_URL: ${LDAP_URL:-ldap://192.168.54.35:389}
+      LDAP_DOMAIN_SUFFIX: ${LDAP_DOMAIN_SUFFIX:-@tag-sa.lan}
+      LDAP_MOCK: ${LDAP_MOCK:-false}
+      LDAP_SEARCH_BASE: ${LDAP_SEARCH_BASE:-DC=tag-sa,DC=lan}
+      LDAP_GROUP_DN: ${LDAP_GROUP_DN:-CN=TAG_USERS,OU=TAG_SA,DC=tag-sa,DC=lan}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-atonelli@tag-sa.lan}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-a-tagsa-2025}
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: inventory-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:

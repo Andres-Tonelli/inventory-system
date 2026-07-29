@@ -32,16 +32,134 @@ export class OrganizacionComponent implements OnInit {
   paginaAreas = 1;
   paginaEstados = 1;
 
+  // Filtros de búsqueda
+  searchEmpleado = '';
+  searchArea = '';
+  searchEstado = '';
+
+  // Ordenamiento
+  sortEmpCol = '';
+  sortEmpAsc = true;
+  sortAreaCol = '';
+  sortAreaAsc = true;
+  sortEstCol = '';
+  sortEstAsc = true;
+
+  toggleSortEmp(col: string) {
+    if (this.sortEmpCol === col) {
+      this.sortEmpAsc = !this.sortEmpAsc;
+    } else {
+      this.sortEmpCol = col;
+      this.sortEmpAsc = true;
+    }
+  }
+
+  toggleSortArea(col: string) {
+    if (this.sortAreaCol === col) {
+      this.sortAreaAsc = !this.sortAreaAsc;
+    } else {
+      this.sortAreaCol = col;
+      this.sortAreaAsc = true;
+    }
+  }
+
+  toggleSortEst(col: string) {
+    if (this.sortEstCol === col) {
+      this.sortEstAsc = !this.sortEstAsc;
+    } else {
+      this.sortEstCol = col;
+      this.sortEstAsc = true;
+    }
+  }
+
+  getSortEmpIcon(col: string): string {
+    if (this.sortEmpCol !== col) return 'pi-sort';
+    return this.sortEmpAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  getSortAreaIcon(col: string): string {
+    if (this.sortAreaCol !== col) return 'pi-sort';
+    return this.sortAreaAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  getSortEstIcon(col: string): string {
+    if (this.sortEstCol !== col) return 'pi-sort';
+    return this.sortEstAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
+  }
+
+  get filteredAndSortedEmpleados(): Empleado[] {
+    let result = [...this.empleados];
+    const search = this.searchEmpleado.toLowerCase().trim();
+    if (search) {
+      result = result.filter(e => 
+        (e.nombre || '').toLowerCase().includes(search) ||
+        (e.legajo || '').toLowerCase().includes(search) ||
+        (e.area?.nombre || '').toLowerCase().includes(search)
+      );
+    }
+    if (this.sortEmpCol) {
+      result.sort((a, b) => {
+        let valA: any = a[this.sortEmpCol as keyof Empleado];
+        let valB: any = b[this.sortEmpCol as keyof Empleado];
+        if (this.sortEmpCol === 'area') {
+          valA = a.area?.nombre || '';
+          valB = b.area?.nombre || '';
+        }
+        valA = valA ? String(valA).toLowerCase() : '';
+        valB = valB ? String(valB).toLowerCase() : '';
+        return this.sortEmpAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+    return result;
+  }
+
+  get filteredAndSortedAreas(): Area[] {
+    let result = [...this.areas];
+    const search = this.searchArea.toLowerCase().trim();
+    if (search) {
+      result = result.filter(a => (a.nombre || '').toLowerCase().includes(search));
+    }
+    if (this.sortAreaCol) {
+      result.sort((a, b) => {
+        const valA = (a.nombre || '').toLowerCase();
+        const valB = (b.nombre || '').toLowerCase();
+        return this.sortAreaAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+    return result;
+  }
+
+  get filteredAndSortedEstados(): EstadoArticulo[] {
+    let result = [...this.estados];
+    const search = this.searchEstado.toLowerCase().trim();
+    if (search) {
+      result = result.filter(e => 
+        (e.nombre || '').toLowerCase().includes(search) ||
+        (e.codigo || '').toLowerCase().includes(search)
+      );
+    }
+    if (this.sortEstCol) {
+      result.sort((a, b) => {
+        let valA: any = a[this.sortEstCol as keyof EstadoArticulo];
+        let valB: any = b[this.sortEstCol as keyof EstadoArticulo];
+        valA = valA ? String(valA).toLowerCase() : '';
+        valB = valB ? String(valB).toLowerCase() : '';
+        return this.sortEstAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+    return result;
+  }
+
   get paginatedEmpleados(): Empleado[] {
-    return paginar(this.empleados, this.paginaEmpleados);
+    return paginar(this.filteredAndSortedEmpleados, this.paginaEmpleados);
   }
 
   get paginatedAreas(): Area[] {
-    return paginar(this.areas, this.paginaAreas);
+    return paginar(this.filteredAndSortedAreas, this.paginaAreas);
   }
 
   get paginatedEstados(): EstadoArticulo[] {
-    return paginar(this.estados, this.paginaEstados);
+    return paginar(this.filteredAndSortedEstados, this.paginaEstados);
   }
 
   showEmpDialog = false;
