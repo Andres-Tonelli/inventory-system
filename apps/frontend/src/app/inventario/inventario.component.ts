@@ -1050,16 +1050,18 @@ export class InventarioComponent implements OnInit {
     if (!modelo?.atributos || !modelo?.categoriaId) return false;
     const cat = this.categorias.find(c => c.id === modelo.categoriaId);
     if (!cat?.atributos) return false;
-    return cat.atributos.some((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '');
+    const isConsumible = cat.tipoSeguimiento === 'POR_LOTE';
+    return cat.atributos.some((a: any) => (isConsumible || a.nivel === 'MODELO') && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '');
   }
 
   getModelSpecsList(modelo: any): { nombre: string, valor: string }[] {
     if (!modelo?.atributos || !modelo?.categoriaId) return [];
     const cat = this.categorias.find(c => c.id === modelo.categoriaId);
     if (!cat?.atributos) return [];
+    const isConsumible = cat.tipoSeguimiento === 'POR_LOTE';
     
     return cat.atributos
-      .filter((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '')
+      .filter((a: any) => (isConsumible || a.nivel === 'MODELO') && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '')
       .map((a: any) => ({
         nombre: a.nombre,
         valor: String(modelo.atributos[a.clave])
@@ -1137,9 +1139,13 @@ export class InventarioComponent implements OnInit {
     };
     this.atributosModeloForm = [];
     if (this.newModelo.categoriaId) {
+      const cat = this.categorias.find(c => c.id === this.newModelo.categoriaId);
+      const isConsumible = cat?.tipoSeguimiento === 'POR_LOTE';
       this.catalogosService.getAtributos(this.newModelo.categoriaId).subscribe(res => {
         if (res.success) {
-          this.atributosModeloForm = res.data.filter((a: any) => a.nivel === 'MODELO');
+          this.atributosModeloForm = isConsumible
+            ? res.data
+            : res.data.filter((a: any) => a.nivel === 'MODELO');
           this.buildModeloDynamicForm();
           const patch: Record<string, any> = {};
           for (const attr of this.atributosModeloForm) {
@@ -1157,9 +1163,13 @@ export class InventarioComponent implements OnInit {
   onModeloCategoriaChange() {
     this.atributosModeloForm = [];
     if (this.newModelo.categoriaId) {
+      const cat = this.categorias.find(c => c.id === this.newModelo.categoriaId);
+      const isConsumible = cat?.tipoSeguimiento === 'POR_LOTE';
       this.catalogosService.getAtributos(this.newModelo.categoriaId).subscribe(res => {
         if (res.success) {
-          this.atributosModeloForm = res.data.filter((a: any) => a.nivel === 'MODELO');
+          this.atributosModeloForm = isConsumible
+            ? res.data
+            : res.data.filter((a: any) => a.nivel === 'MODELO');
           this.buildModeloDynamicForm();
         }
       });

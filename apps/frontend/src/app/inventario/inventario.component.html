@@ -158,16 +158,26 @@
               <ng-container *ngFor="let group of consumiblesAgrupados">
                 <tr>
                   <td class="cell-name">
-                    <button class="btn ghost sm" (click)="toggleConsumibleGroup(group.modelo.id)" style="padding: 0 4px; margin-right: 8px;">
-                      <i class="pi" [ngClass]="expandedConsumibleGroups.has(group.modelo.id) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
-                    </button>
-                    <div class="model-hover-container" style="font-weight: 600;">
-                      {{ group.modelo?.nombre }}
-                      <div class="model-hover-card" *ngIf="hasModelSpecs(group.modelo)">
-                        <div class="mh-header">Especificaciones del Modelo</div>
-                        <div class="mh-row" *ngFor="let spec of getModelSpecsList(group.modelo)">
-                          <span class="mh-key">{{ spec.nombre }}</span>
-                          <span class="mh-val">{{ spec.valor }}</span>
+                    <div style="display: flex; align-items: center;">
+                      <button class="btn ghost sm" (click)="toggleConsumibleGroup(group.modelo.id)" style="padding: 0 4px; margin-right: 8px;">
+                        <i class="pi" [ngClass]="expandedConsumibleGroups.has(group.modelo.id) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                      </button>
+                      <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <div class="model-hover-container" style="font-weight: 600;">
+                          {{ group.modelo?.nombre }}
+                          <div class="model-hover-card" *ngIf="hasModelSpecs(group.modelo)">
+                            <div class="mh-header">Especificaciones del Modelo</div>
+                            <div class="mh-row" *ngFor="let spec of getModelSpecsList(group.modelo)">
+                              <span class="mh-key">{{ spec.nombre }}</span>
+                              <span class="mh-val">{{ spec.valor }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Model specs pills in table directly -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.15rem;" *ngIf="hasModelSpecs(group.modelo)">
+                          <span class="pill slate" *ngFor="let spec of getModelSpecsList(group.modelo)" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;">
+                            <span style="font-weight: 500; opacity: 0.85;">{{ spec.nombre }}:</span> {{ spec.valor }}
+                          </span>
                         </div>
                       </div>
                     </div>
