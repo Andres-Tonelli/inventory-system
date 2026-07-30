@@ -46,6 +46,7 @@ export class InventarioComponent implements OnInit {
   modelos: Modelo[] = [];
   modelosFiltrados: Modelo[] = [];
   atributosDominio: AtributoDefinicion[] = [];
+  atributosDetalle: AtributoDefinicion[] = [];
   tiposAgrupador: TipoAgrupador[] = [];
   agrupadores: Agrupador[] = [];
   agrupadoresPorTipo: { [key: number]: Agrupador[] } = {};
@@ -807,7 +808,7 @@ export class InventarioComponent implements OnInit {
     }
     this.catalogosService.getAtributos(this.filterCategoriaId).subscribe(res => {
       if (res.success) {
-        this.atributosDominio = res.data;
+        this.atributosDominio = res.data.filter((a: any) => a.nivel !== 'MODELO');
         this.buildDynamicForm();
       }
     });
@@ -952,9 +953,22 @@ export class InventarioComponent implements OnInit {
     }
   }
 
+  getAtributoValorDetalle(articulo: any, attrId: number | undefined): string {
+    if (!attrId || !articulo) return '';
+    const def = this.atributosDetalle.find(a => a.id === attrId);
+    if (!def) return '';
+    if (def.nivel === 'MODELO') {
+      const val = articulo.modelo?.atributos?.[def.clave];
+      return val != null ? String(val) : '';
+    } else {
+      const val = articulo.atributos?.[def.clave];
+      return val != null ? String(val) : '';
+    }
+  }
+
   /** Definiciones de atributos del dominio que tienen valor en este artículo. */
   atributosConValor(articulo: any): AtributoDefinicion[] {
-    return this.atributosDominio.filter(def => this.getAtributoValor(articulo, def.id) !== '');
+    return this.atributosDetalle.filter(def => this.getAtributoValorDetalle(articulo, def.id) !== '');
   }
 
   verDetalleArticulo(art: any) {
@@ -963,11 +977,12 @@ export class InventarioComponent implements OnInit {
     if (catId) {
       this.catalogosService.getAtributos(catId).subscribe(res => {
         if (res.success) {
-          this.atributosDominio = res.data;
+          this.atributosDetalle = res.data;
           this.showDetalleArticuloDialog = true;
         }
       });
     } else {
+      this.atributosDetalle = [];
       this.showDetalleArticuloDialog = true;
     }
   }

@@ -553,7 +553,7 @@
     <ng-container *ngIf="atributosConValor(d).length > 0">
       <div class="md-lbl mt">Atributos</div>
       <div class="chips">
-        <span class="chip alt" *ngFor="let def of atributosConValor(d)"><span class="cm">{{ def.nombre }}:</span><span class="cn">{{ getAtributoValor(d, def.id) }}</span></span>
+        <span class="chip alt" *ngFor="let def of atributosConValor(d)"><span class="cm">{{ def.nombre }}:</span><span class="cn">{{ getAtributoValorDetalle(d, def.id) }}</span></span>
       </div>
     </ng-container>
   </div>
