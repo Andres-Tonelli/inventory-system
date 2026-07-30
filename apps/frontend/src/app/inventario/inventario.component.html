@@ -144,6 +144,7 @@
                 <th (click)="toggleSortCons('modelo')" style="cursor: pointer; user-select: none;">
                   Modelo de consumible <i class="pi" [ngClass]="getSortConsIcon('modelo')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
                 </th>
+                <th>Marca</th>
                 <th (click)="toggleSortCons('categoria')" style="cursor: pointer; user-select: none;">
                   Categoría <i class="pi" [ngClass]="getSortConsIcon('categoria')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
                 </th>
@@ -182,13 +183,14 @@
                       </div>
                     </div>
                   </td>
+                  <td class="mut">{{ group.modelo?.marca?.nombre || '—' }}</td>
                   <td class="mut">{{ group.modelo?.categoria?.nombre }}</td>
                   <td><span class="pill teal"><span class="dot"></span>{{ group.totalDisponible }} u.</span></td>
                   <td></td>
                   <td></td>
                 </tr>
                 <tr *ngIf="expandedConsumibleGroups.has(group.modelo.id)">
-                  <td colspan="5" style="padding: 0; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <td colspan="6" style="padding: 0; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                     <table style="width: 100%; border: none; margin: 0; background: transparent;">
                       <thead>
                         <tr>
@@ -458,15 +460,26 @@
 </p-dialog>
 
 <!-- Nuevo lote -->
-<p-dialog header="Nuevo lote de stock" [(visible)]="showLoteDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '460px' }">
+<p-dialog header="Nuevo lote de stock" [(visible)]="showLoteDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '480px' }">
   <div class="form">
     <label>Categoría</label>
     <p-select [options]="categorias" [(ngModel)]="selectedLoteCategoriaId" (onChange)="onLoteCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Seleccionar Categoría" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
 
     <ng-container *ngIf="selectedLoteCategoriaId">
       <label class="mt">Modelo de consumible</label>
-      <p-select [options]="modelosFiltradosLote" [(ngModel)]="newLote.modeloId" optionLabel="displayLabel" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
+      <p-select [options]="modelosFiltradosLote" [(ngModel)]="newLote.modeloId" (onChange)="onLoteModeloChange()" optionLabel="displayLabel" optionValue="id" placeholder="Modelo" appendTo="body" styleClass="w-full" [filter]="true" filterBy="displayLabel" filterPlaceholder="Buscar modelo…" [resetFilterOnHide]="true"></p-select>
     </ng-container>
+
+    <div class="dyn-attrs" *ngIf="newLote.modeloId && atributosLoteForm.length > 0">
+      <div class="md-lbl mt" style="font-weight: 600; margin-top: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.25rem;">Especificaciones del lote de consumible</div>
+      <form [formGroup]="loteModeloDynamicForm" class="form" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+        <ng-container *ngFor="let attr of atributosLoteForm">
+          <label style="font-size: 0.85rem; font-weight: 500;">{{ attr.nombre }}</label>
+          <input *ngIf="attr.tipoDato === 'NUMERO'" pInputText type="number" [formControlName]="attr.clave" />
+          <input *ngIf="attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
+        </ng-container>
+      </form>
+    </div>
 
     <label class="mt">Cantidad a ingresar</label>
     <input pInputText type="number" [(ngModel)]="newLote.cantidadDisponible" placeholder="Ej: 50" />

@@ -59,13 +59,13 @@ export class CatalogosService {
   getAtributos(categoriaId: number): Observable<ApiResponse<AtributoDefinicion[]>> {
     return this.http.get<ApiResponse<AtributoDefinicion[]>>(`/api/catalogos/categorias/${categoriaId}/atributos`);
   }
-  createAtributo(categoriaId: number, data: { nombre: string; clave: string; tipoDato: string }) {
+  createAtributo(categoriaId: number, data: { nombre: string; clave: string; tipoDato: string; nivel?: string }) {
     return this.http.post(`/api/catalogos/categorias/${categoriaId}/atributos`, data);
   }
   getAtributosPorDominio(dominioId: number): Observable<ApiResponse<AtributoDefinicion[]>> {
     return this.http.get<ApiResponse<AtributoDefinicion[]>>(`/api/catalogos/dominios/${dominioId}/atributos`);
   }
-  updateAtributo(id: number, data: { nombre?: string; clave?: string; tipoDato?: string }) {
+  updateAtributo(id: number, data: { nombre?: string; clave?: string; tipoDato?: string; nivel?: string }) {
     return this.http.put(`/api/catalogos/atributos/${id}`, data);
   }
   deleteAtributo(id: number) {
@@ -91,10 +91,10 @@ export class CatalogosService {
     if (dominioId) url += `dominioId=${dominioId}&`;
     return this.http.get<ApiResponse<Modelo[]>>(url);
   }
-  createModelo(data: { nombre: string; marcaId: number; categoriaId: number }) {
+  createModelo(data: { nombre: string; marcaId: number; categoriaId: number; atributos?: any }) {
     return this.http.post('/api/catalogos/modelos', data);
   }
-  updateModelo(id: number, data: { nombre?: string; marcaId?: number; categoriaId?: number }) {
+  updateModelo(id: number, data: { nombre?: string; marcaId?: number; categoriaId?: number; atributos?: any }) {
     return this.http.put(`/api/catalogos/modelos/${id}`, data);
   }
 

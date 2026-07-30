@@ -101,6 +101,8 @@ export class InventarioComponent implements OnInit {
 
   onLoteCategoriaChange() {
     this.newLote.modeloId = null;
+    this.atributosLoteForm = [];
+    this.loteModeloDynamicForm = this.fb.group({});
   }
 
   onVincularCategoriaChange() {
@@ -110,7 +112,32 @@ export class InventarioComponent implements OnInit {
   abrirLoteDialog() {
     this.selectedLoteCategoriaId = null;
     this.newLote = { cantidadDisponible: 0, modeloId: null };
+    this.atributosLoteForm = [];
+    this.loteModeloDynamicForm = this.fb.group({});
     this.showLoteDialog = true;
+  }
+
+  onLoteModeloChange() {
+    this.atributosLoteForm = [];
+    this.loteModeloDynamicForm = this.fb.group({});
+    if (!this.newLote.modeloId) return;
+    const mod = this.modelos.find(m => m.id === this.newLote.modeloId);
+    if (!mod) return;
+    this.catalogosService.getAtributos(mod.categoriaId).subscribe(res => {
+      if (res.success) {
+        this.atributosLoteForm = res.data;
+        const group: any = {};
+        for (const attr of this.atributosLoteForm) {
+          group[attr.clave] = [''];
+        }
+        this.loteModeloDynamicForm = this.fb.group(group);
+        const patch: Record<string, any> = {};
+        for (const attr of this.atributosLoteForm) {
+          patch[attr.clave] = mod.atributos?.[attr.clave] ?? '';
+        }
+        this.loteModeloDynamicForm.patchValue(patch);
+      }
+    });
   }
 
   // Sub-agrupadores state
@@ -260,7 +287,9 @@ export class InventarioComponent implements OnInit {
   // Dinámica
   dynamicForm!: FormGroup;
   modeloDynamicForm!: FormGroup;
+  loteModeloDynamicForm!: FormGroup;
   atributosModeloForm: AtributoDefinicion[] = [];
+  atributosLoteForm: AtributoDefinicion[] = [];
   nivelOptions = [
     { label: 'Artículo (se define por unidad física)', value: 'ARTICULO' },
     { label: 'Modelo (se define una vez en el modelo)', value: 'MODELO' }
@@ -278,6 +307,7 @@ export class InventarioComponent implements OnInit {
   ) {
     this.dynamicForm = this.fb.group({});
     this.modeloDynamicForm = this.fb.group({});
+    this.loteModeloDynamicForm = this.fb.group({});
   }
 
   // Candidatos para vincular a un agrupador. Se cargan on-demand al abrir el diálogo
@@ -1300,13 +1330,32 @@ export class InventarioComponent implements OnInit {
 
   saveLote() {
     if (this.newLote.cantidadDisponible <= 0 || !this.newLote.modeloId) return;
-    this.inventarioService.createLote({
-      cantidadDisponible: this.newLote.cantidadDisponible,
-      modeloId: this.newLote.modeloId
-    }).subscribe(() => {
-      this.showLoteDialog = false;
-      this.newLote = { cantidadDisponible: 0, modeloId: null };
-      this.loadLotes();
+    
+    // Save dynamic attributes to model first
+    const formValues = this.loteModeloDynamicForm.value;
+    const atributos: Record<string, any> = {};
+    for (const attr of this.atributosLoteForm) {
+      const valor = formValues[attr.clave];
+      if (valor != null && valor !== '') atributos[attr.clave] = valor;
+    }
+    
+    const updateAttrsAndCreateLote = () => {
+      this.inventarioService.createLote({
+        cantidadDisponible: this.newLote.cantidadDisponible,
+        modeloId: this.newLote.modeloId!
+      }).subscribe(() => {
+        this.showLoteDialog = false;
+        this.newLote = { cantidadDisponible: 0, modeloId: null };
+        this.atributosLoteForm = [];
+        this.loteModeloDynamicForm = this.fb.group({});
+        this.loadLotes();
+        this.loadCatalogos();
+      });
+    };
+    
+    this.catalogosService.updateModelo(this.newLote.modeloId!, { atributos }).subscribe({
+      next: updateAttrsAndCreateLote,
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudieron guardar las especificaciones del modelo.')
     });
   }
 
