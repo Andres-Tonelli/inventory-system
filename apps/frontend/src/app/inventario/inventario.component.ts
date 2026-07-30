@@ -6,6 +6,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { CatalogosService, Categoria, Modelo, AtributoDefinicion, Marca, TipoAgrupador, EstadoArticulo } from '../core/services/catalogos.service';
 import { InventarioService, Articulo } from '../core/services/inventario.service';
 import { DomainContextService } from '../core/domain-context.service';
+import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -265,7 +266,8 @@ export class InventarioComponent implements OnInit {
     private inventarioService: InventarioService,
     private agrupadoresService: AgrupadoresService,
     private domainContext: DomainContextService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private notificaciones: NotificacionesUiService
   ) {
     this.dynamicForm = this.fb.group({});
   }
@@ -771,11 +773,12 @@ export class InventarioComponent implements OnInit {
       this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
       this.loadCategorias();
     };
+    const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar el atributo.');
 
     if (this.editingAtributoId) {
-      this.catalogosService.updateAtributo(this.editingAtributoId, data).subscribe(done);
+      this.catalogosService.updateAtributo(this.editingAtributoId, data).subscribe({ next: done, error: onErr });
     } else {
-      this.catalogosService.createAtributo(catId, data).subscribe(done);
+      this.catalogosService.createAtributo(catId, data).subscribe({ next: done, error: onErr });
     }
   }
 
@@ -918,7 +921,7 @@ export class InventarioComponent implements OnInit {
       this.loadAtributosCategoria();
       this.loadAgrupadores();
     };
-    const onErr = (e: any) => alert(e?.error?.message || 'No se pudo guardar el artículo.');
+    const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar el artículo.');
 
     if (this.editingArticuloId) {
       this.inventarioService.updateArticulo(this.editingArticuloId, payload).subscribe({ next: done, error: onErr });
@@ -961,7 +964,7 @@ export class InventarioComponent implements OnInit {
         this.loadArticulos();
         this.loadAgrupadores();
       },
-      error: (e) => alert(e?.error?.message || 'No se pudo cambiar el estado.')
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo cambiar el estado.')
     });
   }
 
@@ -1002,10 +1005,11 @@ export class InventarioComponent implements OnInit {
       this.newCategoria = { nombre: '' };
       this.loadCatalogos();
     };
+    const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar la categoría.');
     if (this.editingCategoriaId) {
-      this.catalogosService.updateCategoria(this.editingCategoriaId, { nombre: this.newCategoria.nombre }).subscribe(done);
+      this.catalogosService.updateCategoria(this.editingCategoriaId, { nombre: this.newCategoria.nombre }).subscribe({ next: done, error: onErr });
     } else {
-      this.catalogosService.createCategoria({nombre: this.newCategoria.nombre, dominioId: this.dominioId}).subscribe(done);
+      this.catalogosService.createCategoria({nombre: this.newCategoria.nombre, dominioId: this.dominioId}).subscribe({ next: done, error: onErr });
     }
   }
 
@@ -1027,10 +1031,11 @@ export class InventarioComponent implements OnInit {
       this.newMarca = { nombre: '' };
       this.loadCatalogos();
     };
+    const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar la marca.');
     if (this.editingMarcaId) {
-      this.catalogosService.updateMarca(this.editingMarcaId, this.newMarca.nombre).subscribe(done);
+      this.catalogosService.updateMarca(this.editingMarcaId, this.newMarca.nombre).subscribe({ next: done, error: onErr });
     } else {
-      this.catalogosService.createMarca({nombre: this.newMarca.nombre, dominioId: this.dominioId}).subscribe(done);
+      this.catalogosService.createMarca({nombre: this.newMarca.nombre, dominioId: this.dominioId}).subscribe({ next: done, error: onErr });
     }
   }
 
@@ -1058,10 +1063,11 @@ export class InventarioComponent implements OnInit {
       this.newModelo = { nombre: '', detalle: '', marcaId: null, categoriaId: null };
       this.loadCatalogos();
     };
+    const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar el modelo.');
     if (this.editingModeloId) {
-      this.catalogosService.updateModelo(this.editingModeloId, data).subscribe(done);
+      this.catalogosService.updateModelo(this.editingModeloId, data).subscribe({ next: done, error: onErr });
     } else {
-      this.catalogosService.createModelo(data).subscribe(done);
+      this.catalogosService.createModelo(data).subscribe({ next: done, error: onErr });
     }
   }
 
@@ -1075,14 +1081,16 @@ export class InventarioComponent implements OnInit {
 
   saveAgrupador() {
     if(!this.newAgrupador.nombre || !this.newAgrupador.tipoAgrupadorId) return;
-    this.agrupadoresService.createAgrupador({
-      nombre: this.newAgrupador.nombre,
-      tipoAgrupadorId: this.newAgrupador.tipoAgrupadorId
-    }).subscribe(() => {
+    const done = () => {
       this.showAgrupadorDialog = false;
       this.newAgrupador = { nombre: '', tipoAgrupadorId: null };
       this.loadAgrupadores();
-    });
+    };
+    const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar el agrupador.');
+    this.agrupadoresService.createAgrupador({
+      nombre: this.newAgrupador.nombre,
+      tipoAgrupadorId: this.newAgrupador.tipoAgrupadorId
+    }).subscribe({ next: done, error: onErr });
   }
 
   abrirDialogoArticuloAgrupador(agrupadorId: number) {
