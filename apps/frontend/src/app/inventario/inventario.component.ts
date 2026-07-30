@@ -318,20 +318,29 @@ export class InventarioComponent implements OnInit {
       result = result.filter(art => {
         const nroSerie = (art.nroSerie || '').toLowerCase();
         const alias = (art.alias || '').toLowerCase();
-        const modelo = (art.modelo?.nombre || '').toLowerCase();
         const categoria = (art.modelo?.categoria?.nombre || '').toLowerCase();
-        const estado = (art.estado?.nombre || art.estado || '').toLowerCase();
         const asignatario = this.getArticuloAsignatario(art).toLowerCase();
         const agrupador = (art.agrupador?.nombre || '').toLowerCase();
+
+        const dynamicValues: string[] = [];
+        if (art.atributos) {
+          for (const val of Object.values(art.atributos)) {
+            if (val != null) dynamicValues.push(String(val).toLowerCase());
+          }
+        }
+        if (art.modelo?.atributos) {
+          for (const val of Object.values(art.modelo.atributos)) {
+            if (val != null) dynamicValues.push(String(val).toLowerCase());
+          }
+        }
 
         return keywords.every(kw => 
           nroSerie.includes(kw) || 
           alias.includes(kw) || 
-          modelo.includes(kw) || 
           categoria.includes(kw) || 
-          estado.includes(kw) || 
           asignatario.includes(kw) ||
-          agrupador.includes(kw)
+          agrupador.includes(kw) ||
+          dynamicValues.some(val => val.includes(kw))
         );
       });
     }
