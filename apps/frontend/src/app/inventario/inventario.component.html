@@ -87,7 +87,18 @@
             <tbody>
               <tr *ngFor="let art of filteredArticulos">
                 <td><div class="art"><span class="alias">{{ art.alias || 'Sin alias' }}</span><span class="sn" *ngIf="art.nroSerie">{{ art.nroSerie }}</span></div></td>
-                <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
+                 <td class="mut">
+                  <div class="model-hover-container">
+                    {{ art.modelo?.nombre || '—' }}
+                    <div class="model-hover-card" *ngIf="hasModelSpecs(art.modelo)">
+                      <div class="mh-header">Especificaciones del Modelo</div>
+                      <div class="mh-row" *ngFor="let spec of getModelSpecsList(art.modelo)">
+                        <span class="mh-key">{{ spec.nombre }}</span>
+                        <span class="mh-val">{{ spec.valor }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
                 <td *ngFor="let attr of atributosDominio">{{ getAtributoValor(art, attr.id) || '—' }}</td>
                 <td class="mut detalle-cell" [title]="art.detalle || ''">{{ art.detalle || '—' }}</td>
                 <td><span [ngClass]="estadoPillClass(art)"><span class="dot"></span>{{ estadoNombre(art) }}</span></td>
@@ -370,7 +381,17 @@
         </thead>
         <tbody>
           <tr *ngFor="let mod of filteredModelos">
-            <td class="cell-name">{{ mod.nombre }}</td>
+            <td class="cell-name">
+              <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                <span style="font-weight: 600;">{{ mod.nombre }}</span>
+                <!-- Model dynamic specs pills -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.15rem;" *ngIf="hasModelSpecs(mod)">
+                  <span class="pill slate" *ngFor="let spec of getModelSpecsList(mod)" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;">
+                    <span style="font-weight: 500; opacity: 0.85;">{{ spec.nombre }}:</span> {{ spec.valor }}
+                  </span>
+                </div>
+              </div>
+            </td>
             <td class="mut">{{ mod.detalle || '-' }}</td>
             <td class="mut">{{ mod.marca?.nombre }}</td>
             <td><span class="pill indigo">{{ mod.categoria?.nombre }}</span></td>

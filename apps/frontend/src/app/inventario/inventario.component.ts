@@ -1009,6 +1009,26 @@ export class InventarioComponent implements OnInit {
     return '';
   }
 
+  hasModelSpecs(modelo: any): boolean {
+    if (!modelo?.atributos || !modelo?.categoriaId) return false;
+    const cat = this.categorias.find(c => c.id === modelo.categoriaId);
+    if (!cat?.atributos) return false;
+    return cat.atributos.some((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '');
+  }
+
+  getModelSpecsList(modelo: any): { nombre: string, valor: string }[] {
+    if (!modelo?.atributos || !modelo?.categoriaId) return [];
+    const cat = this.categorias.find(c => c.id === modelo.categoriaId);
+    if (!cat?.atributos) return [];
+    
+    return cat.atributos
+      .filter((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '')
+      .map((a: any) => ({
+        nombre: a.nombre,
+        valor: String(modelo.atributos[a.clave])
+      }));
+  }
+
   // --- CATALOGOS DENTRO DEL DOMINIO ---
   abrirNuevaCategoria() {
     this.editingCategoriaId = null;
