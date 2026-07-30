@@ -22,7 +22,7 @@ export class PrismaStockLoteRepository implements StockLoteRepository {
   async findById(id: number): Promise<StockLote | null> {
     return this.prisma.stockLote.findUnique({ 
       where: { id },
-      include: { modelo: { include: { categoria: { include: { dominio: true } } } } }
+      include: { modelo: { include: { categoria: { include: { dominio: true } }, marca: true } } }
     });
   }
 
@@ -47,7 +47,7 @@ export class PrismaStockLoteRepository implements StockLoteRepository {
     }
     return this.prisma.stockLote.findMany({ 
       where, 
-      include: { modelo: { include: { categoria: { include: { dominio: true } } } } } 
+      include: { modelo: { include: { categoria: { include: { dominio: true } }, marca: true } } } 
     });
   }
 

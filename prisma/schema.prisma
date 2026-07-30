@@ -182,6 +182,7 @@ model StockLote {
   cantidadDisponible Int                 @default(0)
   referencia         String? // remito / orden de compra / origen
   fechaIngreso       DateTime            @default(now())
+  atributos          Json                @default("{}")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   entregas           EntregaConsumible[]

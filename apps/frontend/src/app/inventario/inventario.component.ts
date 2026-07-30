@@ -125,17 +125,12 @@ export class InventarioComponent implements OnInit {
     if (!mod) return;
     this.catalogosService.getAtributos(mod.categoriaId).subscribe(res => {
       if (res.success) {
-        this.atributosLoteForm = res.data;
+        this.atributosLoteForm = res.data.filter((a: any) => a.nivel === 'ARTICULO');
         const group: any = {};
         for (const attr of this.atributosLoteForm) {
           group[attr.clave] = [''];
         }
         this.loteModeloDynamicForm = this.fb.group(group);
-        const patch: Record<string, any> = {};
-        for (const attr of this.atributosLoteForm) {
-          patch[attr.clave] = mod.atributos?.[attr.clave] ?? '';
-        }
-        this.loteModeloDynamicForm.patchValue(patch);
       }
     });
   }
@@ -1080,22 +1075,37 @@ export class InventarioComponent implements OnInit {
     if (!modelo?.atributos || !modelo?.categoriaId) return false;
     const cat = this.categorias.find(c => c.id === modelo.categoriaId);
     if (!cat?.atributos) return false;
-    const isConsumible = cat.tipoSeguimiento === 'POR_LOTE';
-    return cat.atributos.some((a: any) => (isConsumible || a.nivel === 'MODELO') && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '');
+    return cat.atributos.some((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '');
   }
 
   getModelSpecsList(modelo: any): { nombre: string, valor: string }[] {
     if (!modelo?.atributos || !modelo?.categoriaId) return [];
     const cat = this.categorias.find(c => c.id === modelo.categoriaId);
     if (!cat?.atributos) return [];
-    const isConsumible = cat.tipoSeguimiento === 'POR_LOTE';
     
     return cat.atributos
-      .filter((a: any) => (isConsumible || a.nivel === 'MODELO') && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '')
+      .filter((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '')
       .map((a: any) => ({
         nombre: a.nombre,
         valor: String(modelo.atributos[a.clave])
       }));
+  }
+
+  getLoteSpecsText(lote: any): string {
+    if (!lote?.atributos || !lote?.modelo?.categoriaId) return '';
+    const cat = this.categorias.find(c => c.id === lote.modelo.categoriaId);
+    if (!cat?.atributos) return '';
+    
+    const parts: string[] = [];
+    for (const attr of cat.atributos) {
+      if (attr.nivel === 'ARTICULO') {
+        const val = lote.atributos[attr.clave];
+        if (val != null && val !== '') {
+          parts.push(`${attr.nombre}: ${val}`);
+        }
+      }
+    }
+    return parts.length > 0 ? `(${parts.join(', ')})` : '';
   }
 
   // --- CATALOGOS DENTRO DEL DOMINIO ---
@@ -1331,7 +1341,7 @@ export class InventarioComponent implements OnInit {
   saveLote() {
     if (this.newLote.cantidadDisponible <= 0 || !this.newLote.modeloId) return;
     
-    // Save dynamic attributes to model first
+    // Extract Dynamic Lot-level (Article-level) Attributes
     const formValues = this.loteModeloDynamicForm.value;
     const atributos: Record<string, any> = {};
     for (const attr of this.atributosLoteForm) {
@@ -1339,23 +1349,19 @@ export class InventarioComponent implements OnInit {
       if (valor != null && valor !== '') atributos[attr.clave] = valor;
     }
     
-    const updateAttrsAndCreateLote = () => {
-      this.inventarioService.createLote({
-        cantidadDisponible: this.newLote.cantidadDisponible,
-        modeloId: this.newLote.modeloId!
-      }).subscribe(() => {
+    this.inventarioService.createLote({
+      cantidadDisponible: this.newLote.cantidadDisponible,
+      modeloId: this.newLote.modeloId!,
+      atributos
+    }).subscribe({
+      next: () => {
         this.showLoteDialog = false;
         this.newLote = { cantidadDisponible: 0, modeloId: null };
         this.atributosLoteForm = [];
         this.loteModeloDynamicForm = this.fb.group({});
         this.loadLotes();
-        this.loadCatalogos();
-      });
-    };
-    
-    this.catalogosService.updateModelo(this.newLote.modeloId!, { atributos }).subscribe({
-      next: updateAttrsAndCreateLote,
-      error: (e) => this.notificaciones.errorHttp(e, 'No se pudieron guardar las especificaciones del modelo.')
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo guardar el lote de stock.')
     });
   }
 

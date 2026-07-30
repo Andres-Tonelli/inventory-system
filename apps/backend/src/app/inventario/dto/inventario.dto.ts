@@ -28,6 +28,7 @@ export class CreateLoteDto implements ICreateLoteDto {
   @IsInt() @Min(0) cantidadDisponible!: number;
   @IsInt() modeloId!: number;
   @IsOptional() @IsString() @MaxLength(200) referencia?: string;
+  @IsOptional() @IsObject() atributos?: any;
 }
 
 export class AjusteStockDto implements IAjusteStockDto {

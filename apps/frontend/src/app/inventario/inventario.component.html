@@ -202,7 +202,12 @@
                       </thead>
                       <tbody>
                         <tr *ngFor="let lote of group.lotes">
-                          <td style="padding-left: 45px;" class="mut">Lote #{{ lote.id }}</td>
+                          <td style="padding-left: 45px;" class="mut">
+                            Lote #{{ lote.id }}
+                            <span style="font-size: 0.8rem; margin-left: 0.5rem; color: var(--indigo-600); font-weight: 500;" *ngIf="getLoteSpecsText(lote)">
+                              {{ getLoteSpecsText(lote) }}
+                            </span>
+                          </td>
                           <td><b>{{ lote.cantidadDisponible }}</b></td>
                           <td class="mut">{{ lote.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
                           <td class="ta-right">

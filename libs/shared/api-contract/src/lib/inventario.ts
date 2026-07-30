@@ -35,6 +35,7 @@ export interface StockLote {
   cantidadDisponible: number;
   referencia?: string | null;
   fechaIngreso?: string;
+  atributos?: any;
   modelo?: Modelo;
   createdAt?: string;
   updatedAt?: string;
@@ -71,6 +72,7 @@ export interface CreateLoteDto {
   cantidadDisponible: number;
   modeloId: number;
   referencia?: string;
+  atributos?: any;
 }
 
 /** Ajuste de stock de un lote (consumir / adicionar). */

@@ -38,7 +38,7 @@ export class InventarioService {
     return this.http.get<ApiResponse<StockLote[]>>(url);
   }
 
-  createLote(data: { cantidadDisponible: number; modeloId: number }): Observable<any> {
+  createLote(data: { cantidadDisponible: number; modeloId: number; atributos?: any; referencia?: string }): Observable<any> {
     return this.http.post('/api/inventario/lotes', data);
   }
 
