@@ -78,6 +78,7 @@ model Modelo {
   detalle     String?
   marcaId     Int
   categoriaId Int
+  atributos   Json        @default("{}")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   articulos   Articulo[]
@@ -98,6 +99,7 @@ model AtributoDefinicion {
   clave       String
   tipoDato    String
   categoriaId Int
+  nivel       String    @default("ARTICULO")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   categoria   Categoria @relation(fields: [categoriaId], references: [id])

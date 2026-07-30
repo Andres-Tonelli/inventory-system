@@ -455,7 +455,18 @@
     <label class="mt">Marca</label>
     <p-select [options]="marcas" [(ngModel)]="newModelo.marcaId" optionLabel="nombre" optionValue="id" placeholder="Marca" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar marca…" [resetFilterOnHide]="true"></p-select>
     <label class="mt">Categoría</label>
-    <p-select [options]="categorias" [(ngModel)]="newModelo.categoriaId" optionLabel="nombre" optionValue="id" placeholder="Categoría" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
+    <p-select [options]="categorias" [(ngModel)]="newModelo.categoriaId" (onChange)="onModeloCategoriaChange()" optionLabel="nombre" optionValue="id" placeholder="Categoría" appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría…" [resetFilterOnHide]="true"></p-select>
+
+    <div class="dyn-attrs" *ngIf="newModelo.categoriaId && atributosModeloForm.length > 0">
+      <div class="md-lbl mt" style="font-weight: 600; margin-top: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.25rem;">Especificaciones del modelo</div>
+      <form [formGroup]="modeloDynamicForm" class="form" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+        <ng-container *ngFor="let attr of atributosModeloForm">
+          <label style="font-size: 0.85rem; font-weight: 500;">{{ attr.nombre }}</label>
+          <input *ngIf="attr.tipoDato === 'NUMERO'" pInputText type="number" [formControlName]="attr.clave" />
+          <input *ngIf="attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
+        </ng-container>
+      </form>
+    </div>
   </div>
   <ng-template pTemplate="footer"><button class="btn ghost" (click)="showModeloDialog = false">Cancelar</button><button class="btn primary" (click)="saveModelo()" [disabled]="!newModelo.nombre || !newModelo.marcaId || !newModelo.categoriaId">Guardar</button></ng-template>
 </p-dialog>
@@ -559,6 +570,7 @@
                 <th>Nombre</th>
                 <th>Clave</th>
                 <th>Tipo</th>
+                <th>Ámbito</th>
                 <th class="ta-right"></th>
               </tr>
             </thead>
@@ -570,6 +582,11 @@
                   <span class="pill slate" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;">{{ attr.tipoDato }}</span>
                 </td>
                 <td>
+                  <span [ngClass]="attr.nivel === 'MODELO' ? 'pill indigo' : 'pill teal'" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;">
+                    {{ attr.nivel === 'MODELO' ? 'Modelo' : 'Artículo' }}
+                  </span>
+                </td>
+                <td>
                   <div class="row-actions justify-end">
                     <button class="btn ghost sm" style="padding: 0.25rem 0.5rem;" (click)="abrirEditarAtributoCategoria(attr)"><i class="pi pi-pencil"></i></button>
                     <button class="btn ghost sm danger" style="padding: 0.25rem 0.5rem;" (click)="eliminarAtributoCategoria(attr)"><i class="pi pi-trash"></i></button>
@@ -577,7 +594,7 @@
                 </td>
               </tr>
               <tr *ngIf="categoriaAtributos.length === 0">
-                <td colspan="4" class="empty text-center py-4 text-muted" style="text-align: center; padding: 2rem 0; color: var(--text-muted);">No hay atributos definidos para esta categoría.</td>
+                <td colspan="5" class="empty text-center py-4 text-muted" style="text-align: center; padding: 2rem 0; color: var(--text-muted);">No hay atributos definidos para esta categoría.</td>
               </tr>
             </tbody>
           </table>
@@ -599,9 +616,15 @@
             <input pInputText [(ngModel)]="atributoForm.clave" placeholder="Ej: ram_gb" class="mono" [disabled]="!!editingAtributoId" style="width: 100%;" />
           </div>
         </div>
-        <div class="field">
-          <label style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem;">Tipo de dato</label>
-          <p-select [options]="tipoDatoOptions" [(ngModel)]="atributoForm.tipoDato" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="field">
+            <label style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem;">Tipo de dato</label>
+            <p-select [options]="tipoDatoOptions" [(ngModel)]="atributoForm.tipoDato" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+          </div>
+          <div class="field">
+            <label style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem;">Ámbito / Nivel</label>
+            <p-select [options]="nivelOptions" [(ngModel)]="atributoForm.nivel" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+          </div>
         </div>
       </div>
       <div class="flex justify-end gap-2 mt-4" style="margin-top: 1.25rem; display: flex; justify-content: flex-end; gap: 0.75rem;">

@@ -74,7 +74,7 @@ export class InventarioComponent implements OnInit {
   editingCategoriaId: number | null = null;
   newMarca = { nombre: '' };
   editingMarcaId: number | null = null;
-  newModelo = { nombre: '', detalle: '', marcaId: null as number | null, categoriaId: null as number | null };
+  newModelo = { nombre: '', detalle: '', marcaId: null as number | null, categoriaId: null as number | null, atributos: {} as any };
   editingModeloId: number | null = null;
   newAgrupador = { nombre: '', tipoAgrupadorId: null as number | null };
   newLote = { cantidadDisponible: 0, modeloId: null as number | null };
@@ -127,7 +127,7 @@ export class InventarioComponent implements OnInit {
   selectedCategoriaParaAtributos: Categoria | null = null;
   categoriaAtributos: AtributoDefinicion[] = [];
   editingAtributoId: number | null = null;
-  atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+  atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO', nivel: 'ARTICULO' };
   readonly tipoDatoOptions = [
     { label: 'Texto', value: 'TEXTO' },
     { label: 'Número', value: 'NUMERO' },
@@ -258,6 +258,12 @@ export class InventarioComponent implements OnInit {
 
   // Dinámica
   dynamicForm!: FormGroup;
+  modeloDynamicForm!: FormGroup;
+  atributosModeloForm: AtributoDefinicion[] = [];
+  nivelOptions = [
+    { label: 'Artículo (se define por unidad física)', value: 'ARTICULO' },
+    { label: 'Modelo (se define una vez en el modelo)', value: 'MODELO' }
+  ];
 
   constructor(
     private route: ActivatedRoute,
@@ -270,6 +276,7 @@ export class InventarioComponent implements OnInit {
     private notificaciones: NotificacionesUiService
   ) {
     this.dynamicForm = this.fb.group({});
+    this.modeloDynamicForm = this.fb.group({});
   }
 
   // Candidatos para vincular a un agrupador. Se cargan on-demand al abrir el diálogo
@@ -743,7 +750,7 @@ export class InventarioComponent implements OnInit {
     this.selectedCategoriaParaAtributos = cat;
     this.categoriaAtributos = cat.atributos || [];
     this.editingAtributoId = null;
-    this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+    this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO', nivel: 'ARTICULO' };
     this.showGestionAtributosDialog = true;
   }
 
@@ -752,13 +759,14 @@ export class InventarioComponent implements OnInit {
     this.atributoForm = {
       nombre: attr.nombre,
       clave: attr.clave,
-      tipoDato: attr.tipoDato
+      tipoDato: attr.tipoDato,
+      nivel: attr.nivel || 'ARTICULO'
     };
   }
 
   cancelarEdicionAtributo() {
     this.editingAtributoId = null;
-    this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+    this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO', nivel: 'ARTICULO' };
   }
 
   guardarAtributoCategoria() {
@@ -766,11 +774,11 @@ export class InventarioComponent implements OnInit {
     const clave = this.atributoForm.clave.trim();
     if (!nombre || !clave || !this.selectedCategoriaParaAtributos?.id) return;
     const catId = this.selectedCategoriaParaAtributos.id;
-    const data = { nombre, clave, tipoDato: this.atributoForm.tipoDato };
+    const data = { nombre, clave, tipoDato: this.atributoForm.tipoDato, nivel: this.atributoForm.nivel };
 
     const done = () => {
       this.editingAtributoId = null;
-      this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+      this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO', nivel: 'ARTICULO' };
       this.loadCategorias();
     };
     const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar el atributo.');
@@ -851,7 +859,7 @@ export class InventarioComponent implements OnInit {
       this.modelosFiltrados = this.modelos.filter(m => m.categoriaId === this.selectedCategoriaId);
       this.catalogosService.getAtributos(this.selectedCategoriaId).subscribe(res => {
         if (res.success) {
-          this.atributosDominio = res.data;
+          this.atributosDominio = res.data.filter((a: any) => a.nivel !== 'MODELO');
           this.buildDynamicForm();
           this.showNuevoDialog = true;
         }
@@ -876,7 +884,7 @@ export class InventarioComponent implements OnInit {
       this.modelosFiltrados = this.modelos.filter(m => m.categoriaId === this.selectedCategoriaId);
       this.catalogosService.getAtributos(this.selectedCategoriaId).subscribe(res => {
         if (res.success) {
-          this.atributosDominio = res.data;
+          this.atributosDominio = res.data.filter((a: any) => a.nivel !== 'MODELO');
           this.buildDynamicForm();
           
           const patch: Record<string, any> = {};
@@ -932,11 +940,16 @@ export class InventarioComponent implements OnInit {
   }
 
   getAtributoValor(articulo: any, attrId: number | undefined): string {
-    if (!attrId || !articulo?.atributos) return '';
+    if (!attrId || !articulo) return '';
     const def = this.atributosDominio.find(a => a.id === attrId);
     if (!def) return '';
-    const val = articulo.atributos[def.clave];
-    return val != null ? String(val) : '';
+    if (def.nivel === 'MODELO') {
+      const val = articulo.modelo?.atributos?.[def.clave];
+      return val != null ? String(val) : '';
+    } else {
+      const val = articulo.atributos?.[def.clave];
+      return val != null ? String(val) : '';
+    }
   }
 
   /** Definiciones de atributos del dominio que tienen valor en este artículo. */
@@ -946,7 +959,17 @@ export class InventarioComponent implements OnInit {
 
   verDetalleArticulo(art: any) {
     this.selectedArticuloDetalle = art;
-    this.showDetalleArticuloDialog = true;
+    const catId = art.modelo?.categoriaId;
+    if (catId) {
+      this.catalogosService.getAtributos(catId).subscribe(res => {
+        if (res.success) {
+          this.atributosDominio = res.data;
+          this.showDetalleArticuloDialog = true;
+        }
+      });
+    } else {
+      this.showDetalleArticuloDialog = true;
+    }
   }
 
   abrirCambiarEstado(art: any) {
@@ -1041,26 +1064,79 @@ export class InventarioComponent implements OnInit {
 
   abrirNuevoModelo() {
     this.editingModeloId = null;
-    this.newModelo = { nombre: '', detalle: '', marcaId: null, categoriaId: null };
+    this.newModelo = { nombre: '', detalle: '', marcaId: null, categoriaId: null, atributos: {} };
+    this.atributosModeloForm = [];
+    this.buildModeloDynamicForm();
     this.showModeloDialog = true;
   }
   abrirEditarModelo(mod: any) {
     this.editingModeloId = mod.id;
-    this.newModelo = { nombre: mod.nombre, detalle: mod.detalle ?? '', marcaId: mod.marcaId ?? null, categoriaId: mod.categoriaId ?? null };
-    this.showModeloDialog = true;
+    this.newModelo = {
+      nombre: mod.nombre,
+      detalle: mod.detalle ?? '',
+      marcaId: mod.marcaId ?? null,
+      categoriaId: mod.categoriaId ?? null,
+      atributos: mod.atributos ?? {}
+    };
+    this.atributosModeloForm = [];
+    if (this.newModelo.categoriaId) {
+      this.catalogosService.getAtributos(this.newModelo.categoriaId).subscribe(res => {
+        if (res.success) {
+          this.atributosModeloForm = res.data.filter((a: any) => a.nivel === 'MODELO');
+          this.buildModeloDynamicForm();
+          const patch: Record<string, any> = {};
+          for (const attr of this.atributosModeloForm) {
+            patch[attr.clave] = this.newModelo.atributos?.[attr.clave] ?? '';
+          }
+          this.modeloDynamicForm.patchValue(patch);
+          this.showModeloDialog = true;
+        }
+      });
+    } else {
+      this.buildModeloDynamicForm();
+      this.showModeloDialog = true;
+    }
+  }
+  onModeloCategoriaChange() {
+    this.atributosModeloForm = [];
+    if (this.newModelo.categoriaId) {
+      this.catalogosService.getAtributos(this.newModelo.categoriaId).subscribe(res => {
+        if (res.success) {
+          this.atributosModeloForm = res.data.filter((a: any) => a.nivel === 'MODELO');
+          this.buildModeloDynamicForm();
+        }
+      });
+    } else {
+      this.buildModeloDynamicForm();
+    }
+  }
+  buildModeloDynamicForm() {
+    const group: any = {};
+    for (const attr of this.atributosModeloForm) {
+      group[attr.clave] = [''];
+    }
+    this.modeloDynamicForm = this.fb.group(group);
   }
   saveModelo() {
     if(!this.newModelo.nombre || !this.newModelo.marcaId || !this.newModelo.categoriaId) return;
+    const formValues = this.modeloDynamicForm.value;
+    const atributos: Record<string, any> = {};
+    for (const attr of this.atributosModeloForm) {
+      const valor = formValues[attr.clave];
+      if (valor != null && valor !== '') atributos[attr.clave] = valor;
+    }
+
     const data = {
       nombre: this.newModelo.nombre,
       detalle: this.newModelo.detalle || undefined,
       marcaId: this.newModelo.marcaId,
-      categoriaId: this.newModelo.categoriaId
+      categoriaId: this.newModelo.categoriaId,
+      atributos
     };
     const done = () => {
       this.showModeloDialog = false;
       this.editingModeloId = null;
-      this.newModelo = { nombre: '', detalle: '', marcaId: null, categoriaId: null };
+      this.newModelo = { nombre: '', detalle: '', marcaId: null, categoriaId: null, atributos: {} };
       this.loadCatalogos();
     };
     const onErr = (e: any) => this.notificaciones.errorHttp(e, 'No se pudo guardar el modelo.');

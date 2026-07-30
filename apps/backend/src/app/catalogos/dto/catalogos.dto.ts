@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import {
   CreateDominioDto as ICreateDominioDto,
   CreateCategoriaDto as ICreateCategoriaDto,
@@ -48,12 +48,14 @@ export class CreateModeloDto implements ICreateModeloDto {
   @IsOptional() @IsString() @MaxLength(500) detalle?: string;
   @IsInt() marcaId!: number;
   @IsInt() categoriaId!: number;
+  @IsOptional() @IsObject() atributos?: any;
 }
 
 export class CreateAtributoDto implements ICreateAtributoDto {
   @IsString() @MinLength(1) @MaxLength(100) nombre!: string;
   @IsString() @MinLength(1) @MaxLength(50) clave!: string;
   @IsString() @MinLength(1) @MaxLength(50) tipoDato!: string;
+  @IsOptional() @IsString() @MinLength(1) @MaxLength(50) nivel?: string;
 }
 
 export class CreateTipoAgrupadorDto implements ICreateTipoAgrupadorDto {
@@ -88,6 +90,7 @@ export class UpdateModeloDto implements IUpdateModeloDto {
   @IsOptional() @IsString() @MaxLength(500) detalle?: string;
   @IsOptional() @IsInt() marcaId?: number;
   @IsOptional() @IsInt() categoriaId?: number;
+  @IsOptional() @IsObject() atributos?: any;
 }
 
 export class UpdateTipoAgrupadorDto implements IUpdateTipoAgrupadorDto {
@@ -99,6 +102,7 @@ export class UpdateAtributoDto implements IUpdateAtributoDto {
   @IsOptional() @IsString() @MinLength(1) @MaxLength(100) nombre?: string;
   @IsOptional() @IsString() @MinLength(1) @MaxLength(50) clave?: string;
   @IsOptional() @IsString() @MinLength(1) @MaxLength(50) tipoDato?: string;
+  @IsOptional() @IsString() @MinLength(1) @MaxLength(50) nivel?: string;
 }
 
 export class UpdateEstadoDto implements IUpdateEstadoDto {

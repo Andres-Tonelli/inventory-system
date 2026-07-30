@@ -58,6 +58,7 @@ export interface Modelo {
   detalle?: string;
   marcaId: number;
   categoriaId: number;
+  atributos?: any;
   marca?: Marca;
   categoria?: Categoria;
 }
@@ -68,6 +69,7 @@ export interface AtributoDefinicion {
   clave: string;
   tipoDato: string;
   categoriaId: number;
+  nivel?: string;
 }
 
 export interface TipoAgrupador {
@@ -109,12 +111,14 @@ export interface CreateModeloDto {
   detalle?: string;
   marcaId: number;
   categoriaId: number;
+  atributos?: any;
 }
 
 export interface CreateAtributoDto {
   nombre: string;
   clave: string;
   tipoDato: string;
+  nivel?: string;
 }
 
 export interface CreateTipoAgrupadorDto {
@@ -153,6 +157,7 @@ export interface UpdateModeloDto {
   detalle?: string;
   marcaId?: number;
   categoriaId?: number;
+  atributos?: any;
 }
 
 export interface UpdateTipoAgrupadorDto {
@@ -164,6 +169,7 @@ export interface UpdateAtributoDto {
   nombre?: string;
   clave?: string;
   tipoDato?: string;
+  nivel?: string;
 }
 
 export interface UpdateEstadoDto {
