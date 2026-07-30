@@ -38,7 +38,6 @@ model DominioInventario {
   color          String?
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
-  atributos      AtributoDefinicion[]
   categorias     Categoria[]
   marcas         Marca[]
   tiposAgrupador TipoAgrupador[]
@@ -54,6 +53,7 @@ model Categoria {
   updatedAt       DateTime          @updatedAt
   dominio         DominioInventario @relation(fields: [dominioId], references: [id])
   modelos         Modelo[]
+  atributos       AtributoDefinicion[]
 
   @@index([dominioId])
 }
@@ -91,17 +91,17 @@ model Modelo {
 /// Catálogo de atributos dinámicos por dominio. Define QUÉ atributos tiene cada
 /// dominio (para armar formularios y validar). Los VALORES viven en Articulo.atributos (JSONB).
 model AtributoDefinicion {
-  id        Int               @id @default(autoincrement())
-  nombre    String
-  clave     String
-  tipoDato  String
-  dominioId Int
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  dominio   DominioInventario @relation(fields: [dominioId], references: [id])
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  clave       String
+  tipoDato    String
+  categoriaId Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
 
-  @@unique([clave, dominioId])
-  @@index([dominioId])
+  @@unique([clave, categoriaId])
+  @@index([categoriaId])
 }
 
 model Articulo {

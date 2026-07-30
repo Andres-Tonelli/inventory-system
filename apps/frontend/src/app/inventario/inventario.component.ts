@@ -121,6 +121,19 @@ export class InventarioComponent implements OnInit {
   // Expanded consumibles models
   expandedConsumibleGroups = new Set<number>();
 
+  // Gestión de Atributos de Categoría
+  showGestionAtributosDialog = false;
+  selectedCategoriaParaAtributos: Categoria | null = null;
+  categoriaAtributos: AtributoDefinicion[] = [];
+  editingAtributoId: number | null = null;
+  atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+  readonly tipoDatoOptions = [
+    { label: 'Texto', value: 'TEXTO' },
+    { label: 'Número', value: 'NUMERO' },
+    { label: 'Fecha', value: 'FECHA' },
+    { label: 'Booleano', value: 'BOOLEANO' },
+  ];
+
   // Seleccion básica
   selectedCategoriaId: number | null = null;
   selectedModeloId: number | null = null;
@@ -645,9 +658,7 @@ export class InventarioComponent implements OnInit {
     this.catalogosService.getDominios().subscribe(res => {
       if (res.success) this.dominioNombre = res.data.find(d => d.id === this.dominioId)?.nombre || '';
     });
-    this.catalogosService.getCategorias(this.dominioId).subscribe(res => {
-      if(res.success) this.categorias = res.data;
-    });
+    this.loadCategorias();
     this.catalogosService.getMarcas(this.dominioId).subscribe(res => {
       if(res.success) this.marcas = res.data;
     });
@@ -659,12 +670,8 @@ export class InventarioComponent implements OnInit {
         }));
       }
     });
-    this.catalogosService.getAtributos(this.dominioId).subscribe(res => {
-      if(res.success) {
-        this.atributosDominio = res.data;
-        this.buildDynamicForm();
-      }
-    });
+    // Atributos definidos por categoría se cargan dinámicamente cuando el usuario elige la categoría
+    this.loadAtributosCategoria();
     this.catalogosService.getTiposAgrupador(this.dominioId).subscribe(res => {
       if(res.success) {
         this.tiposAgrupador = res.data;
@@ -702,6 +709,97 @@ export class InventarioComponent implements OnInit {
   onCategoriaChange() {
     this.selectedModeloId = null;
     this.modelosFiltrados = this.modelos.filter(m => m.categoriaId === this.selectedCategoriaId);
+    if (this.selectedCategoriaId) {
+      this.catalogosService.getAtributos(this.selectedCategoriaId).subscribe(res => {
+        if (res.success) {
+          this.atributosDominio = res.data;
+          this.buildDynamicForm();
+        }
+      });
+    } else {
+      this.atributosDominio = [];
+      this.buildDynamicForm();
+    }
+  }
+
+  loadCategorias() {
+    this.catalogosService.getCategorias(this.dominioId).subscribe(res => {
+      if (res.success) {
+        this.categorias = res.data;
+        if (this.selectedCategoriaParaAtributos) {
+          const updatedCat = this.categorias.find(c => c.id === this.selectedCategoriaParaAtributos!.id);
+          if (updatedCat) {
+            this.selectedCategoriaParaAtributos = updatedCat;
+            this.categoriaAtributos = updatedCat.atributos || [];
+          }
+        }
+      }
+    });
+  }
+
+  abrirGestionarAtributos(cat: Categoria) {
+    this.selectedCategoriaParaAtributos = cat;
+    this.categoriaAtributos = cat.atributos || [];
+    this.editingAtributoId = null;
+    this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+    this.showGestionAtributosDialog = true;
+  }
+
+  abrirEditarAtributoCategoria(attr: AtributoDefinicion) {
+    this.editingAtributoId = attr.id ?? null;
+    this.atributoForm = {
+      nombre: attr.nombre,
+      clave: attr.clave,
+      tipoDato: attr.tipoDato
+    };
+  }
+
+  cancelarEdicionAtributo() {
+    this.editingAtributoId = null;
+    this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+  }
+
+  guardarAtributoCategoria() {
+    const nombre = this.atributoForm.nombre.trim();
+    const clave = this.atributoForm.clave.trim();
+    if (!nombre || !clave || !this.selectedCategoriaParaAtributos?.id) return;
+    const catId = this.selectedCategoriaParaAtributos.id;
+    const data = { nombre, clave, tipoDato: this.atributoForm.tipoDato };
+
+    const done = () => {
+      this.editingAtributoId = null;
+      this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
+      this.loadCategorias();
+    };
+
+    if (this.editingAtributoId) {
+      this.catalogosService.updateAtributo(this.editingAtributoId, data).subscribe(done);
+    } else {
+      this.catalogosService.createAtributo(catId, data).subscribe(done);
+    }
+  }
+
+  eliminarAtributoCategoria(attr: AtributoDefinicion) {
+    if (!attr.id) return;
+    if (confirm(`¿Eliminar el atributo "${attr.nombre}"?`)) {
+      this.catalogosService.deleteAtributo(attr.id).subscribe(() => {
+        this.loadCategorias();
+      });
+    }
+  }
+
+  loadAtributosCategoria() {
+    if (!this.filterCategoriaId) {
+      this.atributosDominio = [];
+      this.buildDynamicForm();
+      return;
+    }
+    this.catalogosService.getAtributos(this.filterCategoriaId).subscribe(res => {
+      if (res.success) {
+        this.atributosDominio = res.data;
+        this.buildDynamicForm();
+      }
+    });
   }
 
   get modelosFiltradosBusqueda(): Modelo[] {
@@ -713,6 +811,7 @@ export class InventarioComponent implements OnInit {
     this.filterModeloId = null;
     // Al cambiar (o limpiar) la categoría, se re-consulta la lista acotada a esa categoría.
     this.loadArticulos();
+    this.loadAtributosCategoria();
   }
 
   limpiarFiltros() {
@@ -740,30 +839,57 @@ export class InventarioComponent implements OnInit {
   abrirDialogo() {
     this.editingArticuloId = null;
     this.selectedCategoriaId = this.filterCategoriaId;
-    this.onCategoriaChange();
     this.selectedModeloId = null;
     this.nroSerie = '';
     this.alias = '';
     this.detalle = '';
-    this.dynamicForm.reset();
-    this.showNuevoDialog = true;
+    
+    if (this.selectedCategoriaId) {
+      this.modelosFiltrados = this.modelos.filter(m => m.categoriaId === this.selectedCategoriaId);
+      this.catalogosService.getAtributos(this.selectedCategoriaId).subscribe(res => {
+        if (res.success) {
+          this.atributosDominio = res.data;
+          this.buildDynamicForm();
+          this.showNuevoDialog = true;
+        }
+      });
+    } else {
+      this.modelosFiltrados = [];
+      this.atributosDominio = [];
+      this.buildDynamicForm();
+      this.showNuevoDialog = true;
+    }
   }
 
   abrirEditarArticulo(art: any) {
     this.editingArticuloId = art.id;
     this.selectedCategoriaId = art.modelo?.categoriaId ?? null;
-    this.onCategoriaChange(); // repuebla modelosFiltrados (y resetea selectedModeloId)
     this.selectedModeloId = art.modeloId ?? null;
     this.nroSerie = art.nroSerie || '';
     this.alias = art.alias || '';
     this.detalle = art.detalle || '';
-    const patch: Record<string, any> = {};
-    for (const attr of this.atributosDominio) {
-      patch[attr.clave] = art.atributos?.[attr.clave] ?? '';
+    
+    if (this.selectedCategoriaId) {
+      this.modelosFiltrados = this.modelos.filter(m => m.categoriaId === this.selectedCategoriaId);
+      this.catalogosService.getAtributos(this.selectedCategoriaId).subscribe(res => {
+        if (res.success) {
+          this.atributosDominio = res.data;
+          this.buildDynamicForm();
+          
+          const patch: Record<string, any> = {};
+          for (const attr of this.atributosDominio) {
+            patch[attr.clave] = art.atributos?.[attr.clave] ?? '';
+          }
+          this.dynamicForm.patchValue(patch);
+          this.showNuevoDialog = true;
+        }
+      });
+    } else {
+      this.modelosFiltrados = [];
+      this.atributosDominio = [];
+      this.buildDynamicForm();
+      this.showNuevoDialog = true;
     }
-    this.dynamicForm.reset();
-    this.dynamicForm.patchValue(patch);
-    this.showNuevoDialog = true;
   }
 
   guardarArticulo() {
@@ -789,6 +915,7 @@ export class InventarioComponent implements OnInit {
       this.showNuevoDialog = false;
       this.editingArticuloId = null;
       this.loadArticulos();
+      this.loadAtributosCategoria();
       this.loadAgrupadores();
     };
     const onErr = (e: any) => alert(e?.error?.message || 'No se pudo guardar el artículo.');

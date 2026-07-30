@@ -49,7 +49,28 @@ export class AuthService {
     return localStorage.getItem('inventory_token');
   }
 
+  isTokenExpired(token: string): boolean {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      // Decode JWT payload (standard base64url)
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload.exp) return false;
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp < now;
+    } catch {
+      return true;
+    }
+  }
+
   isAuthenticated(): boolean {
+    const token = this.getToken();
+    if (!token || this.isTokenExpired(token)) {
+      if (this.currentUser()) {
+        this.logout();
+      }
+      return false;
+    }
     return this.currentUser() !== null;
   }
 

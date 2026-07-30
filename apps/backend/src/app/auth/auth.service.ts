@@ -31,7 +31,7 @@ export class AuthService {
     });
 
     if (!admin) {
-      throw new UnauthorizedException('El usuario de red no está registrado como administrador en StockFlow');
+      throw new UnauthorizedException('El usuario de red no está registrado como administrador en TagSA-Inv');
     }
 
     // 3. Extract allowed domains

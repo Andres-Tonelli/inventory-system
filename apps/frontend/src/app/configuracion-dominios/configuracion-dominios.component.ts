@@ -12,6 +12,7 @@ import {
   Dominio,
   TipoAgrupador,
   AtributoDefinicion,
+  Categoria,
 } from '../core/services/catalogos.service';
 import { AuthService } from '../core/auth/auth.service';
 import { EmpleadosService } from '../core/services/empleados.service';
@@ -30,10 +31,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
   dominios: Dominio[] = [];
   selectedId: number | null = null;
   tiposByDom: Record<number, TipoAgrupador[]> = {};
-  atrsByDom: Record<number, AtributoDefinicion[]> = {};
   adminsByDom: Record<number, any[]> = {};
   empleadosRed: any[] = [];
-  activeTab: 'tipos' | 'atributos' | 'administradores' = 'tipos';
+  activeTab: 'tipos' | 'administradores' = 'tipos';
 
   // Diálogos
   showDominioDialog = false;
@@ -46,10 +46,6 @@ export class ConfiguracionDominiosComponent implements OnInit {
   showTipoDialog = false;
   editingTipoId: number | null = null;
   tipoForm = { nombre: '', asignable: true };
-
-  showAtributoDialog = false;
-  editingAtributoId: number | null = null;
-  atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
 
   showAdminDialog = false;
   adminForm: { selectedEmpleado: any; rol: 'DOMINIO' | 'SISTEMA' } = { selectedEmpleado: null, rol: 'DOMINIO' };
@@ -91,17 +87,8 @@ export class ConfiguracionDominiosComponent implements OnInit {
   get tipos(): TipoAgrupador[] {
     return this.selectedId ? this.tiposByDom[this.selectedId] ?? [] : [];
   }
-  get atributos(): AtributoDefinicion[] {
-    return this.selectedId ? this.atrsByDom[this.selectedId] ?? [] : [];
-  }
   countTipos(d: Dominio): number {
     return d.id ? this.tiposByDom[d.id]?.length ?? 0 : 0;
-  }
-  countAtrs(d: Dominio): number {
-    return d.id ? this.atrsByDom[d.id]?.length ?? 0 : 0;
-  }
-  tipoDatoLabel(v: string): string {
-    return this.tipoDatoOptions.find((o) => o.value === v)?.label ?? v;
   }
 
   loadAll(): void {
@@ -126,9 +113,6 @@ export class ConfiguracionDominiosComponent implements OnInit {
   loadDominioConfig(id: number): void {
     this.catalogos.getTiposAgrupador(id).subscribe((r) => {
       if (r.success) this.tiposByDom = { ...this.tiposByDom, [id]: r.data };
-    });
-    this.catalogos.getAtributos(id).subscribe((r) => {
-      if (r.success) this.atrsByDom = { ...this.atrsByDom, [id]: r.data };
     });
     if (this.isSystemAdmin()) {
       this.catalogos.getAdministradoresDelDominio(id).subscribe((r) => {
@@ -232,46 +216,6 @@ export class ConfiguracionDominiosComponent implements OnInit {
     });
   }
 
-  // ---- Atributo ----
-  openNewAtributo(): void {
-    this.editingAtributoId = null;
-    this.atributoForm = { nombre: '', clave: '', tipoDato: 'TEXTO' };
-    this.showAtributoDialog = true;
-  }
-  openEditAtributo(a: AtributoDefinicion): void {
-    this.editingAtributoId = a.id ?? null;
-    this.atributoForm = { nombre: a.nombre, clave: a.clave, tipoDato: a.tipoDato };
-    this.showAtributoDialog = true;
-  }
-  saveAtributo(): void {
-    const nombre = this.atributoForm.nombre.trim();
-    const clave = this.atributoForm.clave.trim();
-    if (!nombre || !clave || !this.selectedId) return;
-    const domId = this.selectedId;
-    const data = { nombre, clave, tipoDato: this.atributoForm.tipoDato };
-    const esEdicion = !!this.editingAtributoId;
-    const done = () => {
-      this.notificaciones.exito(esEdicion ? 'Atributo actualizado.' : 'Atributo creado.');
-      this.showAtributoDialog = false;
-      this.loadDominioConfig(domId);
-    };
-    if (this.editingAtributoId) {
-      this.catalogos.updateAtributo(this.editingAtributoId, data).subscribe(done);
-    } else {
-      this.catalogos.createAtributo(domId, data).subscribe(done);
-    }
-  }
-  deleteAtributo(a: AtributoDefinicion): void {
-    if (!a.id || !this.selectedId) return;
-    const id = a.id;
-    const domId = this.selectedId;
-    this.confirmUi.eliminar(`¿Eliminar el atributo "${a.nombre}"?`, () => {
-      this.catalogos.deleteAtributo(id).subscribe(() => {
-        this.notificaciones.exito(`Atributo "${a.nombre}" eliminado.`);
-        this.loadDominioConfig(domId);
-      });
-    });
-  }
 
   // ---- Administradores ----
   get administradores(): any[] {

@@ -42,6 +42,7 @@ export interface Categoria {
   tipoSeguimiento?: TipoSeguimiento;
   dominioId: number;
   dominio?: Dominio;
+  atributos?: AtributoDefinicion[];
 }
 
 export interface Marca {
@@ -66,7 +67,7 @@ export interface AtributoDefinicion {
   nombre: string;
   clave: string;
   tipoDato: string;
-  dominioId: number;
+  categoriaId: number;
 }
 
 export interface TipoAgrupador {

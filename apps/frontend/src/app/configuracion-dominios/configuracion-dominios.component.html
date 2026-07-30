@@ -23,7 +23,7 @@
           <span class="dico" [ngClass]="d.color || 'indigo'"><i [ngClass]="'pi pi-' + (d.icono || 'box')"></i></span>
           <span class="dmeta">
             <span class="dname">{{ d.nombre }}</span>
-            <span class="dsub">{{ countTipos(d) }} tipos · {{ countAtrs(d) }} atributos</span>
+            <span class="dsub">{{ countTipos(d) }} tipos</span>
           </span>
           <span class="dom-actions" *ngIf="isSystemAdmin()">
             <button class="icon-btn" title="Renombrar" (click)="openEditDominio(d, $event)"><i class="pi pi-pencil"></i></button>
@@ -54,9 +54,6 @@
         <div class="tabs" role="tablist">
           <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'tipos'" (click)="activeTab = 'tipos'">
             Tipos de agrupador <span class="count">{{ tipos.length }}</span>
-          </button>
-          <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'atributos'" (click)="activeTab = 'atributos'">
-            Atributos <span class="count">{{ atributos.length }}</span>
           </button>
           <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'administradores'" (click)="activeTab = 'administradores'" *ngIf="isSystemAdmin()">
             Administradores <span class="count">{{ administradores.length }}</span>
@@ -96,43 +93,7 @@
           <ng-template #emptyTipos><div class="empty">Sin tipos de agrupador. Creá el primero.</div></ng-template>
         </div>
 
-        <!-- Atributos -->
-        <div class="tabpanel" *ngIf="activeTab === 'atributos'">
-          <div class="panel-note">
-            <i class="pi pi-info-circle"></i>
-            <span>Campos extra que tendrá cada artículo de <b>{{ dom.nombre }}</b>. La <b>clave</b> es el identificador interno; el <b>nombre</b> es lo que ve el usuario.</span>
-          </div>
-          <div class="toolbar">
-            <span class="cap">Atributos adicionales para catalogar artículos.</span>
-            <button class="btn primary sm" (click)="openNewAtributo()"><i class="pi pi-plus"></i>Nuevo atributo</button>
-          </div>
 
-          <table *ngIf="atributos.length > 0; else emptyAtrs">
-            <thead><tr><th>Nombre</th><th>Clave interna</th><th>Tipo de dato</th><th class="ta-right"></th></tr></thead>
-            <tbody>
-              <tr *ngFor="let a of atributos">
-                <td class="cell-name">{{ a.nombre }}</td>
-                <td><code>{{ a.clave }}</code></td>
-                <td>
-                  <span [ngClass]="{
-                    'pill': true,
-                    'slate': a.tipoDato === 'TEXTO',
-                    'indigo': a.tipoDato === 'NUMERO',
-                    'amber': a.tipoDato === 'FECHA',
-                    'teal': a.tipoDato === 'BOOLEANO'
-                  }">{{ tipoDatoLabel(a.tipoDato) }}</span>
-                </td>
-                <td>
-                  <div class="row-actions">
-                    <button class="btn ghost sm" (click)="openEditAtributo(a)">Editar</button>
-                    <button class="btn ghost sm" (click)="deleteAtributo(a)">Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <ng-template #emptyAtrs><div class="empty">Sin atributos. Agregá el primero.</div></ng-template>
-        </div>
 
         <!-- Administradores -->
         <div class="tabpanel" *ngIf="activeTab === 'administradores' && isSystemAdmin()">
@@ -227,22 +188,7 @@
   </ng-template>
 </p-dialog>
 
-<!-- Diálogo Atributo -->
-<p-dialog [(visible)]="showAtributoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
-  [style]="{ width: '460px' }" [header]="editingAtributoId ? 'Editar atributo' : 'Nuevo atributo'">
-  <div class="form">
-    <label>Nombre</label>
-    <input pInputText [(ngModel)]="atributoForm.nombre" placeholder="Ej: Memoria RAM" />
-    <label class="mt">Clave <span class="muted">(identificador interno)</span></label>
-    <input pInputText [(ngModel)]="atributoForm.clave" placeholder="Ej: ram_gb" class="mono" />
-    <label class="mt">Tipo de dato</label>
-    <p-select [options]="tipoDatoOptions" [(ngModel)]="atributoForm.tipoDato" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
-  </div>
-  <ng-template pTemplate="footer">
-    <button class="btn ghost" (click)="showAtributoDialog = false">Cancelar</button>
-    <button class="btn primary" (click)="saveAtributo()">Guardar</button>
-  </ng-template>
-</p-dialog>
+
 
 <!-- Diálogo Administrador -->
 <p-dialog [(visible)]="showAdminDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"

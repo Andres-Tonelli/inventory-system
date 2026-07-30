@@ -34,7 +34,7 @@
 .btn.ghost:hover { background: var(--slate-soft); color: var(--ink); }
 .btn.sm { padding: 6px 10px; font-size: 12px; }
 
-.panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); max-width: 860px; }
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0; }
 .tabs { display: flex; gap: 4px; padding: 14px 20px 0; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; }
 .tab {
   appearance: none; border: none; background: none; font: inherit; cursor: pointer;

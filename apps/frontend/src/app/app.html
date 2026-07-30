@@ -1,9 +1,74 @@
 <div class="app-container" *ngIf="isAuthenticated(); else unauthenticated">
+  <!-- Desktop Top Horizontal Navbar -->
+  <header class="app-navbar">
+    <div class="navbar-logo">
+      <i class="pi pi-box"></i>
+      <span>TagSA-Inv</span>
+    </div>
+    
+    <nav class="navbar-menu">
+      <a routerLink="/" [class.active]="isRouteActive('/')">
+        <i class="pi pi-home"></i>
+        <span>Dashboard</span>
+      </a>
+      
+      <ng-container *ngIf="hasSelectedDomain()">
+        <a [routerLink]="['/dominios', getSelectedDomainId()]" [class.active]="isDomainActive()">
+          <i class="pi pi-server"></i>
+          <span>{{ getSelectedDomainName() }}</span>
+        </a>
+      </ng-container>
+
+      <a routerLink="/asignaciones" [class.active]="isAsignacionesActive()" *ngIf="hasSelectedDomain()">
+        <i class="pi pi-users"></i>
+        <span>Asignaciones</span>
+      </a>
+      
+      <a routerLink="/configuracion/dominios" [class.active]="isConfiguracionActive()">
+        <i class="pi pi-cog"></i>
+        <span>Configuración</span>
+      </a>
+
+      <a routerLink="/configuracion/administradores" [class.active]="isAdministradoresActive()" *ngIf="isSystemAdmin()">
+        <i class="pi pi-users"></i>
+        <span>Administradores</span>
+      </a>
+
+      <a routerLink="/configuracion/organizacion" [class.active]="isOrganizacionActive()" *ngIf="isSystemAdmin()">
+        <i class="pi pi-sliders-h"></i>
+        <span>Organización</span>
+      </a>
+    </nav>
+
+    <!-- User Profile Dropdown inside Navbar -->
+    <div class="user-profile-container" [class.open]="isUserMenuOpen">
+      <button class="profile-trigger" (click)="toggleUserMenu($event)">
+        <div class="avatar-circle">
+          {{ getUsernameInitials() }}
+        </div>
+        <span class="user-name">{{ getUsername() }}</span>
+        <i class="pi pi-chevron-down trigger-arrow"></i>
+      </button>
+      
+      <div class="profile-dropdown-menu" *ngIf="isUserMenuOpen" (click)="$event.stopPropagation()">
+        <div class="menu-header">
+          <span class="full-name">{{ getUsername() }}</span>
+          <span class="user-role">Legajo: {{ getLegajo() }}</span>
+        </div>
+        <div class="menu-divider"></div>
+        <button class="menu-item logout-btn" (click)="onLogout()">
+          <i class="pi pi-sign-out"></i>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
   <!-- Mobile Header -->
   <header class="mobile-header">
     <div class="sidebar-logo">
       <i class="pi pi-box"></i>
-      <span>StockFlow</span>
+      <span>TagSA-Inv</span>
     </div>
     <button class="menu-toggle" (click)="toggleSidebar()">
       <i class="pi" [ngClass]="isSidebarOpen ? 'pi-times' : 'pi-bars'"></i>
@@ -17,7 +82,7 @@
   <aside class="app-sidebar" [class.open]="isSidebarOpen">
     <div class="sidebar-logo desktop-logo">
       <i class="pi pi-box"></i>
-      <span>StockFlow</span>
+      <span>TagSA-Inv</span>
     </div>
     
     <ul class="sidebar-menu">

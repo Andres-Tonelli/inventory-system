@@ -89,15 +89,21 @@ export class CatalogosController {
   }
 
   // ---- ATRIBUTOS DINÁMICOS ----
-  @Post('dominios/:dominioId/atributos')
-  async createAtributo(@Param('dominioId') dominioId: string, @Body() body: CreateAtributoDto) {
-    await this.catalogosService.createAtributo({ ...body, dominioId: Number(dominioId) });
+  @Post('categorias/:categoriaId/atributos')
+  async createAtributo(@Param('categoriaId') categoriaId: string, @Body() body: CreateAtributoDto) {
+    await this.catalogosService.createAtributo({ ...body, categoriaId: Number(categoriaId) });
     return { success: true, message: 'Atributo dinámico creado exitosamente' };
   }
 
   @Get('dominios/:dominioId/atributos')
-  async getAtributos(@Param('dominioId') dominioId: string) {
-    const resultados = await this.catalogosService.getAtributos(Number(dominioId));
+  async getAtributosPorDominio(@Param('dominioId') dominioId: string) {
+    const resultados = await this.catalogosService.getAtributosPorDominio(Number(dominioId));
+    return { success: true, data: resultados };
+  }
+
+  @Get('categorias/:categoriaId/atributos')
+  async getAtributosPorCategoria(@Param('categoriaId') categoriaId: string) {
+    const resultados = await this.catalogosService.getAtributosPorCategoria(Number(categoriaId));
     return { success: true, data: resultados };
   }
 

@@ -33,7 +33,7 @@ export class PrismaCategoriaRepository implements Repository<Categoria> {
         }
       }
     }
-    return this.prisma.categoria.findMany({ where, include: { dominio: true } });
+    return this.prisma.categoria.findMany({ where, include: { dominio: true, atributos: true } });
   }
 
   async delete(id: number): Promise<void> {

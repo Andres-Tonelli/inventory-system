@@ -1,4 +1,4 @@
-import { Component, OnInit, effect } from '@angular/core';
+import { Component, OnInit, effect, HostListener } from '@angular/core';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -19,6 +19,27 @@ export class App implements OnInit {
   protected title = 'frontend';
   dominios: Dominio[] = [];
   isSidebarOpen: boolean = false;
+  isUserMenuOpen: boolean = false;
+
+  toggleUserMenu(event: Event) {
+    event.stopPropagation();
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+  }
+
+  getUsernameInitials(): string {
+    const name = this.getUsername();
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
+  @HostListener('document:click')
+  closeUserMenu() {
+    this.isUserMenuOpen = false;
+  }
 
   constructor(
     private authService: AuthService,

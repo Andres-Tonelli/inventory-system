@@ -56,11 +56,14 @@ export class CatalogosService {
     return this.http.put(`/api/catalogos/categorias/${id}`, data);
   }
   // ---- ATRIBUTOS DINÁMICOS ----
-  getAtributos(dominioId: number): Observable<ApiResponse<AtributoDefinicion[]>> {
-    return this.http.get<ApiResponse<AtributoDefinicion[]>>(`/api/catalogos/dominios/${dominioId}/atributos`);
+  getAtributos(categoriaId: number): Observable<ApiResponse<AtributoDefinicion[]>> {
+    return this.http.get<ApiResponse<AtributoDefinicion[]>>(`/api/catalogos/categorias/${categoriaId}/atributos`);
   }
-  createAtributo(dominioId: number, data: { nombre: string; clave: string; tipoDato: string }) {
-    return this.http.post(`/api/catalogos/dominios/${dominioId}/atributos`, data);
+  createAtributo(categoriaId: number, data: { nombre: string; clave: string; tipoDato: string }) {
+    return this.http.post(`/api/catalogos/categorias/${categoriaId}/atributos`, data);
+  }
+  getAtributosPorDominio(dominioId: number): Observable<ApiResponse<AtributoDefinicion[]>> {
+    return this.http.get<ApiResponse<AtributoDefinicion[]>>(`/api/catalogos/dominios/${dominioId}/atributos`);
   }
   updateAtributo(id: number, data: { nombre?: string; clave?: string; tipoDato?: string }) {
     return this.http.put(`/api/catalogos/atributos/${id}`, data);

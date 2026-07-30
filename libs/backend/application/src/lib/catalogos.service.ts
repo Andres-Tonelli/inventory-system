@@ -82,8 +82,13 @@ export class CatalogosService {
     await this.atributoRepo.save(data as AtributoDefinicion);
   }
 
-  async getAtributos(dominioId: number) {
-    const criteria = new Criteria([{ field: 'dominioId', operator: 'eq', value: dominioId }]);
+  async getAtributosPorCategoria(categoriaId: number) {
+    const criteria = new Criteria([{ field: 'categoriaId', operator: 'eq', value: categoriaId }]);
+    return this.atributoRepo.search(criteria);
+  }
+
+  async getAtributosPorDominio(dominioId: number) {
+    const criteria = new Criteria([{ field: 'categoria', operator: 'eq', value: { dominioId } }]);
     return this.atributoRepo.search(criteria);
   }
 
