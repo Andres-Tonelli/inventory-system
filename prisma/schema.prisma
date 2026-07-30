@@ -55,6 +55,7 @@ model Categoria {
   modelos         Modelo[]
   atributos       AtributoDefinicion[]
 
+  @@unique([nombre, dominioId])
   @@index([dominioId])
 }
 
@@ -84,6 +85,7 @@ model Modelo {
   marca       Marca       @relation(fields: [marcaId], references: [id])
   lotesStock  StockLote[]
 
+  @@unique([nombre, marcaId, categoriaId])
   @@index([marcaId])
   @@index([categoriaId])
 }
@@ -165,6 +167,7 @@ model Agrupador {
   articulos      Articulo[]
   asignaciones   AsignacionAgrupador[]
 
+  @@unique([nombre, tipoAgrupadorId])
   @@index([tipoAgrupadorId])
   @@index([agrupadorPadreId])
 }

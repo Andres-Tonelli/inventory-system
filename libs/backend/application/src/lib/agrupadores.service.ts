@@ -16,8 +16,15 @@ export class AgrupadoresService {
       tipoAgrupadorId: data.tipoAgrupadorId,
       agrupadorPadreId: data.agrupadorPadreId || null,
     };
-    await this.agrupadorRepo.save(entity as any);
-    return { success: true };
+    try {
+      await this.agrupadorRepo.save(entity as any);
+      return { success: true };
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new BadRequestException('Ya existe un agrupador con ese nombre para este tipo de agrupador.');
+      }
+      throw e;
+    }
   }
 
   async findAll(dominioId?: number, tipoAgrupadorId?: number) {

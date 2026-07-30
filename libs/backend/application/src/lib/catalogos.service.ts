@@ -21,7 +21,14 @@ export class CatalogosService {
       icono: data.icono ?? null,
       color: data.color ?? null,
     } as DominioInventario;
-    await this.dominioRepo.save(nuevo);
+    try {
+      await this.dominioRepo.save(nuevo);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new BadRequestException('Ya existe un dominio con ese nombre.');
+      }
+      throw e;
+    }
   }
 
   async getDominios(searchParams?: { nombre?: string }) {
@@ -41,7 +48,14 @@ export class CatalogosService {
 
   // ---- CATEGORIAS ----
   async createCategoria(data: any) {
-    await this.categoriaRepo.save(data as Categoria);
+    try {
+      await this.categoriaRepo.save(data as Categoria);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new BadRequestException('Ya existe una categoría con ese nombre en este dominio.');
+      }
+      throw e;
+    }
   }
 
   async getCategorias(searchParams?: { nombre?: string, dominioId?: number }) {
@@ -53,7 +67,14 @@ export class CatalogosService {
 
   // ---- MARCAS ----
   async createMarca(data: any) {
-    await this.marcaRepo.save(data as Marca);
+    try {
+      await this.marcaRepo.save(data as Marca);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new BadRequestException('Ya existe una marca con ese nombre en este dominio.');
+      }
+      throw e;
+    }
   }
 
   async getMarcas(searchParams?: { nombre?: string, dominioId?: number }) {
@@ -65,7 +86,14 @@ export class CatalogosService {
 
   // ---- MODELOS ----
   async createModelo(data: any) {
-    await this.modeloRepo.save(data as Modelo);
+    try {
+      await this.modeloRepo.save(data as Modelo);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new BadRequestException('Ya existe un modelo con ese nombre para esta marca y categoría.');
+      }
+      throw e;
+    }
   }
 
   async getModelos(searchParams?: { nombre?: string, marcaId?: number, categoriaId?: number, dominioId?: number }) {
@@ -94,11 +122,18 @@ export class CatalogosService {
 
   // ---- TIPOS DE AGRUPADOR ----
   async createTipoAgrupador(data: { nombre: string; dominioId: number; asignable?: boolean }) {
-    await this.tipoAgrupadorRepo.save({
-      nombre: data.nombre,
-      dominioId: data.dominioId,
-      ...(data.asignable !== undefined && { asignable: data.asignable }),
-    } as any);
+    try {
+      await this.tipoAgrupadorRepo.save({
+        nombre: data.nombre,
+        dominioId: data.dominioId,
+        ...(data.asignable !== undefined && { asignable: data.asignable }),
+      } as any);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new BadRequestException('Ya existe un tipo de agrupador con ese nombre en este dominio.');
+      }
+      throw e;
+    }
   }
 
   async getTiposAgrupador(dominioId?: number) {
