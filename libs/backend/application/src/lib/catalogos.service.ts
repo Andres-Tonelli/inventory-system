@@ -107,7 +107,21 @@ export class CatalogosService {
 
   // ---- ATRIBUTOS DINÁMICOS ----
   async createAtributo(data: any) {
-    await this.atributoRepo.save(data as AtributoDefinicion);
+    try {
+      await this.atributoRepo.save(data as AtributoDefinicion);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        const target = e.meta?.target;
+        if (Array.isArray(target) && target.includes('nombre')) {
+          throw new BadRequestException('Ya existe un atributo con ese nombre en esta categoría.');
+        }
+        if (Array.isArray(target) && target.includes('clave')) {
+          throw new BadRequestException('Ya existe un atributo con esa clave interna en esta categoría.');
+        }
+        throw new BadRequestException('Ya existe un atributo con ese nombre o clave interna en esta categoría.');
+      }
+      throw e;
+    }
   }
 
   async getAtributosPorCategoria(categoriaId: number) {
@@ -217,7 +231,21 @@ export class CatalogosService {
   }
 
   async updateAtributo(id: number, data: { nombre?: string; clave?: string; tipoDato?: string }) {
-    await this.atributoRepo.save({ id, ...data } as any);
+    try {
+      await this.atributoRepo.save({ id, ...data } as any);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        const target = e.meta?.target;
+        if (Array.isArray(target) && target.includes('nombre')) {
+          throw new BadRequestException('Ya existe un atributo con ese nombre en esta categoría.');
+        }
+        if (Array.isArray(target) && target.includes('clave')) {
+          throw new BadRequestException('Ya existe un atributo con esa clave interna en esta categoría.');
+        }
+        throw new BadRequestException('Ya existe un atributo con ese nombre o clave interna en esta categoría.');
+      }
+      throw e;
+    }
   }
 
   async deleteAtributo(id: number) {

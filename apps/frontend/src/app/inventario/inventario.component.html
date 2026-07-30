@@ -301,7 +301,7 @@
                 <!-- Attribute badges list -->
                 <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;" *ngIf="cat.atributos && cat.atributos.length > 0">
                   <span class="pill slate" *ngFor="let attr of cat.atributos" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;">
-                    {{ attr.nombre }} <code class="mono" style="opacity: 0.75; font-size: 0.7rem;">({{ attr.clave }})</code>
+                    {{ attr.nombre }}
                   </span>
                 </div>
                 <div style="font-size: 0.75rem; color: var(--text-muted);" *ngIf="!cat.atributos || cat.atributos.length === 0">

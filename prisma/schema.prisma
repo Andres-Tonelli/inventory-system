@@ -103,6 +103,7 @@ model AtributoDefinicion {
   categoria   Categoria @relation(fields: [categoriaId], references: [id])
 
   @@unique([clave, categoriaId])
+  @@unique([nombre, categoriaId])
   @@index([categoriaId])
 }
 
