@@ -381,10 +381,23 @@ export class InventarioComponent implements OnInit {
   get filteredLotes(): any[] {
     const query = this.searchLote.toLowerCase().trim();
     if (!query) return this.lotes;
+    const keywords = query.split(/\s+/);
     return this.lotes.filter(lote => {
       const modelo = (lote.modelo?.nombre || '').toLowerCase();
       const categoria = (lote.modelo?.categoria?.nombre || '').toLowerCase();
-      return modelo.includes(query) || categoria.includes(query);
+      
+      const dynamicValues: string[] = [];
+      if (lote.modelo?.atributos) {
+        for (const val of Object.values(lote.modelo.atributos)) {
+          if (val != null) dynamicValues.push(String(val).toLowerCase());
+        }
+      }
+
+      return keywords.every(kw => 
+        modelo.includes(kw) || 
+        categoria.includes(kw) || 
+        dynamicValues.some(val => val.includes(kw))
+      );
     });
   }
 

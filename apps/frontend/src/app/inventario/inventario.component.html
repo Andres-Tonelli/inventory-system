@@ -161,7 +161,16 @@
                     <button class="btn ghost sm" (click)="toggleConsumibleGroup(group.modelo.id)" style="padding: 0 4px; margin-right: 8px;">
                       <i class="pi" [ngClass]="expandedConsumibleGroups.has(group.modelo.id) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
                     </button>
-                    {{ group.modelo?.nombre }}
+                    <div class="model-hover-container" style="font-weight: 600;">
+                      {{ group.modelo?.nombre }}
+                      <div class="model-hover-card" *ngIf="hasModelSpecs(group.modelo)">
+                        <div class="mh-header">Especificaciones del Modelo</div>
+                        <div class="mh-row" *ngFor="let spec of getModelSpecsList(group.modelo)">
+                          <span class="mh-key">{{ spec.nombre }}</span>
+                          <span class="mh-val">{{ spec.valor }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </td>
                   <td class="mut">{{ group.modelo?.categoria?.nombre }}</td>
                   <td><span class="pill teal"><span class="dot"></span>{{ group.totalDisponible }} u.</span></td>
