@@ -48,17 +48,49 @@
             <div *ngFor="let slot of getPredefinedSlots(ag)" class="slot-item" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; background-color: var(--bg-card);">
               <i class="pi" [ngClass]="slot.articulo ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.articulo ? '#10b981' : '#94a3b8';"></i>
               <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">{{ slot.categoria.nombre }}:</span>
-              <span *ngIf="slot.articulo" style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
-                {{ slot.articulo.alias || slot.articulo.nroSerie || 'Artículo' }} <small *ngIf="slot.articulo.modelo?.nombre">({{ slot.articulo.modelo.nombre }})</small>
-              </span>
+              
+              <div class="hover-container" *ngIf="slot.articulo" style="display: inline-block;">
+                <span style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
+                  {{ slot.articulo.alias || slot.articulo.nroSerie || 'Artículo' }} <small *ngIf="slot.articulo.modelo?.nombre">({{ slot.articulo.modelo.nombre }})</small>
+                </span>
+                <div class="hover-card">
+                  <div class="hc-header">{{ slot.articulo.alias || 'Artículo' }}</div>
+                  <div class="hc-row"><span class="hc-key">Categoría</span><span class="hc-val">{{ slot.categoria.nombre }}</span></div>
+                  <div class="hc-row"><span class="hc-key">Modelo</span><span class="hc-val">{{ slot.articulo.modelo?.nombre || '—' }}</span></div>
+                  <div class="hc-row"><span class="hc-key">Marca</span><span class="hc-val">{{ slot.articulo.modelo?.marca?.nombre || '—' }}</span></div>
+                  <div class="hc-row"><span class="hc-key">Nº Serie</span><span class="hc-val">{{ slot.articulo.nroSerie || '—' }}</span></div>
+                  <div class="hc-row"><span class="hc-key">Estado</span><span class="hc-val">{{ estadoNombre(slot.articulo) }}</span></div>
+                  <div class="hc-row" *ngIf="slot.articulo.detalle"><span class="hc-key">Detalle</span><span class="hc-val">{{ slot.articulo.detalle }}</span></div>
+                  <div class="hc-divider" *ngIf="slot.articulo.atributos && getObjectKeys(slot.articulo.atributos).length > 0">Atributos de Artículo</div>
+                  <div class="hc-row" *ngFor="let k of getObjectKeys(slot.articulo.atributos)">
+                    <span class="hc-key">{{ k }}</span>
+                    <span class="hc-val">{{ getParsedAttribute(slot.articulo.atributos, k) }}</span>
+                  </div>
+                </div>
+              </div>
+              
               <span *ngIf="!slot.articulo" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">(Vacío)</span>
             </div>
           </div>
 
           <!-- Adicionales/Otros Artículos -->
           <div class="chips" *ngIf="getAdditionalArticles(ag).length > 0; else noArts">
-            <span class="chip" *ngFor="let art of getAdditionalArticles(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="chip hover-container" *ngFor="let art of getAdditionalArticles(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
               <span>{{ art.alias || art.nroSerie || 'Artículo' }} <small *ngIf="art.modelo?.categoria?.nombre">({{ art.modelo.categoria.nombre }})</small></span>
+              <div class="hover-card">
+                <div class="hc-header">{{ art.alias || 'Artículo' }}</div>
+                <div class="hc-row"><span class="hc-key">Categoría</span><span class="hc-val">{{ art.modelo?.categoria?.nombre || '—' }}</span></div>
+                <div class="hc-row"><span class="hc-key">Modelo</span><span class="hc-val">{{ art.modelo?.nombre || '—' }}</span></div>
+                <div class="hc-row"><span class="hc-key">Marca</span><span class="hc-val">{{ art.modelo?.marca?.nombre || '—' }}</span></div>
+                <div class="hc-row"><span class="hc-key">Nº Serie</span><span class="hc-val">{{ art.nroSerie || '—' }}</span></div>
+                <div class="hc-row"><span class="hc-key">Estado</span><span class="hc-val">{{ estadoNombre(art) }}</span></div>
+                <div class="hc-row" *ngIf="art.detalle"><span class="hc-key">Detalle</span><span class="hc-val">{{ art.detalle }}</span></div>
+                <div class="hc-divider" *ngIf="art.atributos && getObjectKeys(art.atributos).length > 0">Atributos de Artículo</div>
+                <div class="hc-row" *ngFor="let k of getObjectKeys(art.atributos)">
+                  <span class="hc-key">{{ k }}</span>
+                  <span class="hc-val">{{ getParsedAttribute(art.atributos, k) }}</span>
+                </div>
+              </div>
             </span>
           </div>
           <ng-template #noArts>
@@ -75,18 +107,44 @@
             <div *ngFor="let slot of getPredefinedSubSlots(ag)" class="slot-item" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; background-color: var(--bg-card);">
               <i class="pi" [ngClass]="slot.subAgrupador ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.subAgrupador ? '#10b981' : '#94a3b8';"></i>
               <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">{{ slot.tipoAgrupador.nombre }}:</span>
-              <span *ngIf="slot.subAgrupador" style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
-                {{ slot.subAgrupador.nombre }}
-              </span>
+              
+              <div class="hover-container" *ngIf="slot.subAgrupador" style="display: inline-block;">
+                <span style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
+                  {{ slot.subAgrupador.nombre }}
+                </span>
+                <div class="hover-card">
+                  <div class="hc-header">{{ slot.subAgrupador.nombre }}</div>
+                  <div class="hc-row"><span class="hc-key">Tipo de Agrupador</span><span class="hc-val">{{ slot.tipoAgrupador.nombre }}</span></div>
+                  <div class="hc-row"><span class="hc-key">Sub-conjuntos</span><span class="hc-val">{{ slot.subAgrupador.subAgrupadores?.length || 0 }}</span></div>
+                  <div class="hc-row"><span class="hc-key">Artículos asignados</span><span class="hc-val">{{ slot.subAgrupador.articulos?.length || 0 }}</span></div>
+                  <div class="hc-divider" *ngIf="slot.subAgrupador.articulos && slot.subAgrupador.articulos.length > 0">Componentes Incluidos</div>
+                  <div class="hc-row" *ngFor="let sa of slot.subAgrupador.articulos">
+                    <span class="hc-key" style="max-width: 50% !important;">{{ sa.alias || sa.nroSerie }}</span>
+                    <span class="hc-val">{{ sa.modelo?.nombre || '—' }}</span>
+                  </div>
+                </div>
+              </div>
+              
               <span *ngIf="!slot.subAgrupador" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">(Vacío)</span>
             </div>
           </div>
 
           <!-- Sub-agrupadores Adicionales -->
           <div class="chips" *ngIf="getAdditionalSubAgrupadores(ag).length > 0; else noSubs">
-            <span class="chip alt" *ngFor="let sub of getAdditionalSubAgrupadores(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="chip alt hover-container" *ngFor="let sub of getAdditionalSubAgrupadores(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
               <i class="pi pi-sitemap" style="font-size: 0.8rem; color: var(--primary); margin-right: 0.25rem;"></i>
               <span>{{ sub.nombre }} <small *ngIf="sub.tipoAgrupador?.nombre">({{ sub.tipoAgrupador.nombre }})</small></span>
+              <div class="hover-card">
+                <div class="hc-header">{{ sub.nombre }}</div>
+                <div class="hc-row"><span class="hc-key">Tipo de Agrupador</span><span class="hc-val">{{ sub.tipoAgrupador?.nombre || '—' }}</span></div>
+                <div class="hc-row"><span class="hc-key">Sub-conjuntos</span><span class="hc-val">{{ sub.subAgrupadores?.length || 0 }}</span></div>
+                <div class="hc-row"><span class="hc-key">Artículos asignados</span><span class="hc-val">{{ sub.articulos?.length || 0 }}</span></div>
+                <div class="hc-divider" *ngIf="sub.articulos && sub.articulos.length > 0">Componentes Incluidos</div>
+                <div class="hc-row" *ngFor="let sa of sub.articulos">
+                  <span class="hc-key" style="max-width: 50% !important;">{{ sa.alias || sa.nroSerie }}</span>
+                  <span class="hc-val">{{ sa.modelo?.nombre || '—' }}</span>
+                </div>
+              </div>
             </span>
           </div>
           <ng-template #noSubs>
@@ -107,7 +165,25 @@
           <thead><tr><th>Artículo</th><th>Modelo</th><th>Nº serie</th><th>Estado</th><th>Desde</th></tr></thead>
           <tbody>
             <tr *ngFor="let art of paginatedArticulos">
-              <td class="cell-name">{{ art.alias || 'Sin alias' }}</td>
+              <td class="cell-name">
+                <div class="hover-container">
+                  {{ art.alias || 'Sin alias' }}
+                  <div class="hover-card">
+                    <div class="hc-header">{{ art.alias || 'Artículo' }}</div>
+                    <div class="hc-row"><span class="hc-key">Categoría</span><span class="hc-val">{{ art.modelo?.categoria?.nombre || '—' }}</span></div>
+                    <div class="hc-row"><span class="hc-key">Modelo</span><span class="hc-val">{{ art.modelo?.nombre || '—' }}</span></div>
+                    <div class="hc-row"><span class="hc-key">Marca</span><span class="hc-val">{{ art.modelo?.marca?.nombre || '—' }}</span></div>
+                    <div class="hc-row"><span class="hc-key">Nº Serie</span><span class="hc-val">{{ art.nroSerie || '—' }}</span></div>
+                    <div class="hc-row"><span class="hc-key">Estado</span><span class="hc-val">{{ estadoNombre(art) }}</span></div>
+                    <div class="hc-row" *ngIf="art.detalle"><span class="hc-key">Detalle</span><span class="hc-val">{{ art.detalle }}</span></div>
+                    <div class="hc-divider" *ngIf="art.atributos && getObjectKeys(art.atributos).length > 0">Atributos de Artículo</div>
+                    <div class="hc-row" *ngFor="let k of getObjectKeys(art.atributos)">
+                      <span class="hc-key">{{ k }}</span>
+                      <span class="hc-val">{{ getParsedAttribute(art.atributos, k) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
               <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
               <td class="mono">{{ art.nroSerie || '—' }}</td>
               <td><span [ngClass]="estadoPillClass(art)"><span class="dot"></span>{{ estadoNombre(art) }}</span></td>

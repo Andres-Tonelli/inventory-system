@@ -75,6 +75,88 @@ tbody tr:hover { background: #fafbff; }
 .pill.slate { background: var(--slate-soft); color: var(--slate); }
 .pill.indigo { background: var(--indigo-soft); color: var(--indigo-600); }
 
+/* Hovercard details style */
+.hover-container {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  
+  &:hover .hover-card {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+td.cell-name .hover-container {
+  display: block;
+  border-bottom: none;
+}
+
+.hover-card {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 1rem;
+  z-index: 1000;
+  min-width: 260px;
+  max-width: 320px;
+  white-space: normal;
+  transition: all 0.2s ease-in-out;
+  pointer-events: none;
+  font-weight: normal;
+  text-align: left;
+  line-height: 1.4;
+  
+  .hc-header {
+    font-weight: 700;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.5rem;
+    color: var(--indigo-600);
+  }
+  
+  .hc-divider {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    margin-top: 0.5rem;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px dashed var(--border-soft);
+    padding-bottom: 0.2rem;
+  }
+  
+  .hc-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 0.25rem;
+    
+    .hc-key {
+      color: var(--muted);
+      font-weight: 500;
+      margin-right: 1rem;
+      text-align: left;
+    }
+    
+    .hc-val {
+      color: var(--ink);
+      font-weight: 400;
+      text-align: right;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .page { padding: 12px 14px 30px; }
   .head { flex-direction: column; align-items: flex-start; gap: 12px; }

@@ -140,6 +140,32 @@ export class EmpleadoAsignacionesComponent implements OnInit {
     return (ag.subAgrupadores || []).filter((subAg: any) => !recTipoIds.has(subAg.tipoAgrupadorId));
   }
 
+  getObjectKeys(obj: any): string[] {
+    if (!obj) return [];
+    try {
+      if (typeof obj === 'string') {
+        const parsed = JSON.parse(obj);
+        return Object.keys(parsed);
+      }
+      return Object.keys(obj);
+    } catch {
+      return [];
+    }
+  }
+
+  getParsedAttribute(obj: any, key: string): string {
+    if (!obj) return '';
+    try {
+      if (typeof obj === 'string') {
+        const parsed = JSON.parse(obj);
+        return parsed[key] ?? '';
+      }
+      return obj[key] ?? '';
+    } catch {
+      return '';
+    }
+  }
+
   volver() {
     this.router.navigate(['/configuracion/organizacion']);
   }
