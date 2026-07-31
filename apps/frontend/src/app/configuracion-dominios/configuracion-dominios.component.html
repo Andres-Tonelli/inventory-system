@@ -185,6 +185,10 @@
     <label class="mt">Categorías preestablecidas / recomendadas</label>
     <p-multiSelect [options]="categorias" [(ngModel)]="tipoForm.categoriaIds" optionLabel="nombre" optionValue="id" placeholder="Ninguna (permite cualquier artículo)" appendTo="body" styleClass="w-full"></p-multiSelect>
     <small class="hint">Define las categorías que componen este agrupador como plantilla sugerida.</small>
+
+    <label class="mt">Sub-agrupadores preestablecidos / recomendados</label>
+    <p-multiSelect [options]="filteredTiposParaRecomendacion" [(ngModel)]="tipoForm.subTipoIds" optionLabel="nombre" optionValue="id" placeholder="Ninguno (permite cualquier agrupador)" appendTo="body" styleClass="w-full"></p-multiSelect>
+    <small class="hint">Define los sub-agrupadores que componen este agrupador como plantilla sugerida (ej. PC dentro de Puesto).</small>
   </div>
   <ng-template pTemplate="footer">
     <button class="btn ghost" (click)="showTipoDialog = false">Cancelar</button>

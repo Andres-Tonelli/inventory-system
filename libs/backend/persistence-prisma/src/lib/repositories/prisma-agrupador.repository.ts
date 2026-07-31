@@ -42,14 +42,16 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
       include: {
         tipoAgrupador: {
           include: {
-            categoriasRecomendadas: { include: { categoria: true } }
+            categoriasRecomendadas: { include: { categoria: true } },
+            subTiposRecomendados: { include: { childTipo: true } }
           }
         },
         agrupadorPadre: {
           include: {
             tipoAgrupador: {
               include: {
-                categoriasRecomendadas: { include: { categoria: true } }
+                categoriasRecomendadas: { include: { categoria: true } },
+                subTiposRecomendados: { include: { childTipo: true } }
               }
             }
           }
@@ -58,7 +60,8 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
           include: {
             tipoAgrupador: {
               include: {
-                categoriasRecomendadas: { include: { categoria: true } }
+                categoriasRecomendadas: { include: { categoria: true } },
+                subTiposRecomendados: { include: { childTipo: true } }
               }
             }
           }
@@ -101,10 +104,20 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
             estado: true
           }
         },
-        subAgrupadores: true,
+        subAgrupadores: {
+          include: {
+            tipoAgrupador: {
+              include: {
+                categoriasRecomendadas: { include: { categoria: true } },
+                subTiposRecomendados: { include: { childTipo: true } }
+              }
+            }
+          }
+        },
         tipoAgrupador: {
           include: {
-            categoriasRecomendadas: { include: { categoria: true } }
+            categoriasRecomendadas: { include: { categoria: true } },
+            subTiposRecomendados: { include: { childTipo: true } }
           }
         },
         asignaciones: {

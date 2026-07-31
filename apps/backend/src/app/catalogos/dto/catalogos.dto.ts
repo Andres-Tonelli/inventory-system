@@ -62,6 +62,7 @@ export class CreateTipoAgrupadorDto implements ICreateTipoAgrupadorDto {
   @IsString() @MinLength(1) @MaxLength(100) nombre!: string;
   @IsOptional() @IsBoolean() asignable?: boolean;
   @IsOptional() @IsArray() @IsInt({ each: true }) categoriaIds?: number[];
+  @IsOptional() @IsArray() @IsInt({ each: true }) subTipoIds?: number[];
 }
 
 export class CreateEstadoDto implements ICreateEstadoDto {
@@ -98,6 +99,7 @@ export class UpdateTipoAgrupadorDto implements IUpdateTipoAgrupadorDto {
   @IsOptional() @IsString() @MinLength(1) @MaxLength(100) nombre?: string;
   @IsOptional() @IsBoolean() asignable?: boolean;
   @IsOptional() @IsArray() @IsInt({ each: true }) categoriaIds?: number[];
+  @IsOptional() @IsArray() @IsInt({ each: true }) subTipoIds?: number[];
 }
 
 export class UpdateAtributoDto implements IUpdateAtributoDto {

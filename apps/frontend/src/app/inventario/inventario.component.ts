@@ -140,6 +140,7 @@ export class InventarioComponent implements OnInit {
   selectedParentAgrupadorId: number | null = null;
   selectedParentAgrupadorNombre = '';
   selectedSubAgrupadorId: number | null = null;
+  selectedChildTipoId: number | null = null;
   agrupadoresDisponibles: any[] = [];
 
   // Expanded consumibles models
@@ -1361,20 +1362,44 @@ export class InventarioComponent implements OnInit {
     });
   }
 
-  abrirDialogoSubAgrupador(parent: any) {
+  abrirDialogoSubAgrupador(parent: any, childTipoId?: number) {
     this.selectedParentAgrupadorId = parent.id;
     this.selectedParentAgrupadorNombre = parent.nombre;
     this.selectedSubAgrupadorId = null;
+    this.selectedChildTipoId = childTipoId || null;
     
     // Filtrar todos los agrupadores que no tienen padre asignado y no son el padre mismo
-    this.agrupadoresDisponibles = this.agrupadores
-      .filter(a => a.id !== parent.id && !a.agrupadorPadreId)
-      .map(a => ({
-        ...a,
-        displayLabel: `${a.tipoAgrupador?.nombre || 'Agrupador'} - ${a.nombre}`
-      }));
+    let list = this.agrupadores.filter(a => a.id !== parent.id && !a.agrupadorPadreId);
+    if (childTipoId) {
+      list = list.filter(a => a.tipoAgrupadorId === childTipoId);
+    }
+    
+    this.agrupadoresDisponibles = list.map(a => ({
+      ...a,
+      displayLabel: `${a.tipoAgrupador?.nombre || 'Agrupador'} - ${a.nombre}`
+    }));
       
     this.showSubAgrupadorDialog = true;
+  }
+
+  getPredefinedSubSlots(ag: any): any[] {
+    if (!ag || !ag.tipoAgrupador?.subTiposRecomendados) return [];
+    return ag.tipoAgrupador.subTiposRecomendados.map((sr: any) => {
+      const tipoChild = sr.childTipo;
+      const sub = (ag.subAgrupadores || []).find((subAg: any) => subAg.tipoAgrupadorId === tipoChild.id);
+      return {
+        tipoAgrupador: tipoChild,
+        subAgrupador: sub || null
+      };
+    });
+  }
+
+  getAdditionalSubAgrupadores(ag: any): any[] {
+    if (!ag) return [];
+    const recTipoIds = new Set(
+      (ag.tipoAgrupador?.subTiposRecomendados || []).map((sr: any) => sr.childTipo.id).filter(Boolean)
+    );
+    return (ag.subAgrupadores || []).filter((subAg: any) => !recTipoIds.has(subAg.tipoAgrupadorId));
   }
 
   vincularSubAgrupador() {

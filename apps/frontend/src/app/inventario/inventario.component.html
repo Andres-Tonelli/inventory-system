@@ -316,14 +316,38 @@
                 </div>
                 <ng-template #noArts><div class="empty sm">Sin otros artículos vinculados.</div></ng-template>
 
-                <div class="md-lbl mt">Sub-agrupadores ({{ ag.subAgrupadores?.length || 0 }})</div>
-                <div class="chips" *ngIf="ag.subAgrupadores?.length; else noSubs">
-                  <span class="chip alt" *ngFor="let sub of ag.subAgrupadores">
-                    <i class="pi pi-sitemap"></i><span class="cn">{{ sub.nombre }}</span>
+                <!-- Checklist de sub-agrupadores preestablecidos si existen -->
+                <ng-container *ngIf="getPredefinedSubSlots(ag).length > 0">
+                  <div class="md-lbl mt">Sub-agrupadores Requeridos</div>
+                  <div class="predefined-slots" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <div *ngFor="let slot of getPredefinedSubSlots(ag)" class="slot-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border: 1px dashed var(--border-soft); border-radius: 6px; background-color: var(--bg-hover);">
+                      <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="pi" [ngClass]="slot.subAgrupador ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.1rem; color: slot.subAgrupador ? '#10b981' : '#94a3b8';"></i>
+                        <span style="font-weight: 500; font-size: 0.9rem;">{{ slot.tipoAgrupador.nombre }}:</span>
+                        <span *ngIf="slot.subAgrupador" style="color: var(--text-main); font-weight: 400; font-size: 0.9rem;">
+                          {{ slot.subAgrupador.nombre }}
+                        </span>
+                        <span *ngIf="!slot.subAgrupador" style="color: var(--text-muted); font-style: italic; font-size: 0.9rem;">(Pendiente de vincular)</span>
+                      </div>
+                      <div>
+                        <button *ngIf="slot.subAgrupador" class="btn ghost sm danger" style="padding: 0.25rem 0.5rem;" (click)="desvincularSubAgrupador(slot.subAgrupador.id)"><i class="pi pi-times"></i></button>
+                        <button *ngIf="!slot.subAgrupador" class="btn ghost sm" style="padding: 0.25rem 0.5rem; color: var(--primary);" (click)="abrirDialogoSubAgrupador(ag, slot.tipoAgrupador.id)"><i class="pi pi-link"></i> Vincular</button>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <!-- Sub-agrupadores adicionales o agrupadores generales -->
+                <div class="md-lbl mt">
+                  {{ getPredefinedSubSlots(ag).length > 0 ? 'Sub-agrupadores Adicionales' : 'Sub-agrupadores Vinculados' }} ({{ getAdditionalSubAgrupadores(ag).length }})
+                </div>
+                <div class="chips" *ngIf="getAdditionalSubAgrupadores(ag).length > 0; else noSubs">
+                  <span class="chip alt" *ngFor="let sub of getAdditionalSubAgrupadores(ag)">
+                    <i class="pi pi-sitemap"></i><span class="cn">{{ sub.nombre }} <small *ngIf="sub.tipoAgrupador?.nombre">({{ sub.tipoAgrupador.nombre }})</small></span>
                     <i class="pi pi-times x" (click)="desvincularSubAgrupador(sub.id)"></i>
                   </span>
                 </div>
-                <ng-template #noSubs><div class="empty sm">Sin sub-agrupadores.</div></ng-template>
+                <ng-template #noSubs><div class="empty sm">Sin otros sub-agrupadores.</div></ng-template>
               </div>
               <div class="md-actions">
                 <button class="btn sm" (click)="abrirDialogoArticuloAgrupador(ag.id)"><i class="pi pi-link"></i>Vincular artículo</button>

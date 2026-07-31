@@ -46,7 +46,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
 
   showTipoDialog = false;
   editingTipoId: number | null = null;
-  tipoForm = { nombre: '', asignable: true, categoriaIds: [] as number[] };
+  tipoForm = { nombre: '', asignable: true, categoriaIds: [] as number[], subTipoIds: [] as number[] };
   categorias: Categoria[] = [];
 
   showAdminDialog = false;
@@ -88,6 +88,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
   }
   get tipos(): TipoAgrupador[] {
     return this.selectedId ? this.tiposByDom[this.selectedId] ?? [] : [];
+  }
+  get filteredTiposParaRecomendacion(): TipoAgrupador[] {
+    return this.tipos.filter((t) => t.id !== this.editingTipoId);
   }
   countTipos(d: Dominio): number {
     return d.id ? this.tiposByDom[d.id]?.length ?? 0 : 0;
@@ -185,13 +188,14 @@ export class ConfiguracionDominiosComponent implements OnInit {
   // ---- Tipo de agrupador ----
   openNewTipo(): void {
     this.editingTipoId = null;
-    this.tipoForm = { nombre: '', asignable: true, categoriaIds: [] };
+    this.tipoForm = { nombre: '', asignable: true, categoriaIds: [], subTipoIds: [] };
     this.showTipoDialog = true;
   }
   openEditTipo(t: TipoAgrupador): void {
     this.editingTipoId = t.id ?? null;
     const categoriaIds = (t.categoriasRecomendadas || []).map((cr: any) => cr.categoria.id).filter(Boolean);
-    this.tipoForm = { nombre: t.nombre, asignable: t.asignable ?? true, categoriaIds };
+    const subTipoIds = (t.subTiposRecomendados || []).map((sr: any) => sr.childTipo.id).filter(Boolean);
+    this.tipoForm = { nombre: t.nombre, asignable: t.asignable ?? true, categoriaIds, subTipoIds };
     this.showTipoDialog = true;
   }
   saveTipo(): void {
@@ -207,7 +211,8 @@ export class ConfiguracionDominiosComponent implements OnInit {
     const payload = {
       nombre,
       asignable: this.tipoForm.asignable,
-      categoriaIds: this.tipoForm.categoriaIds
+      categoriaIds: this.tipoForm.categoriaIds,
+      subTipoIds: this.tipoForm.subTipoIds
     };
     if (this.editingTipoId) {
       this.catalogos

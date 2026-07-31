@@ -139,20 +139,33 @@ model Articulo {
 }
 
 model TipoAgrupador {
-  id                     Int                         @id @default(autoincrement())
-  nombre                 String
-  dominioId              Int
+  id                      Int                         @id @default(autoincrement())
+  nombre                  String
+  dominioId               Int
   /// Configurable por el admin: ¿instancias de este tipo se pueden asignar a una persona?
   /// false = contenedor/ubicación (ej. locker), true = conjunto asignable (ej. PC).
-  asignable              Boolean                     @default(true)
-  createdAt              DateTime                    @default(now())
-  updatedAt              DateTime                    @updatedAt
-  agrupadores            Agrupador[]
-  dominio                DominioInventario           @relation(fields: [dominioId], references: [id])
-  categoriasRecomendadas CategoriasEnTipoAgrupador[]
+  asignable               Boolean                     @default(true)
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  agrupadores             Agrupador[]
+  dominio                 DominioInventario           @relation(fields: [dominioId], references: [id])
+  categoriasRecomendadas  CategoriasEnTipoAgrupador[]
+  subTiposRecomendados    SubTiposEnTipoAgrupador[]   @relation("ParentTipoRelation")
+  parentTiposRecomendados SubTiposEnTipoAgrupador[]   @relation("ChildTipoRelation")
 
   @@unique([nombre, dominioId])
   @@index([dominioId])
+}
+
+model SubTiposEnTipoAgrupador {
+  parentTipoId Int
+  childTipoId  Int
+  parentTipo   TipoAgrupador @relation("ParentTipoRelation", fields: [parentTipoId], references: [id], onDelete: Cascade)
+  childTipo    TipoAgrupador @relation("ChildTipoRelation", fields: [childTipoId], references: [id], onDelete: Cascade)
+
+  @@id([parentTipoId, childTipoId])
+  @@index([parentTipoId])
+  @@index([childTipoId])
 }
 
 model CategoriasEnTipoAgrupador {

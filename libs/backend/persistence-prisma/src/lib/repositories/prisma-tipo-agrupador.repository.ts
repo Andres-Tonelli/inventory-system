@@ -12,7 +12,7 @@ export class PrismaTipoAgrupadorRepository implements TipoAgrupadorRepository {
 
   async save(entity: any): Promise<void> {
     if (entity.id) {
-      const { id, agrupadores, dominio, categoriasRecomendadas, categoriaIds, ...data } = entity;
+      const { id, agrupadores, dominio, categoriasRecomendadas, subTiposRecomendados, categoriaIds, subTipoIds, ...data } = entity;
       await this.prisma.$transaction(async (tx: any) => {
         await tx.tipoAgrupador.update({
           where: { id },
@@ -31,9 +31,22 @@ export class PrismaTipoAgrupadorRepository implements TipoAgrupadorRepository {
             });
           }
         }
+        if (subTipoIds !== undefined) {
+          await tx.subTiposEnTipoAgrupador.deleteMany({
+            where: { parentTipoId: id }
+          });
+          if (subTipoIds.length > 0) {
+            await tx.subTiposEnTipoAgrupador.createMany({
+              data: subTipoIds.map((childId: number) => ({
+                parentTipoId: id,
+                childTipoId: childId
+              }))
+            });
+          }
+        }
       });
     } else {
-      const { agrupadores, dominio, categoriasRecomendadas, categoriaIds, ...data } = entity;
+      const { agrupadores, dominio, categoriasRecomendadas, subTiposRecomendados, categoriaIds, subTipoIds, ...data } = entity;
       await this.prisma.$transaction(async (tx: any) => {
         const created = await tx.tipoAgrupador.create({
           data
@@ -46,6 +59,14 @@ export class PrismaTipoAgrupadorRepository implements TipoAgrupadorRepository {
             }))
           });
         }
+        if (subTipoIds && subTipoIds.length > 0) {
+          await tx.subTiposEnTipoAgrupador.createMany({
+            data: subTipoIds.map((childId: number) => ({
+              parentTipoId: created.id,
+              childTipoId: childId
+            }))
+          });
+        }
       });
     }
   }
@@ -53,7 +74,10 @@ export class PrismaTipoAgrupadorRepository implements TipoAgrupadorRepository {
   async findById(id: number): Promise<TipoAgrupador | null> {
     return this.prisma.tipoAgrupador.findUnique({
       where: { id },
-      include: { categoriasRecomendadas: { include: { categoria: true } } }
+      include: {
+        categoriasRecomendadas: { include: { categoria: true } },
+        subTiposRecomendados: { include: { childTipo: true } }
+      }
     });
   }
 
@@ -68,7 +92,10 @@ export class PrismaTipoAgrupadorRepository implements TipoAgrupadorRepository {
     }
     return this.prisma.tipoAgrupador.findMany({
       where,
-      include: { categoriasRecomendadas: { include: { categoria: true } } }
+      include: {
+        categoriasRecomendadas: { include: { categoria: true } },
+        subTiposRecomendados: { include: { childTipo: true } }
+      }
     });
   }
 
