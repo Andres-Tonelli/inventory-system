@@ -218,3 +218,21 @@ Ejecutado con `prisma migrate` (base de dev reseteada, sin backfill por acuerdo)
 - Render de `atributos` en los diálogos de detalle (hoy quedan vacíos, sin romper).
 - Índices de expresión BTREE sobre atributos "calientes" concretos (cuando se sepan cuáles).
 - `prisma/estados.csv` quedó sin uso (el seed ya no lo lee).
+
+## Revisión y Ajuste de Atributos Dinámicos (2026-07-31)
+
+Tras evaluar el uso de los atributos dinámicos en producción local, se identificó que no todos los atributos pertenecían propiamente a la instancia física individual del artículo:
+
+1. **Separación de Niveles en Artículos Únicos**:
+   - Los atributos fijos definidos a nivel de modelo (ej. capacidad RAM, procesador, tamaño de pantalla) se movieron de `Articulo.atributos` a `Modelo.atributos`.
+   - Se mantuvieron en `Articulo.atributos` únicamente los atributos específicos de la unidad física (ej. fecha de entrega de garantía, estado de desgaste específico).
+
+2. **Atributos Dinámicos en Consumibles (Lotes)**:
+   - Los consumibles se gestionan mediante lotes (`StockLote`) agrupados por su modelo. No existen registros de `Articulo` individuales para ellos.
+   - Para soportar atributos personalizados sin alterar el modelo, se incorporó una columna de atributos en el lote (`StockLote.atributos Json`).
+   - **Regla de asignación**:
+     - Atributos con `nivel === 'MODELO'` (ej. código de cartucho, color de tinta) se guardan y editan en el `Modelo`.
+     - Atributos con `nivel === 'ARTICULO'` (ej. fecha de vencimiento, nro. de remito) se ingresan en el alta de lote y se guardan en `StockLote.atributos`.
+
+3. **Cambios en Base de Datos**:
+   - Se añadió `StockLote.atributos` a `prisma/schema.prisma` y se ejecutó la sincronización.
