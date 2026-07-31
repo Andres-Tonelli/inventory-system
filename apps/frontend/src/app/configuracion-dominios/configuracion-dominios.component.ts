@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 import {
   CatalogosService,
@@ -23,7 +24,7 @@ import { DOMINIO_ICONOS, DOMINIO_COLORES } from '@inventory-system/api-contract'
 @Component({
   selector: 'app-configuracion-dominios',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, DialogModule, InputTextModule, SelectModule],
+  imports: [CommonModule, FormsModule, ButtonModule, DialogModule, InputTextModule, SelectModule, MultiSelectModule],
   templateUrl: './configuracion-dominios.component.html',
   styleUrl: './configuracion-dominios.component.scss',
 })
@@ -45,7 +46,8 @@ export class ConfiguracionDominiosComponent implements OnInit {
 
   showTipoDialog = false;
   editingTipoId: number | null = null;
-  tipoForm = { nombre: '', asignable: true };
+  tipoForm = { nombre: '', asignable: true, categoriaIds: [] as number[] };
+  categorias: Categoria[] = [];
 
   showAdminDialog = false;
   adminForm: { selectedEmpleado: any; rol: 'DOMINIO' | 'SISTEMA' } = { selectedEmpleado: null, rol: 'DOMINIO' };
@@ -104,9 +106,18 @@ export class ConfiguracionDominiosComponent implements OnInit {
       if (this.selectedId == null && this.dominios.length) {
         this.selectedId = this.dominios[0].id ?? null;
       }
+      if (this.selectedId) {
+        this.loadCategorias(this.selectedId);
+      }
       this.dominios.forEach((d) => {
         if (d.id) this.loadDominioConfig(d.id);
       });
+    });
+  }
+
+  loadCategorias(domId: number): void {
+    this.catalogos.getCategorias(domId).subscribe((res) => {
+      if (res.success) this.categorias = res.data;
     });
   }
 
@@ -124,6 +135,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
   select(d: Dominio): void {
     this.selectedId = d.id ?? null;
     this.activeTab = 'tipos';
+    if (d.id) this.loadCategorias(d.id);
   }
 
   // ---- Dominio ----
@@ -173,12 +185,13 @@ export class ConfiguracionDominiosComponent implements OnInit {
   // ---- Tipo de agrupador ----
   openNewTipo(): void {
     this.editingTipoId = null;
-    this.tipoForm = { nombre: '', asignable: true };
+    this.tipoForm = { nombre: '', asignable: true, categoriaIds: [] };
     this.showTipoDialog = true;
   }
   openEditTipo(t: TipoAgrupador): void {
     this.editingTipoId = t.id ?? null;
-    this.tipoForm = { nombre: t.nombre, asignable: t.asignable ?? true };
+    const categoriaIds = (t.categoriasRecomendadas || []).map((cr: any) => cr.categoria.id).filter(Boolean);
+    this.tipoForm = { nombre: t.nombre, asignable: t.asignable ?? true, categoriaIds };
     this.showTipoDialog = true;
   }
   saveTipo(): void {
@@ -191,13 +204,18 @@ export class ConfiguracionDominiosComponent implements OnInit {
       this.showTipoDialog = false;
       this.loadDominioConfig(domId);
     };
+    const payload = {
+      nombre,
+      asignable: this.tipoForm.asignable,
+      categoriaIds: this.tipoForm.categoriaIds
+    };
     if (this.editingTipoId) {
       this.catalogos
-        .updateTipoAgrupador(this.editingTipoId, { nombre, asignable: this.tipoForm.asignable })
+        .updateTipoAgrupador(this.editingTipoId, payload)
         .subscribe(done);
     } else {
       this.catalogos
-        .createTipoAgrupador(domId, { nombre, asignable: this.tipoForm.asignable })
+        .createTipoAgrupador(domId, payload)
         .subscribe(done);
     }
   }

@@ -45,15 +45,16 @@ model DominioInventario {
 }
 
 model Categoria {
-  id              Int               @id @default(autoincrement())
-  nombre          String
-  tipoSeguimiento TipoSeguimiento   @default(UNITARIO)
-  dominioId       Int
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  dominio         DominioInventario @relation(fields: [dominioId], references: [id])
-  modelos         Modelo[]
-  atributos       AtributoDefinicion[]
+  id                         Int                         @id @default(autoincrement())
+  nombre                     String
+  tipoSeguimiento            TipoSeguimiento             @default(UNITARIO)
+  dominioId                  Int
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  dominio                    DominioInventario           @relation(fields: [dominioId], references: [id])
+  modelos                    Modelo[]
+  atributos                  AtributoDefinicion[]
+  tiposAgrupadorRecomendados CategoriasEnTipoAgrupador[]
 
   @@unique([nombre, dominioId])
   @@index([dominioId])
@@ -138,19 +139,31 @@ model Articulo {
 }
 
 model TipoAgrupador {
-  id          Int               @id @default(autoincrement())
-  nombre      String
-  dominioId   Int
+  id                     Int                         @id @default(autoincrement())
+  nombre                 String
+  dominioId              Int
   /// Configurable por el admin: ¿instancias de este tipo se pueden asignar a una persona?
   /// false = contenedor/ubicación (ej. locker), true = conjunto asignable (ej. PC).
-  asignable   Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  agrupadores Agrupador[]
-  dominio     DominioInventario @relation(fields: [dominioId], references: [id])
+  asignable              Boolean                     @default(true)
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+  agrupadores            Agrupador[]
+  dominio                DominioInventario           @relation(fields: [dominioId], references: [id])
+  categoriasRecomendadas CategoriasEnTipoAgrupador[]
 
   @@unique([nombre, dominioId])
   @@index([dominioId])
+}
+
+model CategoriasEnTipoAgrupador {
+  tipoAgrupadorId Int
+  categoriaId     Int
+  tipoAgrupador   TipoAgrupador @relation(fields: [tipoAgrupadorId], references: [id], onDelete: Cascade)
+  categoria       Categoria     @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@id([tipoAgrupadorId, categoriaId])
+  @@index([tipoAgrupadorId])
+  @@index([categoriaId])
 }
 
 model Agrupador {

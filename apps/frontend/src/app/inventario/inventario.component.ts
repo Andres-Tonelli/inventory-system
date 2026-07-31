@@ -1309,10 +1309,10 @@ export class InventarioComponent implements OnInit {
     }).subscribe({ next: done, error: onErr });
   }
 
-  abrirDialogoArticuloAgrupador(agrupadorId: number) {
+  abrirDialogoArticuloAgrupador(agrupadorId: number, categoryId?: number) {
     this.selectedAgrupadorId = agrupadorId;
     this.selectedArticuloAgrupador = null;
-    this.selectedVincularCategoriaId = null;
+    this.selectedVincularCategoriaId = categoryId || null;
     // Cargar artículos libres (disponibles y sin agrupador) del dominio, on-demand.
     this.inventarioService.getArticulos(this.dominioId, 'Disponible').subscribe(res => {
       this.articulosLibres = res.success 
@@ -1323,6 +1323,26 @@ export class InventarioComponent implements OnInit {
         : [];
     });
     this.showArticuloAgrupadorDialog = true;
+  }
+
+  getPredefinedSlots(ag: any): any[] {
+    if (!ag || !ag.tipoAgrupador?.categoriasRecomendadas) return [];
+    return ag.tipoAgrupador.categoriasRecomendadas.map((cr: any) => {
+      const cat = cr.categoria;
+      const articulo = (ag.articulos || []).find((art: any) => art.modelo?.categoriaId === cat.id);
+      return {
+        categoria: cat,
+        articulo: articulo || null
+      };
+    });
+  }
+
+  getAdditionalArticles(ag: any): any[] {
+    if (!ag) return [];
+    const recCatIds = new Set(
+      (ag.tipoAgrupador?.categoriasRecomendadas || []).map((cr: any) => cr.categoria.id).filter(Boolean)
+    );
+    return (ag.articulos || []).filter((art: any) => !recCatIds.has(art.modelo?.categoriaId));
   }
 
   vincularArticuloAgrupador() {

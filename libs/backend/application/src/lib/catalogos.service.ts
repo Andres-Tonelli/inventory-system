@@ -135,12 +135,13 @@ export class CatalogosService {
   }
 
   // ---- TIPOS DE AGRUPADOR ----
-  async createTipoAgrupador(data: { nombre: string; dominioId: number; asignable?: boolean }) {
+  async createTipoAgrupador(data: { nombre: string; dominioId: number; asignable?: boolean; categoriaIds?: number[] }) {
     try {
       await this.tipoAgrupadorRepo.save({
         nombre: data.nombre,
         dominioId: data.dominioId,
         ...(data.asignable !== undefined && { asignable: data.asignable }),
+        categoriaIds: data.categoriaIds
       } as any);
     } catch (e: any) {
       if (e?.code === 'P2002') {
@@ -247,7 +248,7 @@ export class CatalogosService {
     }
   }
 
-  async updateTipoAgrupador(id: number, data: { nombre?: string; asignable?: boolean }) {
+  async updateTipoAgrupador(id: number, data: { nombre?: string; asignable?: boolean; categoriaIds?: number[] }) {
     await this.tipoAgrupadorRepo.save({ id, ...data } as any);
   }
 

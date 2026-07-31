@@ -181,6 +181,10 @@
     <label class="mt">Comportamiento</label>
     <p-select [options]="asignableOptions" [(ngModel)]="tipoForm.asignable" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
     <small class="hint">Asignable = se entrega a una persona · Contenedor = ubicación (no se entrega).</small>
+    
+    <label class="mt">Categorías preestablecidas / recomendadas</label>
+    <p-multiSelect [options]="categorias" [(ngModel)]="tipoForm.categoriaIds" optionLabel="nombre" optionValue="id" placeholder="Ninguna (permite cualquier artículo)" appendTo="body" styleClass="w-full"></p-multiSelect>
+    <small class="hint">Define las categorías que componen este agrupador como plantilla sugerida.</small>
   </div>
   <ng-template pTemplate="footer">
     <button class="btn ghost" (click)="showTipoDialog = false">Cancelar</button>

@@ -12,22 +12,48 @@ export class PrismaTipoAgrupadorRepository implements TipoAgrupadorRepository {
 
   async save(entity: any): Promise<void> {
     if (entity.id) {
-      const { id, agrupadores, dominio, ...data } = entity;
-      await this.prisma.tipoAgrupador.update({
-        where: { id },
-        data
+      const { id, agrupadores, dominio, categoriasRecomendadas, categoriaIds, ...data } = entity;
+      await this.prisma.$transaction(async (tx: any) => {
+        await tx.tipoAgrupador.update({
+          where: { id },
+          data
+        });
+        if (categoriaIds !== undefined) {
+          await tx.categoriasEnTipoAgrupador.deleteMany({
+            where: { tipoAgrupadorId: id }
+          });
+          if (categoriaIds.length > 0) {
+            await tx.categoriasEnTipoAgrupador.createMany({
+              data: categoriaIds.map((catId: number) => ({
+                tipoAgrupadorId: id,
+                categoriaId: catId
+              }))
+            });
+          }
+        }
       });
     } else {
-      const { agrupadores, dominio, ...data } = entity;
-      await this.prisma.tipoAgrupador.create({
-        data
+      const { agrupadores, dominio, categoriasRecomendadas, categoriaIds, ...data } = entity;
+      await this.prisma.$transaction(async (tx: any) => {
+        const created = await tx.tipoAgrupador.create({
+          data
+        });
+        if (categoriaIds && categoriaIds.length > 0) {
+          await tx.categoriasEnTipoAgrupador.createMany({
+            data: categoriaIds.map((catId: number) => ({
+              tipoAgrupadorId: created.id,
+              categoriaId: catId
+            }))
+          });
+        }
       });
     }
   }
 
   async findById(id: number): Promise<TipoAgrupador | null> {
     return this.prisma.tipoAgrupador.findUnique({
-      where: { id }
+      where: { id },
+      include: { categoriasRecomendadas: { include: { categoria: true } } }
     });
   }
 
@@ -41,7 +67,8 @@ export class PrismaTipoAgrupadorRepository implements TipoAgrupadorRepository {
       }
     }
     return this.prisma.tipoAgrupador.findMany({
-      where
+      where,
+      include: { categoriasRecomendadas: { include: { categoria: true } } }
     });
   }
 

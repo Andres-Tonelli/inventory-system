@@ -40,15 +40,27 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
     return this.prisma.agrupador.findUnique({
       where: { id },
       include: {
-        tipoAgrupador: true,
+        tipoAgrupador: {
+          include: {
+            categoriasRecomendadas: { include: { categoria: true } }
+          }
+        },
         agrupadorPadre: {
           include: {
-            tipoAgrupador: true
+            tipoAgrupador: {
+              include: {
+                categoriasRecomendadas: { include: { categoria: true } }
+              }
+            }
           }
         },
         subAgrupadores: {
           include: {
-            tipoAgrupador: true
+            tipoAgrupador: {
+              include: {
+                categoriasRecomendadas: { include: { categoria: true } }
+              }
+            }
           }
         },
         articulos: {
@@ -90,7 +102,11 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
           }
         },
         subAgrupadores: true,
-        tipoAgrupador: true,
+        tipoAgrupador: {
+          include: {
+            categoriasRecomendadas: { include: { categoria: true } }
+          }
+        },
         asignaciones: {
           where: { fechaDevolucion: null },
           include: { empleado: { include: { area: true } } }

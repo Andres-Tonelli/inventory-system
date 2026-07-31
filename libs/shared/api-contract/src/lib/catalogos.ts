@@ -78,6 +78,7 @@ export interface TipoAgrupador {
   dominioId: number;
   /** true = conjunto asignable a persona; false = contenedor/ubicación (ej. locker). Ver ADR-0004 D3. */
   asignable?: boolean;
+  categoriasRecomendadas?: { categoria: Categoria }[];
 }
 
 export interface EstadoArticulo {
@@ -125,6 +126,7 @@ export interface CreateTipoAgrupadorDto {
   nombre: string;
   /** Si se omite, el backend usa true (asignable) por defecto. */
   asignable?: boolean;
+  categoriaIds?: number[];
 }
 
 export interface CreateEstadoDto {
@@ -163,6 +165,7 @@ export interface UpdateModeloDto {
 export interface UpdateTipoAgrupadorDto {
   nombre?: string;
   asignable?: boolean;
+  categoriaIds?: number[];
 }
 
 export interface UpdateAtributoDto {
