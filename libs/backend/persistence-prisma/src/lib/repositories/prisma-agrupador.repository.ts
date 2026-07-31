@@ -63,6 +63,17 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
                 categoriasRecomendadas: { include: { categoria: true } },
                 subTiposRecomendados: { include: { childTipo: true } }
               }
+            },
+            articulos: {
+              include: {
+                modelo: { include: { categoria: true, marca: true } },
+                estado: true
+              }
+            },
+            subAgrupadores: {
+              include: {
+                tipoAgrupador: true
+              }
             }
           }
         },
@@ -110,6 +121,17 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
               include: {
                 categoriasRecomendadas: { include: { categoria: true } },
                 subTiposRecomendados: { include: { childTipo: true } }
+              }
+            },
+            articulos: {
+              include: {
+                modelo: { include: { categoria: true, marca: true } },
+                estado: true
+              }
+            },
+            subAgrupadores: {
+              include: {
+                tipoAgrupador: true
               }
             }
           }

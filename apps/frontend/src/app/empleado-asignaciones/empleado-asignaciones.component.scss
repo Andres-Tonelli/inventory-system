@@ -89,6 +89,65 @@ tbody tr:hover { background: #fafbff; }
   }
 }
 
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  
+  i {
+    font-size: 11px;
+  }
+  
+  &:hover {
+    border-color: #d5d8e6;
+    background: #fafbff;
+  }
+  
+  &.primary {
+    background: var(--indigo);
+    border-color: var(--indigo);
+    color: #ffffff;
+    
+    &:hover {
+      background: var(--indigo-600);
+      border-color: var(--indigo-600);
+    }
+  }
+  
+  &.ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--muted);
+    
+    &:hover {
+      background: var(--slate-soft);
+      color: var(--ink);
+    }
+  }
+  
+  &.sm {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+
 @media (max-width: 768px) {
   .page { padding: 12px 14px 30px; }
   .head { flex-direction: column; align-items: flex-start; gap: 12px; }
