@@ -55,6 +55,9 @@ export class CatalogosService {
   updateCategoria(id: number, data: { nombre?: string }) {
     return this.http.put(`/api/catalogos/categorias/${id}`, data);
   }
+  deleteCategoria(id: number) {
+    return this.http.delete(`/api/catalogos/categorias/${id}`);
+  }
   // ---- ATRIBUTOS DINÁMICOS ----
   getAtributos(categoriaId: number): Observable<ApiResponse<AtributoDefinicion[]>> {
     return this.http.get<ApiResponse<AtributoDefinicion[]>>(`/api/catalogos/categorias/${categoriaId}/atributos`);
@@ -83,6 +86,9 @@ export class CatalogosService {
   updateMarca(id: number, nombre: string) {
     return this.http.put(`/api/catalogos/marcas/${id}`, { nombre });
   }
+  deleteMarca(id: number) {
+    return this.http.delete(`/api/catalogos/marcas/${id}`);
+  }
 
   // ---- MODELOS ----
   getModelos(categoriaId?: number, dominioId?: number): Observable<ApiResponse<Modelo[]>> {
@@ -96,6 +102,9 @@ export class CatalogosService {
   }
   updateModelo(id: number, data: { nombre?: string; marcaId?: number; categoriaId?: number; atributos?: any }) {
     return this.http.put(`/api/catalogos/modelos/${id}`, data);
+  }
+  deleteModelo(id: number) {
+    return this.http.delete(`/api/catalogos/modelos/${id}`);
   }
 
   // ---- TIPOS DE AGRUPADOR ----

@@ -350,6 +350,7 @@
               <div class="row-actions">
                 <button class="btn ghost sm" (click)="abrirGestionarAtributos(cat)"><i class="pi pi-cog"></i>Atributos</button>
                 <button class="btn ghost sm" (click)="abrirEditarCategoria(cat)"><i class="pi pi-pencil"></i>Editar</button>
+                <button class="btn ghost sm danger" (click)="eliminarCategoria(cat.id!)"><i class="pi pi-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -375,7 +376,12 @@
         <tbody>
           <tr *ngFor="let marca of filteredMarcas">
             <td class="cell-name">{{ marca.nombre }}</td>
-            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarMarca(marca)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+             <td>
+               <div class="row-actions">
+                 <button class="btn ghost sm" (click)="abrirEditarMarca(marca)"><i class="pi pi-pencil"></i>Editar</button>
+                 <button class="btn ghost sm danger" (click)="eliminarMarca(marca.id!)"><i class="pi pi-trash"></i></button>
+               </div>
+             </td>
           </tr>
           <tr *ngIf="filteredMarcas.length === 0"><td colspan="2" class="empty">Sin marcas.</td></tr>
         </tbody>
@@ -421,7 +427,12 @@
             <td class="mut">{{ mod.detalle || '-' }}</td>
             <td class="mut">{{ mod.marca?.nombre }}</td>
             <td><span class="pill indigo">{{ mod.categoria?.nombre }}</span></td>
-            <td><div class="row-actions"><button class="btn ghost sm" (click)="abrirEditarModelo(mod)"><i class="pi pi-pencil"></i>Editar</button></div></td>
+             <td>
+               <div class="row-actions">
+                 <button class="btn ghost sm" (click)="abrirEditarModelo(mod)"><i class="pi pi-pencil"></i>Editar</button>
+                 <button class="btn ghost sm danger" (click)="eliminarModelo(mod.id!)"><i class="pi pi-trash"></i></button>
+               </div>
+             </td>
           </tr>
           <tr *ngIf="filteredModelos.length === 0"><td colspan="5" class="empty">Sin modelos.</td></tr>
         </tbody>

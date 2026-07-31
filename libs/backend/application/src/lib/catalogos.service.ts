@@ -191,13 +191,42 @@ export class CatalogosService {
     await this.marcaRepo.save({ id, nombre } as any);
   }
 
-  async updateModelo(id: number, data: { nombre?: string; detalle?: string; marcaId?: number; categoriaId?: number }) {
+  async updateModelo(id: number, data: { nombre?: string; detalle?: string; marcaId?: number; categoriaId?: number; atributos?: any }) {
     const patch: any = { id };
     if (data.nombre !== undefined) patch.nombre = data.nombre;
     if (data.detalle !== undefined) patch.detalle = data.detalle;
     if (data.marcaId !== undefined) patch.marcaId = Number(data.marcaId);
     if (data.categoriaId !== undefined) patch.categoriaId = Number(data.categoriaId);
+    if (data.atributos !== undefined) patch.atributos = data.atributos;
     await this.modeloRepo.save(patch);
+  }
+
+  async deleteCategoria(id: number) {
+    try {
+      await this.categoriaRepo.delete(id);
+    } catch {
+      throw new BadRequestException(
+        'No se puede eliminar la categoría: tiene modelos o atributos asociados.',
+      );
+    }
+  }
+
+  async deleteMarca(id: number) {
+    try {
+      await this.marcaRepo.delete(id);
+    } catch {
+      throw new BadRequestException('No se puede eliminar la marca: tiene modelos asociados.');
+    }
+  }
+
+  async deleteModelo(id: number) {
+    try {
+      await this.modeloRepo.delete(id);
+    } catch {
+      throw new BadRequestException(
+        'No se puede eliminar el modelo: tiene artículos o lotes de stock asociados.',
+      );
+    }
   }
 
   async updateDominio(id: number, data: { nombre: string; icono?: string; color?: string }) {

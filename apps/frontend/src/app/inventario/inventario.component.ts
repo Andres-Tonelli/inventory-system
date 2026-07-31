@@ -1135,6 +1135,17 @@ export class InventarioComponent implements OnInit {
     }
   }
 
+  eliminarCategoria(id: number) {
+    if (!window.confirm('¿Estás seguro de que querés eliminar esta categoría?')) return;
+    this.catalogosService.deleteCategoria(id).subscribe({
+      next: () => {
+        this.notificaciones.exito('Categoría eliminada con éxito');
+        this.loadCatalogos();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo eliminar la categoría.')
+    });
+  }
+
   abrirNuevaMarca() {
     this.editingMarcaId = null;
     this.newMarca = { nombre: '' };
@@ -1159,6 +1170,17 @@ export class InventarioComponent implements OnInit {
     } else {
       this.catalogosService.createMarca({nombre: this.newMarca.nombre, dominioId: this.dominioId}).subscribe({ next: done, error: onErr });
     }
+  }
+
+  eliminarMarca(id: number) {
+    if (!window.confirm('¿Estás seguro de que querés eliminar esta marca?')) return;
+    this.catalogosService.deleteMarca(id).subscribe({
+      next: () => {
+        this.notificaciones.exito('Marca eliminada con éxito');
+        this.loadCatalogos();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo eliminar la marca.')
+    });
   }
 
   abrirNuevoModelo() {
@@ -1252,6 +1274,17 @@ export class InventarioComponent implements OnInit {
     } else {
       this.catalogosService.createModelo(data).subscribe({ next: done, error: onErr });
     }
+  }
+
+  eliminarModelo(id: number) {
+    if (!window.confirm('¿Estás seguro de que querés eliminar este modelo?')) return;
+    this.catalogosService.deleteModelo(id).subscribe({
+      next: () => {
+        this.notificaciones.exito('Modelo eliminado con éxito');
+        this.loadCatalogos();
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo eliminar el modelo.')
+    });
   }
 
   // --- AGRUPADORES ---

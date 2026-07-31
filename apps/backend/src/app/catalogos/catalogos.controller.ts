@@ -196,6 +196,24 @@ export class CatalogosController {
     return { success: true, message: 'Estado actualizado' };
   }
 
+  @Delete('categorias/:id')
+  async deleteCategoria(@Param('id') id: string) {
+    await this.catalogosService.deleteCategoria(Number(id));
+    return { success: true, message: 'Categoría eliminada' };
+  }
+
+  @Delete('marcas/:id')
+  async deleteMarca(@Param('id') id: string) {
+    await this.catalogosService.deleteMarca(Number(id));
+    return { success: true, message: 'Marca eliminada' };
+  }
+
+  @Delete('modelos/:id')
+  async deleteModelo(@Param('id') id: string) {
+    await this.catalogosService.deleteModelo(Number(id));
+    return { success: true, message: 'Modelo eliminado' };
+  }
+
   @Delete('estados/:id')
   async deleteEstado(@Param('id') id: string) {
     await this.catalogosService.deleteEstado(Number(id));
