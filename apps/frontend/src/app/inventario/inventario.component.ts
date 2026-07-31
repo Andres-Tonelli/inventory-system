@@ -64,6 +64,8 @@ export class InventarioComponent implements OnInit {
   showAdicionarLoteDialog = false;
   showDetalleArticuloDialog = false;
   selectedArticuloDetalle: any = null;
+  showDetalleSubAgrupadorDialog = false;
+  selectedSubAgrupadorDetalle: any = null;
 
   // Cambio manual de estado
   showEstadoDialog = false;
@@ -1033,6 +1035,11 @@ export class InventarioComponent implements OnInit {
       this.atributosDetalle = [];
       this.showDetalleArticuloDialog = true;
     }
+  }
+
+  verDetalleSubAgrupador(sub: any) {
+    this.selectedSubAgrupadorDetalle = sub;
+    this.showDetalleSubAgrupadorDialog = true;
   }
 
   abrirCambiarEstado(art: any) {
