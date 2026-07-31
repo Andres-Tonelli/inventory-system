@@ -100,6 +100,46 @@ export class EmpleadoAsignacionesComponent implements OnInit {
     return !!this.expandedAgrupadores[id];
   }
 
+  getPredefinedSlots(ag: any): any[] {
+    if (!ag || !ag.tipoAgrupador?.categoriasRecomendadas) return [];
+    return ag.tipoAgrupador.categoriasRecomendadas.map((cr: any) => {
+      const cat = cr.categoria;
+      const articulo = (ag.articulos || []).find((art: any) => art.modelo?.categoriaId === cat.id);
+      return {
+        categoria: cat,
+        articulo: articulo || null
+      };
+    });
+  }
+
+  getAdditionalArticles(ag: any): any[] {
+    if (!ag) return [];
+    const recCatIds = new Set(
+      (ag.tipoAgrupador?.categoriasRecomendadas || []).map((cr: any) => cr.categoria.id).filter(Boolean)
+    );
+    return (ag.articulos || []).filter((art: any) => !recCatIds.has(art.modelo?.categoriaId));
+  }
+
+  getPredefinedSubSlots(ag: any): any[] {
+    if (!ag || !ag.tipoAgrupador?.subTiposRecomendados) return [];
+    return ag.tipoAgrupador.subTiposRecomendados.map((sr: any) => {
+      const tipoChild = sr.childTipo;
+      const sub = (ag.subAgrupadores || []).find((subAg: any) => subAg.tipoAgrupadorId === tipoChild.id);
+      return {
+        tipoAgrupador: tipoChild,
+        subAgrupador: sub || null
+      };
+    });
+  }
+
+  getAdditionalSubAgrupadores(ag: any): any[] {
+    if (!ag) return [];
+    const recTipoIds = new Set(
+      (ag.tipoAgrupador?.subTiposRecomendados || []).map((sr: any) => sr.childTipo.id).filter(Boolean)
+    );
+    return (ag.subAgrupadores || []).filter((subAg: any) => !recTipoIds.has(subAg.tipoAgrupadorId));
+  }
+
   volver() {
     this.router.navigate(['/configuracion/organizacion']);
   }

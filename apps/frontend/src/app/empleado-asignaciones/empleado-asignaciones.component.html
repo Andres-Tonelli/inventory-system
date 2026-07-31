@@ -37,19 +37,63 @@
           <i class="pi" [ngClass]="isAgrupadorExpanded(ag.id) ? 'pi-chevron-up' : 'pi-chevron-down'" style="color: var(--muted-2); font-size: 13px;"></i>
         </div>
       </div>
-      <div class="tablescroll" *ngIf="isAgrupadorExpanded(ag.id)">
-        <table>
-          <thead><tr><th>Artículo</th><th>Modelo</th><th>Nº serie</th><th>Estado</th></tr></thead>
-          <tbody>
-            <tr *ngFor="let art of ag.articulos">
-              <td class="cell-name">{{ art.alias || 'Sin alias' }}</td>
-              <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
-              <td class="mono">{{ art.nroSerie || '—' }}</td>
-              <td><span [ngClass]="estadoPillClass(art)"><span class="dot"></span>{{ estadoNombre(art) }}</span></td>
-            </tr>
-            <tr *ngIf="!ag.articulos?.length"><td colspan="4" class="empty">Agrupador sin artículos.</td></tr>
-          </tbody>
-        </table>
+      <div class="ag-detail-body" *ngIf="isAgrupadorExpanded(ag.id)" style="padding: 1.25rem; border-top: 1px solid var(--border-soft); background-color: var(--bg-hover); display: flex; flex-direction: column; gap: 1rem;">
+        
+        <!-- Checklist de Artículos/Componentes -->
+        <div>
+          <div class="md-lbl" style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main); font-size: 0.95rem;">Artículos / Componentes</div>
+          
+          <!-- Plantilla Preestablecida -->
+          <div class="predefined-slots" *ngIf="getPredefinedSlots(ag).length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div *ngFor="let slot of getPredefinedSlots(ag)" class="slot-item" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; background-color: var(--bg-card);">
+              <i class="pi" [ngClass]="slot.articulo ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.articulo ? '#10b981' : '#94a3b8';"></i>
+              <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">{{ slot.categoria.nombre }}:</span>
+              <span *ngIf="slot.articulo" style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
+                {{ slot.articulo.alias || slot.articulo.nroSerie || 'Artículo' }} <small *ngIf="slot.articulo.modelo?.nombre">({{ slot.articulo.modelo.nombre }})</small>
+              </span>
+              <span *ngIf="!slot.articulo" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">(Vacío)</span>
+            </div>
+          </div>
+
+          <!-- Adicionales/Otros Artículos -->
+          <div class="chips" *ngIf="getAdditionalArticles(ag).length > 0; else noArts">
+            <span class="chip" *ngFor="let art of getAdditionalArticles(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+              <span>{{ art.alias || art.nroSerie || 'Artículo' }} <small *ngIf="art.modelo?.categoria?.nombre">({{ art.modelo.categoria.nombre }})</small></span>
+            </span>
+          </div>
+          <ng-template #noArts>
+            <div *ngIf="getPredefinedSlots(ag).length === 0" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">Sin artículos vinculados.</div>
+          </ng-template>
+        </div>
+
+        <!-- Checklist de Sub-agrupadores -->
+        <div>
+          <div class="md-lbl" style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main); font-size: 0.95rem;">Sub-conjuntos / Sub-agrupadores</div>
+          
+          <!-- Sub-agrupadores Preestablecidos -->
+          <div class="predefined-slots" *ngIf="getPredefinedSubSlots(ag).length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div *ngFor="let slot of getPredefinedSubSlots(ag)" class="slot-item" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; background-color: var(--bg-card);">
+              <i class="pi" [ngClass]="slot.subAgrupador ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.subAgrupador ? '#10b981' : '#94a3b8';"></i>
+              <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">{{ slot.tipoAgrupador.nombre }}:</span>
+              <span *ngIf="slot.subAgrupador" style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
+                {{ slot.subAgrupador.nombre }}
+              </span>
+              <span *ngIf="!slot.subAgrupador" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">(Vacío)</span>
+            </div>
+          </div>
+
+          <!-- Sub-agrupadores Adicionales -->
+          <div class="chips" *ngIf="getAdditionalSubAgrupadores(ag).length > 0; else noSubs">
+            <span class="chip alt" *ngFor="let sub of getAdditionalSubAgrupadores(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+              <i class="pi pi-sitemap" style="font-size: 0.8rem; color: var(--primary); margin-right: 0.25rem;"></i>
+              <span>{{ sub.nombre }} <small *ngIf="sub.tipoAgrupador?.nombre">({{ sub.tipoAgrupador.nombre }})</small></span>
+            </span>
+          </div>
+          <ng-template #noSubs>
+            <div *ngIf="getPredefinedSubSlots(ag).length === 0" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">Sin sub-agrupadores vinculados.</div>
+          </ng-template>
+        </div>
+
       </div>
     </div>
     <app-paginador *ngIf="agrupadores.length > 0" [total]="agrupadores.length" [pagina]="paginaAgrupadores" (paginaChange)="paginaAgrupadores = $event"></app-paginador>
