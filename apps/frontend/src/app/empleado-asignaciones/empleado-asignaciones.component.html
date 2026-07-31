@@ -49,25 +49,9 @@
               <i class="pi" [ngClass]="slot.articulo ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.articulo ? '#10b981' : '#94a3b8';"></i>
               <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">{{ slot.categoria.nombre }}:</span>
               
-              <div class="hover-container" *ngIf="slot.articulo" style="display: inline-block;">
-                <span style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
-                  {{ slot.articulo.alias || slot.articulo.nroSerie || 'Artículo' }} <small *ngIf="slot.articulo.modelo?.nombre">({{ slot.articulo.modelo.nombre }})</small>
-                </span>
-                <div class="hover-card">
-                  <div class="hc-header">{{ slot.articulo.alias || 'Artículo' }}</div>
-                  <div class="hc-row"><span class="hc-key">Categoría</span><span class="hc-val">{{ slot.categoria.nombre }}</span></div>
-                  <div class="hc-row"><span class="hc-key">Modelo</span><span class="hc-val">{{ slot.articulo.modelo?.nombre || '—' }}</span></div>
-                  <div class="hc-row"><span class="hc-key">Marca</span><span class="hc-val">{{ slot.articulo.modelo?.marca?.nombre || '—' }}</span></div>
-                  <div class="hc-row"><span class="hc-key">Nº Serie</span><span class="hc-val">{{ slot.articulo.nroSerie || '—' }}</span></div>
-                  <div class="hc-row"><span class="hc-key">Estado</span><span class="hc-val">{{ estadoNombre(slot.articulo) }}</span></div>
-                  <div class="hc-row" *ngIf="slot.articulo.detalle"><span class="hc-key">Detalle</span><span class="hc-val">{{ slot.articulo.detalle }}</span></div>
-                  <div class="hc-divider" *ngIf="slot.articulo.atributos && getObjectKeys(slot.articulo.atributos).length > 0">Atributos de Artículo</div>
-                  <div class="hc-row" *ngFor="let k of getObjectKeys(slot.articulo.atributos)">
-                    <span class="hc-key">{{ k }}</span>
-                    <span class="hc-val">{{ getParsedAttribute(slot.articulo.atributos, k) }}</span>
-                  </div>
-                </div>
-              </div>
+              <span *ngIf="slot.articulo" class="clickable-detail" (click)="verDetalleArticulo(slot.articulo)" style="font-size: 0.85rem;">
+                {{ slot.articulo.alias || slot.articulo.nroSerie || 'Artículo' }} <small *ngIf="slot.articulo.modelo?.nombre">({{ slot.articulo.modelo.nombre }})</small>
+              </span>
               
               <span *ngIf="!slot.articulo" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">(Vacío)</span>
             </div>
@@ -75,22 +59,8 @@
 
           <!-- Adicionales/Otros Artículos -->
           <div class="chips" *ngIf="getAdditionalArticles(ag).length > 0; else noArts">
-            <span class="chip hover-container" *ngFor="let art of getAdditionalArticles(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="chip clickable-detail" *ngFor="let art of getAdditionalArticles(ag)" (click)="verDetalleArticulo(art)" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px dashed var(--indigo);">
               <span>{{ art.alias || art.nroSerie || 'Artículo' }} <small *ngIf="art.modelo?.categoria?.nombre">({{ art.modelo.categoria.nombre }})</small></span>
-              <div class="hover-card">
-                <div class="hc-header">{{ art.alias || 'Artículo' }}</div>
-                <div class="hc-row"><span class="hc-key">Categoría</span><span class="hc-val">{{ art.modelo?.categoria?.nombre || '—' }}</span></div>
-                <div class="hc-row"><span class="hc-key">Modelo</span><span class="hc-val">{{ art.modelo?.nombre || '—' }}</span></div>
-                <div class="hc-row"><span class="hc-key">Marca</span><span class="hc-val">{{ art.modelo?.marca?.nombre || '—' }}</span></div>
-                <div class="hc-row"><span class="hc-key">Nº Serie</span><span class="hc-val">{{ art.nroSerie || '—' }}</span></div>
-                <div class="hc-row"><span class="hc-key">Estado</span><span class="hc-val">{{ estadoNombre(art) }}</span></div>
-                <div class="hc-row" *ngIf="art.detalle"><span class="hc-key">Detalle</span><span class="hc-val">{{ art.detalle }}</span></div>
-                <div class="hc-divider" *ngIf="art.atributos && getObjectKeys(art.atributos).length > 0">Atributos de Artículo</div>
-                <div class="hc-row" *ngFor="let k of getObjectKeys(art.atributos)">
-                  <span class="hc-key">{{ k }}</span>
-                  <span class="hc-val">{{ getParsedAttribute(art.atributos, k) }}</span>
-                </div>
-              </div>
             </span>
           </div>
           <ng-template #noArts>
@@ -108,22 +78,9 @@
               <i class="pi" [ngClass]="slot.subAgrupador ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.subAgrupador ? '#10b981' : '#94a3b8';"></i>
               <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">{{ slot.tipoAgrupador.nombre }}:</span>
               
-              <div class="hover-container" *ngIf="slot.subAgrupador" style="display: inline-block;">
-                <span style="font-weight: 400; font-size: 0.85rem; color: var(--text-main);">
-                  {{ slot.subAgrupador.nombre }}
-                </span>
-                <div class="hover-card">
-                  <div class="hc-header">{{ slot.subAgrupador.nombre }}</div>
-                  <div class="hc-row"><span class="hc-key">Tipo de Agrupador</span><span class="hc-val">{{ slot.tipoAgrupador.nombre }}</span></div>
-                  <div class="hc-row"><span class="hc-key">Sub-conjuntos</span><span class="hc-val">{{ slot.subAgrupador.subAgrupadores?.length || 0 }}</span></div>
-                  <div class="hc-row"><span class="hc-key">Artículos asignados</span><span class="hc-val">{{ slot.subAgrupador.articulos?.length || 0 }}</span></div>
-                  <div class="hc-divider" *ngIf="slot.subAgrupador.articulos && slot.subAgrupador.articulos.length > 0">Componentes Incluidos</div>
-                  <div class="hc-row" *ngFor="let sa of slot.subAgrupador.articulos">
-                    <span class="hc-key" style="max-width: 50% !important;">{{ sa.alias || sa.nroSerie }}</span>
-                    <span class="hc-val">{{ sa.modelo?.nombre || '—' }}</span>
-                  </div>
-                </div>
-              </div>
+              <span *ngIf="slot.subAgrupador" class="clickable-detail" (click)="verDetalleAgrupador(slot.subAgrupador)" style="font-size: 0.85rem;">
+                {{ slot.subAgrupador.nombre }}
+              </span>
               
               <span *ngIf="!slot.subAgrupador" style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">(Vacío)</span>
             </div>
@@ -131,20 +88,9 @@
 
           <!-- Sub-agrupadores Adicionales -->
           <div class="chips" *ngIf="getAdditionalSubAgrupadores(ag).length > 0; else noSubs">
-            <span class="chip alt hover-container" *ngFor="let sub of getAdditionalSubAgrupadores(ag)" style="cursor: default; padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="chip alt clickable-detail" *ngFor="let sub of getAdditionalSubAgrupadores(ag)" (click)="verDetalleAgrupador(sub)" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px dashed var(--indigo);">
               <i class="pi pi-sitemap" style="font-size: 0.8rem; color: var(--primary); margin-right: 0.25rem;"></i>
               <span>{{ sub.nombre }} <small *ngIf="sub.tipoAgrupador?.nombre">({{ sub.tipoAgrupador.nombre }})</small></span>
-              <div class="hover-card">
-                <div class="hc-header">{{ sub.nombre }}</div>
-                <div class="hc-row"><span class="hc-key">Tipo de Agrupador</span><span class="hc-val">{{ sub.tipoAgrupador?.nombre || '—' }}</span></div>
-                <div class="hc-row"><span class="hc-key">Sub-conjuntos</span><span class="hc-val">{{ sub.subAgrupadores?.length || 0 }}</span></div>
-                <div class="hc-row"><span class="hc-key">Artículos asignados</span><span class="hc-val">{{ sub.articulos?.length || 0 }}</span></div>
-                <div class="hc-divider" *ngIf="sub.articulos && sub.articulos.length > 0">Componentes Incluidos</div>
-                <div class="hc-row" *ngFor="let sa of sub.articulos">
-                  <span class="hc-key" style="max-width: 50% !important;">{{ sa.alias || sa.nroSerie }}</span>
-                  <span class="hc-val">{{ sa.modelo?.nombre || '—' }}</span>
-                </div>
-              </div>
             </span>
           </div>
           <ng-template #noSubs>
@@ -166,23 +112,9 @@
           <tbody>
             <tr *ngFor="let art of paginatedArticulos">
               <td class="cell-name">
-                <div class="hover-container">
+                <span class="clickable-detail" (click)="verDetalleArticulo(art)">
                   {{ art.alias || 'Sin alias' }}
-                  <div class="hover-card">
-                    <div class="hc-header">{{ art.alias || 'Artículo' }}</div>
-                    <div class="hc-row"><span class="hc-key">Categoría</span><span class="hc-val">{{ art.modelo?.categoria?.nombre || '—' }}</span></div>
-                    <div class="hc-row"><span class="hc-key">Modelo</span><span class="hc-val">{{ art.modelo?.nombre || '—' }}</span></div>
-                    <div class="hc-row"><span class="hc-key">Marca</span><span class="hc-val">{{ art.modelo?.marca?.nombre || '—' }}</span></div>
-                    <div class="hc-row"><span class="hc-key">Nº Serie</span><span class="hc-val">{{ art.nroSerie || '—' }}</span></div>
-                    <div class="hc-row"><span class="hc-key">Estado</span><span class="hc-val">{{ estadoNombre(art) }}</span></div>
-                    <div class="hc-row" *ngIf="art.detalle"><span class="hc-key">Detalle</span><span class="hc-val">{{ art.detalle }}</span></div>
-                    <div class="hc-divider" *ngIf="art.atributos && getObjectKeys(art.atributos).length > 0">Atributos de Artículo</div>
-                    <div class="hc-row" *ngFor="let k of getObjectKeys(art.atributos)">
-                      <span class="hc-key">{{ k }}</span>
-                      <span class="hc-val">{{ getParsedAttribute(art.atributos, k) }}</span>
-                    </div>
-                  </div>
-                </div>
+                </span>
               </td>
               <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
               <td class="mono">{{ art.nroSerie || '—' }}</td>
@@ -218,3 +150,90 @@
     <app-paginador *ngIf="historial.length > 0" [total]="historial.length" [pagina]="paginaHistorial" (paginaChange)="paginaHistorial = $event"></app-paginador>
   </ng-container>
 </div>
+
+<!-- Modal Detalle del Artículo -->
+<p-dialog header="Detalle del artículo" [(visible)]="showDetalleArticuloDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '500px' }">
+  <div class="form" *ngIf="selectedArticuloDetalle as d" style="display: flex; flex-direction: column; gap: 1rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.75rem; margin-bottom: 0.5rem;">
+      <div style="font-size: 1.15rem; font-weight: 700; color: var(--ink);">{{ d.alias || 'Artículo' }}</div>
+      <span [ngClass]="estadoPillClass(d)"><span class="dot"></span>{{ estadoNombre(d) }}</span>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Modelo</span><span style="font-weight: 500;">{{ d.modelo?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Marca</span><span style="font-weight: 500;">{{ d.modelo?.marca?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Categoría</span><span style="font-weight: 500;">{{ d.modelo?.categoria?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Nº de Serie</span><span style="font-weight: 500; font-family: var(--mono);">{{ d.nroSerie || 'Sin serie' }}</span></div>
+    </div>
+
+    <div *ngIf="d.detalle" style="background-color: var(--border-soft); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-soft);">
+      <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Detalle</span>
+      <p style="margin: 0; font-size: 0.9rem; color: var(--ink); white-space: pre-wrap;">{{ d.detalle }}</p>
+    </div>
+
+    <!-- Atributos del Artículo -->
+    <ng-container *ngIf="d.atributos && getObjectKeys(d.atributos).length > 0">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Atributos del Artículo</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+        <div *ngFor="let k of getObjectKeys(d.atributos)" style="display: flex; flex-direction: column;">
+          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ k }}</span>
+          <span style="font-weight: 500;">{{ getParsedAttribute(d.atributos, k) }}</span>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Atributos del Modelo -->
+    <ng-container *ngIf="d.modelo?.atributos && getObjectKeys(d.modelo.atributos).length > 0">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Especificaciones del Modelo</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+        <div *ngFor="let k of getObjectKeys(d.modelo.atributos)" style="display: flex; flex-direction: column;">
+          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ k }}</span>
+          <span style="font-weight: 500;">{{ getParsedAttribute(d.modelo.atributos, k) }}</span>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn primary" (click)="showDetalleArticuloDialog = false">Cerrar</button></ng-template>
+</p-dialog>
+
+<!-- Modal Detalle del Agrupador -->
+<p-dialog [header]="selectedAgrupadorDetalle?.tipoAgrupador?.nombre || 'Detalle del agrupador'" [(visible)]="showDetalleAgrupadorDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '500px' }">
+  <div class="form" *ngIf="selectedAgrupadorDetalle as g" style="display: flex; flex-direction: column; gap: 1rem;">
+    <div style="border-bottom: 1px solid var(--border-soft); padding-bottom: 0.75rem; margin-bottom: 0.5rem;">
+      <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; display: block;">Agrupador</span>
+      <div style="font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-top: 0.15rem;">{{ g.nombre }}</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Tipo</span><span style="font-weight: 500;">{{ g.tipoAgrupador?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Agrupador Padre</span><span style="font-weight: 500;">{{ g.agrupadorPadre?.nombre || '—' }}</span></div>
+    </div>
+
+    <!-- Lista de Artículos Contenidos -->
+    <div *ngIf="g.articulos?.length">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Artículos Contenidos</div>
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <div *ngFor="let sa of g.articulos" style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background-color: var(--bg-hover); border: 1px solid var(--border-soft); border-radius: 6px; font-size: 0.85rem;">
+          <span style="font-weight: 600; color: var(--ink);">{{ sa.alias || sa.nroSerie }}</span>
+          <span style="color: var(--muted);">{{ sa.modelo?.nombre || '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Sub-agrupadores Contenidos -->
+    <div *ngIf="g.subAgrupadores?.length">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Sub-agrupadores Contenidos</div>
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <div *ngFor="let s of g.subAgrupadores" style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background-color: var(--bg-hover); border: 1px solid var(--border-soft); border-radius: 6px; font-size: 0.85rem;">
+          <span style="font-weight: 600; color: var(--ink);">{{ s.nombre }}</span>
+          <span style="color: var(--muted);">{{ s.tipoAgrupador?.nombre || '—' }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="!g.articulos?.length && !g.subAgrupadores?.length" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; text-align: center; padding: 1rem;">
+      Este agrupador no contiene artículos ni sub-agrupadores vinculados.
+    </div>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn primary" (click)="showDetalleAgrupadorDialog = false">Cerrar</button></ng-template>
+</p-dialog>

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DialogModule } from 'primeng/dialog';
 
 import { AsignacionesService } from '../core/services/asignaciones.service';
 import { EmpleadosService } from '../core/services/empleados.service';
@@ -9,7 +10,7 @@ import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
 @Component({
   selector: 'app-empleado-asignaciones',
   standalone: true,
-  imports: [CommonModule, PaginadorComponent],
+  imports: [CommonModule, PaginadorComponent, DialogModule],
   templateUrl: './empleado-asignaciones.component.html',
   styleUrl: './empleado-asignaciones.component.scss',
 })
@@ -20,6 +21,11 @@ export class EmpleadoAsignacionesComponent implements OnInit {
   articulos: any[] = [];
   historial: any[] = [];
   loading = true;
+
+  showDetalleArticuloDialog = false;
+  selectedArticuloDetalle: any = null;
+  showDetalleAgrupadorDialog = false;
+  selectedAgrupadorDetalle: any = null;
 
   // Variables de paginación
   paginaAgrupadores = 1;
@@ -164,6 +170,16 @@ export class EmpleadoAsignacionesComponent implements OnInit {
     } catch {
       return '';
     }
+  }
+
+  verDetalleArticulo(art: any) {
+    this.selectedArticuloDetalle = art;
+    this.showDetalleArticuloDialog = true;
+  }
+
+  verDetalleAgrupador(sub: any) {
+    this.selectedAgrupadorDetalle = sub;
+    this.showDetalleAgrupadorDialog = true;
   }
 
   volver() {
