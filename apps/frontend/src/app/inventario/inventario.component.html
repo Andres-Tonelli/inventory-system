@@ -513,8 +513,9 @@
       <form [formGroup]="dynamicForm" class="form">
         <ng-container *ngFor="let attr of atributosDominio">
           <label class="mt">{{ attr.nombre }}</label>
+          <p-select *ngIf="attr.tipoDato === 'BOOLEANO'" [options]="booleanoOptions" [formControlName]="attr.clave" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body"></p-select>
           <input *ngIf="attr.tipoDato === 'NUMERO'" pInputText type="number" [formControlName]="attr.clave" />
-          <input *ngIf="attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
+          <input *ngIf="attr.tipoDato !== 'BOOLEANO' && attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
         </ng-container>
       </form>
     </div>
@@ -541,8 +542,9 @@
       <form [formGroup]="loteModeloDynamicForm" class="form" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
         <ng-container *ngFor="let attr of atributosLoteForm">
           <label style="font-size: 0.85rem; font-weight: 500;">{{ attr.nombre }}</label>
+          <p-select *ngIf="attr.tipoDato === 'BOOLEANO'" [options]="booleanoOptions" [formControlName]="attr.clave" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body"></p-select>
           <input *ngIf="attr.tipoDato === 'NUMERO'" pInputText type="number" [formControlName]="attr.clave" />
-          <input *ngIf="attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
+          <input *ngIf="attr.tipoDato !== 'BOOLEANO' && attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
         </ng-container>
       </form>
     </div>
@@ -581,8 +583,9 @@
       <form [formGroup]="modeloDynamicForm" class="form" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
         <ng-container *ngFor="let attr of atributosModeloForm">
           <label style="font-size: 0.85rem; font-weight: 500;">{{ attr.nombre }}</label>
+          <p-select *ngIf="attr.tipoDato === 'BOOLEANO'" [options]="booleanoOptions" [formControlName]="attr.clave" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body"></p-select>
           <input *ngIf="attr.tipoDato === 'NUMERO'" pInputText type="number" [formControlName]="attr.clave" />
-          <input *ngIf="attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
+          <input *ngIf="attr.tipoDato !== 'BOOLEANO' && attr.tipoDato !== 'NUMERO'" pInputText [formControlName]="attr.clave" />
         </ng-container>
       </form>
     </div>

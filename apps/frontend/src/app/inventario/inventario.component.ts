@@ -130,7 +130,11 @@ export class InventarioComponent implements OnInit {
         this.atributosLoteForm = res.data.filter((a: any) => a.nivel === 'ARTICULO');
         const group: any = {};
         for (const attr of this.atributosLoteForm) {
-          group[attr.clave] = [''];
+          if (attr.tipoDato === 'BOOLEANO') {
+            group[attr.clave] = [0];
+          } else {
+            group[attr.clave] = [''];
+          }
         }
         this.loteModeloDynamicForm = this.fb.group(group);
       }
@@ -159,6 +163,10 @@ export class InventarioComponent implements OnInit {
     { label: 'Número', value: 'NUMERO' },
     { label: 'Fecha', value: 'FECHA' },
     { label: 'Booleano', value: 'BOOLEANO' },
+  ];
+  readonly booleanoOptions = [
+    { label: 'NO', value: 0 },
+    { label: 'SI', value: 1 }
   ];
 
   // Seleccion básica
@@ -893,7 +901,11 @@ export class InventarioComponent implements OnInit {
   buildDynamicForm() {
     const group: any = {};
     for (const attr of this.atributosDominio) {
-      group[attr.clave] = [''];
+      if (attr.tipoDato === 'BOOLEANO') {
+        group[attr.clave] = [0];
+      } else {
+        group[attr.clave] = [''];
+      }
     }
     this.dynamicForm = this.fb.group(group);
   }
@@ -940,7 +952,12 @@ export class InventarioComponent implements OnInit {
           
           const patch: Record<string, any> = {};
           for (const attr of this.atributosDominio) {
-            patch[attr.clave] = art.atributos?.[attr.clave] ?? '';
+            const val = art.atributos?.[attr.clave];
+            if (attr.tipoDato === 'BOOLEANO') {
+              patch[attr.clave] = (val === true || val === 1 || val === '1' || val === 'true') ? 1 : 0;
+            } else {
+              patch[attr.clave] = val ?? '';
+            }
           }
           this.dynamicForm.patchValue(patch);
           this.showNuevoDialog = true;
@@ -961,7 +978,10 @@ export class InventarioComponent implements OnInit {
     // Atributos dinámicos como objeto { clave: valor } (JSONB). Ver ADR-0004 D1.
     const atributos: Record<string, any> = {};
     for (const attr of this.atributosDominio) {
-      const valor = formValues[attr.clave];
+      let valor = formValues[attr.clave];
+      if (attr.tipoDato === 'BOOLEANO') {
+        valor = (valor === true || valor === 1 || valor === '1' || valor === 'true') ? 1 : 0;
+      }
       if (valor != null && valor !== '') atributos[attr.clave] = valor;
     }
 
@@ -994,26 +1014,34 @@ export class InventarioComponent implements OnInit {
     if (!attrId || !articulo) return '';
     const def = this.atributosDominio.find(a => a.id === attrId);
     if (!def) return '';
+    let val: any;
     if (def.nivel === 'MODELO') {
-      const val = articulo.modelo?.atributos?.[def.clave];
-      return val != null ? String(val) : '';
+      val = articulo.modelo?.atributos?.[def.clave];
     } else {
-      const val = articulo.atributos?.[def.clave];
-      return val != null ? String(val) : '';
+      val = articulo.atributos?.[def.clave];
     }
+    if (val == null) return '';
+    if (def.tipoDato === 'BOOLEANO') {
+      return (val === true || val === 1 || val === '1' || val === 'true') ? 'SI' : 'NO';
+    }
+    return String(val);
   }
 
   getAtributoValorDetalle(articulo: any, attrId: number | undefined): string {
     if (!attrId || !articulo) return '';
     const def = this.atributosDetalle.find(a => a.id === attrId);
     if (!def) return '';
+    let val: any;
     if (def.nivel === 'MODELO') {
-      const val = articulo.modelo?.atributos?.[def.clave];
-      return val != null ? String(val) : '';
+      val = articulo.modelo?.atributos?.[def.clave];
     } else {
-      const val = articulo.atributos?.[def.clave];
-      return val != null ? String(val) : '';
+      val = articulo.atributos?.[def.clave];
     }
+    if (val == null) return '';
+    if (def.tipoDato === 'BOOLEANO') {
+      return (val === true || val === 1 || val === '1' || val === 'true') ? 'SI' : 'NO';
+    }
+    return String(val);
   }
 
   /** Definiciones de atributos del dominio que tienen valor en este artículo. */
@@ -1093,10 +1121,16 @@ export class InventarioComponent implements OnInit {
     
     return cat.atributos
       .filter((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '')
-      .map((a: any) => ({
-        nombre: a.nombre,
-        valor: String(modelo.atributos[a.clave])
-      }));
+      .map((a: any) => {
+        let val = modelo.atributos[a.clave];
+        if (a.tipoDato === 'BOOLEANO') {
+          val = (val === true || val === 1 || val === '1' || val === 'true') ? 'SI' : 'NO';
+        }
+        return {
+          nombre: a.nombre,
+          valor: String(val)
+        };
+      });
   }
 
   getLoteSpecsText(lote: any): string {
@@ -1107,8 +1141,11 @@ export class InventarioComponent implements OnInit {
     const parts: string[] = [];
     for (const attr of cat.atributos) {
       if (attr.nivel === 'ARTICULO') {
-        const val = lote.atributos[attr.clave];
+        let val = lote.atributos[attr.clave];
         if (val != null && val !== '') {
+          if (attr.tipoDato === 'BOOLEANO') {
+            val = (val === true || val === 1 || val === '1' || val === 'true') ? 'SI' : 'NO';
+          }
           parts.push(`${attr.nombre}: ${val}`);
         }
       }
@@ -1219,7 +1256,12 @@ export class InventarioComponent implements OnInit {
           this.buildModeloDynamicForm();
           const patch: Record<string, any> = {};
           for (const attr of this.atributosModeloForm) {
-            patch[attr.clave] = this.newModelo.atributos?.[attr.clave] ?? '';
+            const val = this.newModelo.atributos?.[attr.clave];
+            if (attr.tipoDato === 'BOOLEANO') {
+              patch[attr.clave] = (val === true || val === 1 || val === '1' || val === 'true') ? 1 : 0;
+            } else {
+              patch[attr.clave] = val ?? '';
+            }
           }
           this.modeloDynamicForm.patchValue(patch);
           this.showModeloDialog = true;
@@ -1250,7 +1292,11 @@ export class InventarioComponent implements OnInit {
   buildModeloDynamicForm() {
     const group: any = {};
     for (const attr of this.atributosModeloForm) {
-      group[attr.clave] = [''];
+      if (attr.tipoDato === 'BOOLEANO') {
+        group[attr.clave] = [0];
+      } else {
+        group[attr.clave] = [''];
+      }
     }
     this.modeloDynamicForm = this.fb.group(group);
   }
@@ -1259,7 +1305,10 @@ export class InventarioComponent implements OnInit {
     const formValues = this.modeloDynamicForm.value;
     const atributos: Record<string, any> = {};
     for (const attr of this.atributosModeloForm) {
-      const valor = formValues[attr.clave];
+      let valor = formValues[attr.clave];
+      if (attr.tipoDato === 'BOOLEANO') {
+        valor = (valor === true || valor === 1 || valor === '1' || valor === 'true') ? 1 : 0;
+      }
       if (valor != null && valor !== '') atributos[attr.clave] = valor;
     }
 
@@ -1430,7 +1479,10 @@ export class InventarioComponent implements OnInit {
     const formValues = this.loteModeloDynamicForm.value;
     const atributos: Record<string, any> = {};
     for (const attr of this.atributosLoteForm) {
-      const valor = formValues[attr.clave];
+      let valor = formValues[attr.clave];
+      if (attr.tipoDato === 'BOOLEANO') {
+        valor = (valor === true || valor === 1 || valor === '1' || valor === 'true') ? 1 : 0;
+      }
       if (valor != null && valor !== '') atributos[attr.clave] = valor;
     }
     
