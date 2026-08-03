@@ -27,8 +27,12 @@ export class AgrupadoresService {
     return this.http.post<any>(`${this.apiUrl}/${agrupadorId}/articulos`, { articuloId });
   }
 
-  removeArticulo(articuloId: number): Observable<{ success: boolean }> {
-    return this.http.delete<any>(`${this.apiUrl}/articulos/${articuloId}`);
+  removeArticulo(articuloId: number, nuevoEstadoCodigo?: string): Observable<{ success: boolean }> {
+    let url = `${this.apiUrl}/articulos/${articuloId}`;
+    if (nuevoEstadoCodigo) {
+      url += `?nuevoEstadoCodigo=${nuevoEstadoCodigo}`;
+    }
+    return this.http.delete<any>(url);
   }
 
   addSubAgrupador(parentAgrupadorId: number, childAgrupadorId: number): Observable<{ success: boolean }> {

@@ -87,7 +87,7 @@ describe('AsignacionesService', () => {
       await expect(service.asignarAgrupador(10, 7)).rejects.toThrow(/ya asignado/i);
     });
 
-    it('camino feliz: estado ASIGNADO (único escritor, D5) + artículos directos a EN_USO (D2)', async () => {
+    it('camino feliz: estado ASIGNADO (único escritor, D5) + artículos directos a EN_USO (D2) con cascada recursiva', async () => {
       agrupadorRepo.seed({
         id: 10, estado: 'DISPONIBLE',
         tipoAgrupador: { asignable: true },
@@ -105,8 +105,8 @@ describe('AsignacionesService', () => {
       // Los artículos DIRECTOS pasan a EN_USO...
       const estadosEscritos = articuloRepo.savedWith.map((a) => a.estadoCodigo);
       expect(estadosEscritos).toEqual(['EN_USO', 'EN_USO']);
-      // ...y NO se cascadea a sub-agrupadores (D2): ningún save sobre el sub 20.
-      expect(agrupadorRepo.savedWith.some((a) => a.id === 20)).toBe(false);
+      // ...y SÍ se cascadea a sub-agrupadores: el sub 20 debe ser guardado como ASIGNADO
+      expect(agrupadorRepo.savedWith.some((a) => a.id === 20 && a.estado === 'ASIGNADO')).toBe(true);
       // Queda la asignación registrada.
       expect([...asignacionAgrupadorRepo.items.values()][0]).toMatchObject({ agrupadorId: 10, empleadoId: 7 });
     });

@@ -51,6 +51,31 @@ export class AsignacionesService {
     });
   }
 
+  private async cascadeAgrupadorEstado(agrupadorId: number, estadoAgrupador: 'ASIGNADO' | 'DISPONIBLE', estadoArticuloCodigo: string) {
+    const agrupador: any = await this.agrupadorRepo.findById(agrupadorId);
+    if (!agrupador) return;
+
+    if (agrupador.articulos && agrupador.articulos.length > 0) {
+      for (const art of agrupador.articulos) {
+        if (estadoAgrupador === 'DISPONIBLE') {
+          if (art.estado?.codigo === EstadoCodigo.EN_USO) {
+            await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
+          }
+        } else {
+          await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
+        }
+      }
+    }
+
+    if (agrupador.subAgrupadores && agrupador.subAgrupadores.length > 0) {
+      for (const sub of agrupador.subAgrupadores) {
+        sub.estado = estadoAgrupador;
+        await this.agrupadorRepo.save(sub);
+        await this.cascadeAgrupadorEstado(sub.id, estadoAgrupador, estadoArticuloCodigo);
+      }
+    }
+  }
+
   async asignarAgrupador(agrupadorId: number, empleadoId: number, observaciones?: string) {
     return this.uow.execute(async () => {
       const agrupador: any = await this.agrupadorRepo.findById(agrupadorId);
@@ -66,13 +91,8 @@ export class AsignacionesService {
       agrupador.estado = 'ASIGNADO';
       await this.agrupadorRepo.save(agrupador);
 
-      // Los artículos DIRECTOS pasan a "en uso". No se cascada a sub-agrupadores (ADR-0004 D2).
-      if (agrupador.articulos && agrupador.articulos.length > 0) {
-        for (const art of agrupador.articulos) {
-          art.estadoCodigo = EstadoCodigo.EN_USO;
-          await this.articuloRepo.save(art);
-        }
-      }
+      // Cascada recursiva a todos los sub-agrupadores y artículos contenidos
+      await this.cascadeAgrupadorEstado(agrupadorId, 'ASIGNADO', EstadoCodigo.EN_USO);
 
       await this.asignacionAgrupadorRepo.save({
         agrupadorId,
@@ -186,11 +206,8 @@ export class AsignacionesService {
         agrupador.estado = 'DISPONIBLE';
         await this.agrupadorRepo.save(agrupador);
 
-        for (const art of agrupador.articulos ?? []) {
-          if (art.estado?.codigo === EstadoCodigo.EN_USO) {
-            await this.articuloRepo.save({ id: art.id, estadoCodigo: EstadoCodigo.DISPONIBLE } as any);
-          }
-        }
+        // Cascada recursiva a todos los sub-agrupadores y artículos contenidos
+        await this.cascadeAgrupadorEstado(asig.agrupadorId, 'DISPONIBLE', EstadoCodigo.DISPONIBLE);
       }
       return { success: true };
     });

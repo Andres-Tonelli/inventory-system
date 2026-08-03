@@ -282,6 +282,9 @@ export class InventarioComponent implements OnInit {
   filterEstadoId: number | null = null;
   filterAsignatario = '';
   estadosArticulo: EstadoArticulo[] = [];
+  showDesvincularArticuloDialog = false;
+  articuloIdParaDesvincular: number | null = null;
+  estadoDesvincularArticulo = 'DISPONIBLE';
 
   filterAgrupadorEstado: string | null = null;
   filterAgrupadorAsignatario = '';
@@ -1412,9 +1415,22 @@ export class InventarioComponent implements OnInit {
   }
 
   desvincularArticulo(articuloId: number) {
-    this.agrupadoresService.removeArticulo(articuloId).subscribe(() => {
-      this.loadAgrupadores();
-      this.loadArticulos();
+    this.articuloIdParaDesvincular = articuloId;
+    this.estadoDesvincularArticulo = 'DISPONIBLE'; // default
+    this.showDesvincularArticuloDialog = true;
+  }
+
+  confirmarDesvincularArticulo() {
+    if (!this.articuloIdParaDesvincular || !this.estadoDesvincularArticulo) return;
+    this.agrupadoresService.removeArticulo(this.articuloIdParaDesvincular, this.estadoDesvincularArticulo).subscribe({
+      next: () => {
+        this.showDesvincularArticuloDialog = false;
+        this.articuloIdParaDesvincular = null;
+        this.loadAgrupadores();
+        this.loadArticulos();
+        this.notificaciones.exito('Artículo desvinculado con éxito');
+      },
+      error: (e) => this.notificaciones.errorHttp(e, 'No se pudo desvincular el artículo.')
     });
   }
 

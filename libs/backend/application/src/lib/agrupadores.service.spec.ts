@@ -17,11 +17,13 @@ describe('AgrupadoresService', () => {
 
   describe('addArticulo (vincular a un agrupador)', () => {
     it('rechaza un artículo EN_USO (está entregado a una persona)', async () => {
+      agrupadorRepo.seed({ id: 10, estado: 'DISPONIBLE' });
       articuloRepo.seed({ id: 1, estado: { codigo: 'EN_USO' } });
       await expect(service.addArticulo(10, 1)).rejects.toThrow(BadRequestException);
     });
 
-    it('contención pura: setea agrupadorId y NO cambia el estado (condición) del artículo', async () => {
+    it('contención pura: setea agrupadorId y NO cambia el estado (condición) del artículo si el agrupador está disponible', async () => {
+      agrupadorRepo.seed({ id: 10, estado: 'DISPONIBLE' });
       articuloRepo.seed({ id: 1, estado: { codigo: 'DISPONIBLE' }, agrupadorId: null });
 
       await service.addArticulo(10, 1);
@@ -30,13 +32,31 @@ describe('AgrupadoresService', () => {
       // El save NO debe escribir estadoCodigo: contención ≠ asignación (D2).
       expect(articuloRepo.savedWith[0].estadoCodigo).toBeUndefined();
     });
+
+    it('si se agrega un artículo a un agrupador ASIGNADO, el artículo pasa a EN_USO', async () => {
+      agrupadorRepo.seed({ id: 10, estado: 'ASIGNADO' });
+      articuloRepo.seed({ id: 1, estado: { codigo: 'DISPONIBLE' }, agrupadorId: null });
+
+      await service.addArticulo(10, 1);
+
+      expect(articuloRepo.items.get(1).agrupadorId).toBe(10);
+      expect(articuloRepo.savedWith[0].estadoCodigo).toBe('EN_USO');
+    });
   });
 
   describe('removeArticulo (desvincular)', () => {
-    it('limpia agrupadorId', async () => {
-      articuloRepo.seed({ id: 1, estado: { codigo: 'DISPONIBLE' }, agrupadorId: 10 });
+    it('limpia agrupadorId y por defecto cambia estado a DISPONIBLE', async () => {
+      articuloRepo.seed({ id: 1, estado: { codigo: 'EN_USO' }, agrupadorId: 10 });
       await service.removeArticulo(1);
       expect(articuloRepo.items.get(1).agrupadorId).toBeNull();
+      expect(articuloRepo.savedWith[0].estadoCodigo).toBe('DISPONIBLE');
+    });
+
+    it('limpia agrupadorId y permite especificar un estado destino personalizado', async () => {
+      articuloRepo.seed({ id: 1, estado: { codigo: 'EN_USO' }, agrupadorId: 10 });
+      await service.removeArticulo(1, 'EN_REPARACION');
+      expect(articuloRepo.items.get(1).agrupadorId).toBeNull();
+      expect(articuloRepo.savedWith[0].estadoCodigo).toBe('EN_REPARACION');
     });
   });
 

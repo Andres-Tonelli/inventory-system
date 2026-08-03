@@ -41,8 +41,11 @@ export class AgrupadoresController {
   }
 
   @Delete('articulos/:articuloId')
-  async removeArticulo(@Param('articuloId') articuloId: string) {
-    await this.agrupadoresService.removeArticulo(+articuloId);
+  async removeArticulo(
+    @Param('articuloId') articuloId: string,
+    @Query('nuevoEstadoCodigo') nuevoEstadoCodigo?: string
+  ) {
+    await this.agrupadoresService.removeArticulo(+articuloId, nuevoEstadoCodigo);
     return { success: true, message: 'Artículo removido del agrupador' };
   }
 

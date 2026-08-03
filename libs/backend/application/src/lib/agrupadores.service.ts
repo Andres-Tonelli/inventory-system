@@ -41,27 +41,63 @@ export class AgrupadoresService {
     return this.agrupadorRepo.findById(id);
   }
 
+  private async cascadeAgrupadorEstado(agrupadorId: number, estadoAgrupador: 'ASIGNADO' | 'DISPONIBLE', estadoArticuloCodigo: string) {
+    const agrupador: any = await this.agrupadorRepo.findById(agrupadorId);
+    if (!agrupador) return;
+
+    if (agrupador.articulos && agrupador.articulos.length > 0) {
+      for (const art of agrupador.articulos) {
+        if (estadoAgrupador === 'DISPONIBLE') {
+          if (art.estado?.codigo === EstadoCodigo.EN_USO) {
+            await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
+          }
+        } else {
+          await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
+        }
+      }
+    }
+
+    if (agrupador.subAgrupadores && agrupador.subAgrupadores.length > 0) {
+      for (const sub of agrupador.subAgrupadores) {
+        sub.estado = estadoAgrupador;
+        await this.agrupadorRepo.save(sub);
+        await this.cascadeAgrupadorEstado(sub.id, estadoAgrupador, estadoArticuloCodigo);
+      }
+    }
+  }
+
   async addArticulo(agrupadorId: number, articuloId: number) {
     return this.uow.execute(async () => {
+      const parent: any = await this.agrupadorRepo.findById(agrupadorId);
+      if (!parent) throw new BadRequestException('Agrupador no encontrado');
+
       const articulo: any = await this.articuloRepo.findById(articuloId);
       if (!articulo) throw new BadRequestException('Artículo no encontrado');
       if (articulo.estado?.codigo === EstadoCodigo.EN_USO) {
         throw new BadRequestException('Artículo asignado a empleado. No puede ser agregado.');
       }
 
-      // Contención: sólo se setea agrupadorId. El estado (condición) no cambia (ADR-0004 D2/D4).
+      // Si el agrupador está asignado, el artículo pasa a "en uso"
       articulo.agrupadorId = agrupadorId;
+      if (parent.estado === 'ASIGNADO') {
+        articulo.estadoCodigo = EstadoCodigo.EN_USO;
+      }
       await this.articuloRepo.save(articulo);
       return { success: true };
     });
   }
 
-  async removeArticulo(articuloId: number) {
+  async removeArticulo(articuloId: number, nuevoEstadoCodigo?: string) {
     return this.uow.execute(async () => {
       const articulo: any = await this.articuloRepo.findById(articuloId);
       if (!articulo) throw new BadRequestException('Artículo no encontrado');
 
       articulo.agrupadorId = null;
+      if (nuevoEstadoCodigo) {
+        articulo.estadoCodigo = nuevoEstadoCodigo;
+      } else {
+        articulo.estadoCodigo = EstadoCodigo.DISPONIBLE;
+      }
       await this.articuloRepo.save(articulo);
       return { success: true };
     });
@@ -89,7 +125,13 @@ export class AgrupadoresService {
       }
 
       child.agrupadorPadreId = parentAgrupadorId;
-      await this.agrupadorRepo.save(child);
+      if (parent.estado === 'ASIGNADO') {
+        child.estado = 'ASIGNADO';
+        await this.agrupadorRepo.save(child);
+        await this.cascadeAgrupadorEstado(child.id, 'ASIGNADO', EstadoCodigo.EN_USO);
+      } else {
+        await this.agrupadorRepo.save(child);
+      }
       return { success: true };
     });
   }
@@ -99,8 +141,21 @@ export class AgrupadoresService {
       const child: any = await this.agrupadorRepo.findById(childAgrupadorId);
       if (!child) throw new BadRequestException('Agrupador no encontrado');
 
+      const parentId = child.agrupadorPadreId;
       child.agrupadorPadreId = null;
-      await this.agrupadorRepo.save(child);
+
+      if (parentId) {
+        const parent: any = await this.agrupadorRepo.findById(parentId);
+        if (parent && parent.estado === 'ASIGNADO') {
+          child.estado = 'DISPONIBLE';
+          await this.agrupadorRepo.save(child);
+          await this.cascadeAgrupadorEstado(child.id, 'DISPONIBLE', EstadoCodigo.DISPONIBLE);
+        } else {
+          await this.agrupadorRepo.save(child);
+        }
+      } else {
+        await this.agrupadorRepo.save(child);
+      }
       return { success: true };
     });
   }

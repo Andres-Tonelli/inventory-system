@@ -803,3 +803,16 @@
   <ng-template pTemplate="footer"><button class="btn primary" (click)="showDetalleSubAgrupadorDialog = false">Cerrar</button></ng-template>
 </p-dialog>
 
+<!-- Diálogo para elegir estado al desvincular artículo -->
+<p-dialog header="Elegir estado al desvincular" [(visible)]="showDesvincularArticuloDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '440px' }">
+  <div class="form">
+    <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.95rem;">¿A qué estado querés enviar el artículo desvinculado?</p>
+    <label>Estado de destino</label>
+    <p-select [options]="estadosArticulo" [(ngModel)]="estadoDesvincularArticulo" optionLabel="nombre" optionValue="codigo" placeholder="Seleccionar estado" appendTo="body" styleClass="w-full"></p-select>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showDesvincularArticuloDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="confirmarDesvincularArticulo()" [disabled]="!estadoDesvincularArticulo">Confirmar</button>
+  </ng-template>
+</p-dialog>
+
