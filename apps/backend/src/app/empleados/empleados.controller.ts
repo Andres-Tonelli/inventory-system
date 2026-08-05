@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Logger, ParseIntPipe } from '@nestjs/common';
 import { EmpleadosService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SystemAdminGuard } from '../auth/system-admin.guard';
@@ -39,15 +39,15 @@ export class EmpleadosController {
 
   @Put('areas/:id')
   @UseGuards(JwtAuthGuard, SystemAdminGuard)
-  async updateArea(@Param('id') id: string, @Body() body: UpdateAreaDto) {
-    await this.empleadosService.updateArea(Number(id), body.nombre);
+  async updateArea(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateAreaDto) {
+    await this.empleadosService.updateArea(id, body.nombre);
     return { success: true, message: 'Área actualizada' };
   }
 
   @Delete('areas/:id')
   @UseGuards(JwtAuthGuard, SystemAdminGuard)
-  async deleteArea(@Param('id') id: string) {
-    await this.empleadosService.deleteArea(Number(id));
+  async deleteArea(@Param('id', ParseIntPipe) id: number) {
+    await this.empleadosService.deleteArea(id);
     return { success: true, message: 'Área eliminada' };
   }
 
@@ -95,15 +95,15 @@ export class EmpleadosController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, SystemAdminGuard)
-  async updateEmpleado(@Param('id') id: string, @Body() body: UpdateEmpleadoDto) {
-    await this.empleadosService.updateEmpleado(Number(id), body);
+  async updateEmpleado(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateEmpleadoDto) {
+    await this.empleadosService.updateEmpleado(id, body);
     return { success: true, message: 'Empleado actualizado' };
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, SystemAdminGuard)
-  async deleteEmpleado(@Param('id') id: string) {
-    await this.empleadosService.deleteEmpleado(Number(id));
+  async deleteEmpleado(@Param('id', ParseIntPipe) id: number) {
+    await this.empleadosService.deleteEmpleado(id);
     return { success: true, message: 'Empleado eliminado' };
   }
 

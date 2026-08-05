@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, HttpStatus, HttpCode, ParseIntPipe } from '@nestjs/common';
 import { PrismaService } from '@inventory-system/backend-persistence';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { SystemAdminGuard } from './system-admin.guard';
@@ -9,12 +9,12 @@ export class AdministradoresController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get('dominios/:dominioId/administradores')
-  async getAdministradores(@Param('dominioId') dominioId: string) {
+  async getAdministradores(@Param('dominioId', ParseIntPipe) dominioId: number) {
     const admins = await this.prisma.administrador.findMany({
       where: {
         dominios: {
           some: {
-            dominioId: Number(dominioId),
+            dominioId: dominioId,
           },
         },
       },
@@ -32,7 +32,7 @@ export class AdministradoresController {
   @Post('dominios/:dominioId/administradores')
   @HttpCode(HttpStatus.OK)
   async asociarAdministrador(
-    @Param('dominioId') dominioId: string,
+    @Param('dominioId', ParseIntPipe) dominioId: number,
     @Body() body: { username: string; nombre: string; rol?: 'DOMINIO' | 'SISTEMA' }
   ) {
     const rol = body.rol || 'DOMINIO';
@@ -51,13 +51,13 @@ export class AdministradoresController {
         where: {
           administradorId_dominioId: {
             administradorId: admin.id,
-            dominioId: Number(dominioId),
+            dominioId: dominioId,
           },
         },
         update: {},
         create: {
           administradorId: admin.id,
-          dominioId: Number(dominioId),
+          dominioId: dominioId,
         },
       });
     }
@@ -67,14 +67,14 @@ export class AdministradoresController {
 
   @Delete('dominios/:dominioId/administradores/:adminId')
   async desvincularAdministrador(
-    @Param('dominioId') dominioId: string,
-    @Param('adminId') adminId: string
+    @Param('dominioId', ParseIntPipe) dominioId: number,
+    @Param('adminId', ParseIntPipe) adminId: number
   ) {
     await this.prisma.administradorDominio.delete({
       where: {
         administradorId_dominioId: {
-          administradorId: Number(adminId),
-          dominioId: Number(dominioId),
+          administradorId: adminId,
+          dominioId: dominioId,
         },
       },
     });
@@ -136,10 +136,10 @@ export class AdministradoresController {
 
   @Put('administradores/:id')
   async updateAdministrador(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() body: { nombre: string; rol: 'DOMINIO' | 'SISTEMA'; dominios?: number[] }
   ) {
-    const adminId = Number(id);
+    const adminId = id;
 
     // 1. Update basic admin data
     await this.prisma.administrador.update({
@@ -166,8 +166,8 @@ export class AdministradoresController {
   }
 
   @Delete('administradores/:id')
-  async deleteAdministrador(@Param('id') id: string) {
-    const adminId = Number(id);
+  async deleteAdministrador(@Param('id', ParseIntPipe) id: number) {
+    const adminId = id;
 
     // Delete relations first to satisfy FK constraints in standard DB setups
     await this.prisma.administradorDominio.deleteMany({

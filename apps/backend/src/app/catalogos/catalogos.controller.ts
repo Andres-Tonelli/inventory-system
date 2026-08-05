@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Req, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Req, BadRequestException, ParseIntPipe } from '@nestjs/common';
 import { CatalogosService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DomainAdminGuard } from '../auth/domain-admin.guard';
@@ -90,33 +90,33 @@ export class CatalogosController {
 
   // ---- ATRIBUTOS DINÁMICOS ----
   @Post('categorias/:categoriaId/atributos')
-  async createAtributo(@Param('categoriaId') categoriaId: string, @Body() body: CreateAtributoDto) {
-    await this.catalogosService.createAtributo({ ...body, categoriaId: Number(categoriaId) });
+  async createAtributo(@Param('categoriaId', ParseIntPipe) categoriaId: number, @Body() body: CreateAtributoDto) {
+    await this.catalogosService.createAtributo({ ...body, categoriaId: categoriaId });
     return { success: true, message: 'Atributo dinámico creado exitosamente' };
   }
 
   @Get('dominios/:dominioId/atributos')
-  async getAtributosPorDominio(@Param('dominioId') dominioId: string) {
-    const resultados = await this.catalogosService.getAtributosPorDominio(Number(dominioId));
+  async getAtributosPorDominio(@Param('dominioId', ParseIntPipe) dominioId: number) {
+    const resultados = await this.catalogosService.getAtributosPorDominio(dominioId);
     return { success: true, data: resultados };
   }
 
   @Get('categorias/:categoriaId/atributos')
-  async getAtributosPorCategoria(@Param('categoriaId') categoriaId: string) {
-    const resultados = await this.catalogosService.getAtributosPorCategoria(Number(categoriaId));
+  async getAtributosPorCategoria(@Param('categoriaId', ParseIntPipe) categoriaId: number) {
+    const resultados = await this.catalogosService.getAtributosPorCategoria(categoriaId);
     return { success: true, data: resultados };
   }
 
   // ---- TIPOS DE AGRUPADOR ----
   @Post('dominios/:dominioId/tipos-agrupador')
-  async createTipoAgrupador(@Param('dominioId') dominioId: string, @Body() body: CreateTipoAgrupadorDto) {
-    await this.catalogosService.createTipoAgrupador({ ...body, dominioId: Number(dominioId) });
+  async createTipoAgrupador(@Param('dominioId', ParseIntPipe) dominioId: number, @Body() body: CreateTipoAgrupadorDto) {
+    await this.catalogosService.createTipoAgrupador({ ...body, dominioId: dominioId });
     return { success: true, message: 'Tipo de agrupador creado exitosamente' };
   }
 
   @Get('dominios/:dominioId/tipos-agrupador')
-  async getTiposAgrupador(@Param('dominioId') dominioId: string) {
-    const resultados = await this.catalogosService.getTiposAgrupador(Number(dominioId));
+  async getTiposAgrupador(@Param('dominioId', ParseIntPipe) dominioId: number) {
+    const resultados = await this.catalogosService.getTiposAgrupador(dominioId);
     return { success: true, data: resultados };
   }
 
@@ -128,96 +128,95 @@ export class CatalogosController {
   }
 
   @Get('estados')
-  async getEstados(@Query('dominioId') dominioId: string) {
-    if (!dominioId) throw new BadRequestException('Se requiere dominioId');
-    const resultados = await this.catalogosService.getEstados(+dominioId);
+  async getEstados(@Query('dominioId', ParseIntPipe) dominioId: number) {
+    const resultados = await this.catalogosService.getEstados(dominioId);
     return { success: true, data: resultados };
   }
 
   // ---- UPDATE / DELETE (config de dominios) ----
   @Put('categorias/:id')
-  async updateCategoria(@Param('id') id: string, @Body() body: UpdateCategoriaDto) {
-    await this.catalogosService.updateCategoria(Number(id), body);
+  async updateCategoria(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateCategoriaDto) {
+    await this.catalogosService.updateCategoria(id, body);
     return { success: true, message: 'Categoría actualizada' };
   }
 
   @Put('marcas/:id')
-  async updateMarca(@Param('id') id: string, @Body() body: UpdateMarcaDto) {
-    await this.catalogosService.updateMarca(Number(id), body.nombre);
+  async updateMarca(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateMarcaDto) {
+    await this.catalogosService.updateMarca(id, body.nombre);
     return { success: true, message: 'Marca actualizada' };
   }
 
   @Put('modelos/:id')
-  async updateModelo(@Param('id') id: string, @Body() body: UpdateModeloDto) {
-    await this.catalogosService.updateModelo(Number(id), body);
+  async updateModelo(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateModeloDto) {
+    await this.catalogosService.updateModelo(id, body);
     return { success: true, message: 'Modelo actualizado' };
   }
 
   @Put('dominios/:id')
   @UseGuards(SystemAdminGuard)
-  async updateDominio(@Param('id') id: string, @Body() body: UpdateDominioDto) {
-    await this.catalogosService.updateDominio(Number(id), body);
+  async updateDominio(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateDominioDto) {
+    await this.catalogosService.updateDominio(id, body);
     return { success: true, message: 'Dominio actualizado' };
   }
 
   @Delete('dominios/:id')
   @UseGuards(SystemAdminGuard)
-  async deleteDominio(@Param('id') id: string) {
-    await this.catalogosService.deleteDominio(Number(id));
+  async deleteDominio(@Param('id', ParseIntPipe) id: number) {
+    await this.catalogosService.deleteDominio(id);
     return { success: true, message: 'Dominio eliminado' };
   }
 
   @Put('tipos-agrupador/:id')
-  async updateTipoAgrupador(@Param('id') id: string, @Body() body: UpdateTipoAgrupadorDto) {
-    await this.catalogosService.updateTipoAgrupador(Number(id), body);
+  async updateTipoAgrupador(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateTipoAgrupadorDto) {
+    await this.catalogosService.updateTipoAgrupador(id, body);
     return { success: true, message: 'Tipo de agrupador actualizado' };
   }
 
   @Delete('tipos-agrupador/:id')
-  async deleteTipoAgrupador(@Param('id') id: string) {
-    await this.catalogosService.deleteTipoAgrupador(Number(id));
+  async deleteTipoAgrupador(@Param('id', ParseIntPipe) id: number) {
+    await this.catalogosService.deleteTipoAgrupador(id);
     return { success: true, message: 'Tipo de agrupador eliminado' };
   }
 
   @Put('atributos/:id')
-  async updateAtributo(@Param('id') id: string, @Body() body: UpdateAtributoDto) {
-    await this.catalogosService.updateAtributo(Number(id), body);
+  async updateAtributo(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateAtributoDto) {
+    await this.catalogosService.updateAtributo(id, body);
     return { success: true, message: 'Atributo actualizado' };
   }
 
   @Delete('atributos/:id')
-  async deleteAtributo(@Param('id') id: string) {
-    await this.catalogosService.deleteAtributo(Number(id));
+  async deleteAtributo(@Param('id', ParseIntPipe) id: number) {
+    await this.catalogosService.deleteAtributo(id);
     return { success: true, message: 'Atributo eliminado' };
   }
 
   @Put('estados/:id')
-  async updateEstado(@Param('id') id: string, @Body() body: UpdateEstadoDto) {
-    await this.catalogosService.updateEstado(Number(id), body.nombre);
+  async updateEstado(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateEstadoDto) {
+    await this.catalogosService.updateEstado(id, body.nombre);
     return { success: true, message: 'Estado actualizado' };
   }
 
   @Delete('categorias/:id')
-  async deleteCategoria(@Param('id') id: string) {
-    await this.catalogosService.deleteCategoria(Number(id));
+  async deleteCategoria(@Param('id', ParseIntPipe) id: number) {
+    await this.catalogosService.deleteCategoria(id);
     return { success: true, message: 'Categoría eliminada' };
   }
 
   @Delete('marcas/:id')
-  async deleteMarca(@Param('id') id: string) {
-    await this.catalogosService.deleteMarca(Number(id));
+  async deleteMarca(@Param('id', ParseIntPipe) id: number) {
+    await this.catalogosService.deleteMarca(id);
     return { success: true, message: 'Marca eliminada' };
   }
 
   @Delete('modelos/:id')
-  async deleteModelo(@Param('id') id: string) {
-    await this.catalogosService.deleteModelo(Number(id));
+  async deleteModelo(@Param('id', ParseIntPipe) id: number) {
+    await this.catalogosService.deleteModelo(id);
     return { success: true, message: 'Modelo eliminado' };
   }
 
   @Delete('estados/:id')
-  async deleteEstado(@Param('id') id: string) {
-    await this.catalogosService.deleteEstado(Number(id));
+  async deleteEstado(@Param('id', ParseIntPipe) id: number) {
+    await this.catalogosService.deleteEstado(id);
     return { success: true, message: 'Estado eliminado' };
   }
 }

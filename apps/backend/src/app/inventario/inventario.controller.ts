@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Put, Body, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Body, Query, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { InventarioService } from '@inventory-system/backend-application';
 import { CreateArticuloDto, CreateLoteDto, AjusteStockDto, UpdateEstadoArticuloDto, UpdateArticuloDto } from './dto/inventario.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -16,14 +16,14 @@ export class InventarioController {
   }
 
   @Put('articulos/:id')
-  async actualizarArticulo(@Param('id') id: string, @Body() body: UpdateArticuloDto) {
-    await this.inventarioService.actualizarArticulo(Number(id), body);
+  async actualizarArticulo(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateArticuloDto) {
+    await this.inventarioService.actualizarArticulo(id, body);
     return { success: true, message: 'Artículo actualizado' };
   }
 
   @Patch('articulos/:id/estado')
-  async cambiarEstado(@Param('id') id: string, @Body() body: UpdateEstadoArticuloDto) {
-    await this.inventarioService.cambiarEstadoArticulo(Number(id), body.estadoCodigo);
+  async cambiarEstado(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateEstadoArticuloDto) {
+    await this.inventarioService.cambiarEstadoArticulo(id, body.estadoCodigo);
     return { success: true, message: 'Estado del artículo actualizado' };
   }
 
@@ -52,14 +52,14 @@ export class InventarioController {
   }
 
   @Post('lotes/:id/consumir')
-  async consumirLote(@Param('id') id: string, @Body() body: AjusteStockDto) {
-    await this.inventarioService.consumirLote(Number(id), body.cantidad);
+  async consumirLote(@Param('id', ParseIntPipe) id: number, @Body() body: AjusteStockDto) {
+    await this.inventarioService.consumirLote(id, body.cantidad);
     return { success: true, message: 'Unidades consumidas exitosamente' };
   }
 
   @Post('lotes/:id/adicionar')
-  async adicionarStock(@Param('id') id: string, @Body() body: AjusteStockDto) {
-    await this.inventarioService.adicionarStock(Number(id), body.cantidad);
+  async adicionarStock(@Param('id', ParseIntPipe) id: number, @Body() body: AjusteStockDto) {
+    await this.inventarioService.adicionarStock(id, body.cantidad);
     return { success: true, message: 'Unidades adicionadas exitosamente' };
   }
 }

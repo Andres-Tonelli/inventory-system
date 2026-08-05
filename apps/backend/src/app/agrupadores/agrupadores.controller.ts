@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { AgrupadoresService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DomainAdminGuard } from '../auth/domain-admin.guard';
@@ -29,35 +29,35 @@ export class AgrupadoresController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const res = await this.agrupadoresService.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const res = await this.agrupadoresService.findOne(id);
     return { success: true, data: res };
   }
 
   @Post(':id/articulos')
-  async addArticulo(@Param('id') id: string, @Body() body: AddArticuloAgrupadorDto) {
-    await this.agrupadoresService.addArticulo(+id, body.articuloId);
+  async addArticulo(@Param('id', ParseIntPipe) id: number, @Body() body: AddArticuloAgrupadorDto) {
+    await this.agrupadoresService.addArticulo(id, body.articuloId);
     return { success: true, message: 'Artículo agregado al agrupador' };
   }
 
   @Delete('articulos/:articuloId')
   async removeArticulo(
-    @Param('articuloId') articuloId: string,
+    @Param('articuloId', ParseIntPipe) articuloId: number,
     @Query('nuevoEstadoCodigo') nuevoEstadoCodigo?: string
   ) {
-    await this.agrupadoresService.removeArticulo(+articuloId, nuevoEstadoCodigo);
+    await this.agrupadoresService.removeArticulo(articuloId, nuevoEstadoCodigo);
     return { success: true, message: 'Artículo removido del agrupador' };
   }
 
   @Post(':id/subagrupadores')
-  async addSubAgrupador(@Param('id') id: string, @Body() body: AddSubAgrupadorDto) {
-    await this.agrupadoresService.addSubAgrupador(+id, body.childAgrupadorId);
+  async addSubAgrupador(@Param('id', ParseIntPipe) id: number, @Body() body: AddSubAgrupadorDto) {
+    await this.agrupadoresService.addSubAgrupador(id, body.childAgrupadorId);
     return { success: true, message: 'Sub-agrupador agregado exitosamente' };
   }
 
   @Delete('subagrupadores/:childAgrupadorId')
-  async removeSubAgrupador(@Param('childAgrupadorId') childAgrupadorId: string) {
-    await this.agrupadoresService.removeSubAgrupador(+childAgrupadorId);
+  async removeSubAgrupador(@Param('childAgrupadorId', ParseIntPipe) childAgrupadorId: number) {
+    await this.agrupadoresService.removeSubAgrupador(childAgrupadorId);
     return { success: true, message: 'Sub-agrupador removido exitosamente' };
   }
 }

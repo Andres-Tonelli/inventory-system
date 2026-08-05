@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, Get, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Patch, Body, Get, Query, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { AsignacionesService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DomainAdminGuard } from '../auth/domain-admin.guard';
@@ -38,20 +38,20 @@ export class AsignacionesController {
   }
 
   @Get('empleado/:id')
-  async getAsignacionesDeEmpleado(@Param('id') id: string) {
-    const resultados = await this.asignacionesService.getAsignacionesDeEmpleado(Number(id));
+  async getAsignacionesDeEmpleado(@Param('id', ParseIntPipe) id: number) {
+    const resultados = await this.asignacionesService.getAsignacionesDeEmpleado(id);
     return { success: true, data: resultados };
   }
 
   @Patch('articulos/:id/devolver')
-  async devolverArticulo(@Param('id') id: string) {
-    await this.asignacionesService.devolverArticulo(Number(id));
+  async devolverArticulo(@Param('id', ParseIntPipe) id: number) {
+    await this.asignacionesService.devolverArticulo(id);
     return { success: true, message: 'Artículo devuelto' };
   }
 
   @Patch('agrupadores/:id/devolver')
-  async devolverAgrupador(@Param('id') id: string) {
-    await this.asignacionesService.devolverAgrupador(Number(id));
+  async devolverAgrupador(@Param('id', ParseIntPipe) id: number) {
+    await this.asignacionesService.devolverAgrupador(id);
     return { success: true, message: 'Agrupador devuelto' };
   }
 }
