@@ -11,10 +11,11 @@ export class PrismaAreaRepository implements Repository<Area> {
   }
 
   async save(entity: Area): Promise<void> {
+    const { empleados, ...data } = entity as any;
     if (entity.id) {
-      await this.prisma.area.update({ where: { id: entity.id }, data: entity });
+      await this.prisma.area.update({ where: { id: entity.id }, data });
     } else {
-      await this.prisma.area.create({ data: entity });
+      await this.prisma.area.create({ data });
     }
   }
 

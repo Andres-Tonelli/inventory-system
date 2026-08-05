@@ -36,7 +36,7 @@ export class NotificacionesUiService {
     if (res && res.correlationId) {
       const m = res.message;
       const msgStr = Array.isArray(m) ? m.join(' · ') : m;
-      const detail = `${msgStr} [Cod: ${res.errorCode} | ID: ${res.correlationId} | ${res.method} ${res.path}]`;
+      const detail = `${msgStr} [Cod: ${res.errorCode} | ID: ${res.correlationId}]`;
       this.error(detail, 'Error del Sistema');
     } else {
       const m = res?.message;

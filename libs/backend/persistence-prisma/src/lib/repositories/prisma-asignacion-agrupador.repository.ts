@@ -11,10 +11,11 @@ export class PrismaAsignacionAgrupadorRepository implements AsignacionAgrupadorR
   }
 
   async save(entity: any): Promise<void> {
-    if (entity.id) {
-      await this.prisma.asignacionAgrupador.update({ where: { id: entity.id }, data: entity });
+    const { empleado, agrupador, ...data } = entity;
+    if (data.id) {
+      await this.prisma.asignacionAgrupador.update({ where: { id: data.id }, data });
     } else {
-      await this.prisma.asignacionAgrupador.create({ data: entity });
+      await this.prisma.asignacionAgrupador.create({ data });
     }
   }
 

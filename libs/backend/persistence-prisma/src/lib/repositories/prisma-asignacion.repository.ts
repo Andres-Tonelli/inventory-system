@@ -10,11 +10,12 @@ export class PrismaAsignacionRepository implements Repository<AsignacionArticulo
     return this.ctx.client;
   }
 
-  async save(entity: AsignacionArticulo): Promise<void> {
-    if (entity.id) {
-      await this.prisma.asignacionArticulo.update({ where: { id: entity.id }, data: entity });
+  async save(entity: any): Promise<void> {
+    const { articulo, empleado, ...data } = entity;
+    if (data.id) {
+      await this.prisma.asignacionArticulo.update({ where: { id: data.id }, data });
     } else {
-      await this.prisma.asignacionArticulo.create({ data: entity });
+      await this.prisma.asignacionArticulo.create({ data });
     }
   }
 

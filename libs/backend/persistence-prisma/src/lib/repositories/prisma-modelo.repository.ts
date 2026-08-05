@@ -11,10 +11,11 @@ export class PrismaModeloRepository implements Repository<Modelo> {
   }
 
   async save(entity: Modelo): Promise<void> {
+    const { categoria, marca, articulos, lotes, ...data } = entity as any;
     if (entity.id) {
-      await this.prisma.modelo.update({ where: { id: entity.id }, data: entity });
+      await this.prisma.modelo.update({ where: { id: entity.id }, data });
     } else {
-      await this.prisma.modelo.create({ data: entity });
+      await this.prisma.modelo.create({ data });
     }
   }
 

@@ -11,10 +11,11 @@ export class PrismaCategoriaRepository implements Repository<Categoria> {
   }
 
   async save(entity: Categoria): Promise<void> {
+    const { dominio, modelos, atributos, tiposAgrupadorAsociados, ...data } = entity as any;
     if (entity.id) {
-      await this.prisma.categoria.update({ where: { id: entity.id }, data: entity });
+      await this.prisma.categoria.update({ where: { id: entity.id }, data });
     } else {
-      await this.prisma.categoria.create({ data: entity });
+      await this.prisma.categoria.create({ data });
     }
   }
 

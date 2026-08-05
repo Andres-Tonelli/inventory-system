@@ -11,10 +11,11 @@ export class PrismaAtributoRepository implements Repository<AtributoDefinicion> 
   }
 
   async save(entity: AtributoDefinicion): Promise<void> {
+    const { categoria, valores, ...data } = entity as any;
     if (entity.id) {
-      await this.prisma.atributoDefinicion.update({ where: { id: entity.id }, data: entity });
+      await this.prisma.atributoDefinicion.update({ where: { id: entity.id }, data });
     } else {
-      await this.prisma.atributoDefinicion.create({ data: entity });
+      await this.prisma.atributoDefinicion.create({ data });
     }
   }
 

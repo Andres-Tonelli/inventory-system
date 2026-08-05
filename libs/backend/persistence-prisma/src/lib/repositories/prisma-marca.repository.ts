@@ -11,10 +11,11 @@ export class PrismaMarcaRepository implements Repository<Marca> {
   }
 
   async save(entity: Marca): Promise<void> {
+    const { modelos, ...data } = entity as any;
     if (entity.id) {
-      await this.prisma.marca.update({ where: { id: entity.id }, data: entity });
+      await this.prisma.marca.update({ where: { id: entity.id }, data });
     } else {
-      await this.prisma.marca.create({ data: entity });
+      await this.prisma.marca.create({ data });
     }
   }
 

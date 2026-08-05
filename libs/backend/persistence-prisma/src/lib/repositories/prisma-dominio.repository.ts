@@ -11,10 +11,11 @@ export class PrismaDominioRepository implements Repository<DominioInventario> {
   }
 
   async save(entity: DominioInventario): Promise<void> {
+    const { categorias, estadosArticulo, tiposAgrupador, ...data } = entity as any;
     if (entity.id) {
-      await this.prisma.dominioInventario.update({ where: { id: entity.id }, data: entity });
+      await this.prisma.dominioInventario.update({ where: { id: entity.id }, data });
     } else {
-      await this.prisma.dominioInventario.create({ data: entity });
+      await this.prisma.dominioInventario.create({ data });
     }
   }
 

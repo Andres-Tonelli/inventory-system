@@ -11,10 +11,11 @@ export class PrismaEmpleadoRepository implements Repository<Empleado> {
   }
 
   async save(entity: Empleado): Promise<void> {
+    const { area, asignaciones_articulos, asignaciones_agrupadores, entregas_consumibles, ...data } = entity as any;
     if (entity.id) {
-      await this.prisma.empleado.update({ where: { id: entity.id }, data: entity });
+      await this.prisma.empleado.update({ where: { id: entity.id }, data });
     } else {
-      await this.prisma.empleado.create({ data: entity });
+      await this.prisma.empleado.create({ data });
     }
   }
 
