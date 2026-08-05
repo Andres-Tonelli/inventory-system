@@ -122,11 +122,11 @@ export class CatalogosService {
   }
 
   // ---- ESTADOS DE ARTÍCULO ----
-  getEstados(): Observable<ApiResponse<EstadoArticulo[]>> {
-    return this.http.get<ApiResponse<EstadoArticulo[]>>('/api/catalogos/estados');
+  getEstados(dominioId: number): Observable<ApiResponse<EstadoArticulo[]>> {
+    return this.http.get<ApiResponse<EstadoArticulo[]>>(`/api/catalogos/estados?dominioId=${dominioId}`);
   }
-  createEstado(nombre: string): Observable<any> {
-    return this.http.post('/api/catalogos/estados', { nombre });
+  createEstado(nombre: string, dominioId: number): Observable<any> {
+    return this.http.post('/api/catalogos/estados', { nombre, dominioId });
   }
   updateEstado(id: number, nombre: string) {
     return this.http.put(`/api/catalogos/estados/${id}`, { nombre });

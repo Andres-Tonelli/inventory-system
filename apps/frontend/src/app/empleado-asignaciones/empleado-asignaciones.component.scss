@@ -159,3 +159,39 @@ tbody tr:hover { background: #fafbff; }
 @media (max-width: 480px) {
   .stats { grid-template-columns: 1fr; }
 }
+
+/* Model specifications hover card tooltip */
+.model-hover-container {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  border-bottom: 1px dotted var(--border-soft);
+}
+
+::ng-deep .custom-model-tooltip {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  opacity: 1 !important;
+
+  .p-tooltip-text {
+    background: #ffffff !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--border-soft) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    padding: 0.75rem 1rem !important;
+    min-width: 220px !important;
+    max-width: 280px !important;
+    white-space: normal !important;
+    font-family: inherit !important;
+    text-align: left !important;
+  }
+
+  &.p-tooltip-top .p-tooltip-arrow {
+    border-top-color: var(--border-soft) !important;
+  }
+  &.p-tooltip-bottom .p-tooltip-arrow {
+    border-bottom-color: var(--border-soft) !important;
+  }
+}

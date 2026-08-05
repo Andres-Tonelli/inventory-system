@@ -55,6 +55,9 @@
           <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'tipos'" (click)="activeTab = 'tipos'">
             Tipos de agrupador <span class="count">{{ tipos.length }}</span>
           </button>
+          <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'estados'" (click)="activeTab = 'estados'">
+            Estados de artículo <span class="count">{{ estados.length }}</span>
+          </button>
           <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'administradores'" (click)="activeTab = 'administradores'" *ngIf="isSystemAdmin()">
             Administradores <span class="count">{{ administradores.length }}</span>
           </button>
@@ -91,6 +94,36 @@
             </tbody>
           </table>
           <ng-template #emptyTipos><div class="empty">Sin tipos de agrupador. Creá el primero.</div></ng-template>
+        </div>
+
+        <!-- Estados -->
+        <div class="tabpanel" *ngIf="activeTab === 'estados'">
+          <div class="panel-note">
+            <i class="pi pi-info-circle"></i>
+            <span>La condición de cada artículo de este dominio (Disponible, En uso, etc.). El <b>código</b> es estable e interno. Los estados requeridos por el sistema (`DISPONIBLE` y `EN_USO`) son fijos.</span>
+          </div>
+          <div class="toolbar">
+            <span class="cap">Estados disponibles para los artículos de este dominio.</span>
+            <button class="btn primary sm" (click)="openNewEstado()"><i class="pi pi-plus"></i>Nuevo estado</button>
+          </div>
+
+          <table *ngIf="estados.length > 0; else emptyEstados">
+            <thead><tr><th>Nombre</th><th>Código estable</th><th class="ta-right"></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let s of estados">
+                <td class="cell-name">{{ s.nombre }}</td>
+                <td><code>{{ s.codigo }}</code></td>
+                <td>
+                  <div class="row-actions" *ngIf="s.codigo !== 'DISPONIBLE' && s.codigo !== 'EN_USO'">
+                    <button class="btn ghost sm" (click)="openEditEstado(s)">Editar</button>
+                    <button class="btn ghost sm text-danger" (click)="deleteEstado(s)">Eliminar</button>
+                  </div>
+                  <span *ngIf="s.codigo === 'DISPONIBLE' || s.codigo === 'EN_USO'" style="font-size: 0.8rem; color: var(--text-muted); padding-right: 0.5rem; font-style: italic;">Sistema</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyEstados><div class="empty">Sin estados de artículo.</div></ng-template>
         </div>
 
 
@@ -218,5 +251,19 @@
   <ng-template pTemplate="footer">
     <button class="btn ghost" (click)="showAdminDialog = false">Cancelar</button>
     <button class="btn primary" [disabled]="!adminForm.selectedEmpleado" (click)="saveAdmin()">Asociar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo Estado -->
+<p-dialog [(visible)]="showEstadoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  [style]="{ width: '420px' }" [header]="editingEstadoId ? 'Editar estado' : 'Nuevo estado'">
+  <div class="form">
+    <label>Nombre del estado</label>
+    <input pInputText [(ngModel)]="estadoForm.nombre" placeholder="Ej: En reparación" (keyup.enter)="saveEstado()" />
+    <small class="hint" *ngIf="!editingEstadoId">El código estable se genera automáticamente a partir del nombre.</small>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showEstadoDialog = false">Cancelar</button>
+    <button class="btn primary" (click)="saveEstado()">Guardar</button>
   </ng-template>
 </p-dialog>

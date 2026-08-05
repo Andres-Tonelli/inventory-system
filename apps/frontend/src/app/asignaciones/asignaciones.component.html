@@ -65,7 +65,11 @@
                   <span class="sn" *ngIf="asig.articulo?.nroSerie">{{ asig.articulo.nroSerie }}</span>
                 </div>
               </td>
-              <td class="mut">{{ asig.articulo?.modelo?.nombre || 'Sin modelo' }}</td>
+              <td class="mut">
+                <span class="model-hover-container" [pTooltip]="getModelTooltipHtml(asig.articulo?.modelo)" escape="false" tooltipPosition="top" appendTo="body" tooltipStyleClass="custom-model-tooltip">
+                  {{ asig.articulo?.modelo?.nombre || 'Sin modelo' }}
+                </span>
+              </td>
               <td class="cell-name">{{ asig.empleado?.nombre }}</td>
               <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>
               <td class="mut">{{ asig.observaciones || '—' }}</td>
@@ -145,7 +149,11 @@
           <tbody>
             <tr *ngFor="let asig of paginatedEntregasConsumibles">
               <td class="mut">{{ asig.fechaEntrega | date:'dd/MM/yyyy' }}</td>
-              <td class="cell-name">{{ asig.lote?.modelo?.nombre }}</td>
+              <td class="cell-name">
+                <span class="model-hover-container" [pTooltip]="getModelTooltipHtml(asig.lote?.modelo)" escape="false" tooltipPosition="top" appendTo="body" tooltipStyleClass="custom-model-tooltip">
+                  {{ asig.lote?.modelo?.nombre }}
+                </span>
+              </td>
               <td><span class="pill teal">{{ asig.cantidadEntregada }} u.</span></td>
               <td class="cell-name">{{ asig.empleado?.nombre }}</td>
               <td><span class="pill slate" *ngIf="asig.empleado?.area">{{ asig.empleado.area.nombre }}</span></td>

@@ -14,6 +14,7 @@ import {
   TipoAgrupador,
   AtributoDefinicion,
   Categoria,
+  EstadoArticulo,
 } from '../core/services/catalogos.service';
 import { AuthService } from '../core/auth/auth.service';
 import { EmpleadosService } from '../core/services/empleados.service';
@@ -33,8 +34,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
   selectedId: number | null = null;
   tiposByDom: Record<number, TipoAgrupador[]> = {};
   adminsByDom: Record<number, any[]> = {};
+  estadosByDom: Record<number, EstadoArticulo[]> = {};
   empleadosRed: any[] = [];
-  activeTab: 'tipos' | 'administradores' = 'tipos';
+  activeTab: 'tipos' | 'administradores' | 'estados' = 'tipos';
 
   // Diálogos
   showDominioDialog = false;
@@ -51,6 +53,10 @@ export class ConfiguracionDominiosComponent implements OnInit {
 
   showAdminDialog = false;
   adminForm: { selectedEmpleado: any; rol: 'DOMINIO' | 'SISTEMA' } = { selectedEmpleado: null, rol: 'DOMINIO' };
+
+  showEstadoDialog = false;
+  editingEstadoId: number | null = null;
+  estadoForm = { nombre: '' };
 
   readonly asignableOptions = [
     { label: 'Asignable a persona', value: true },
@@ -127,6 +133,9 @@ export class ConfiguracionDominiosComponent implements OnInit {
   loadDominioConfig(id: number): void {
     this.catalogos.getTiposAgrupador(id).subscribe((r) => {
       if (r.success) this.tiposByDom = { ...this.tiposByDom, [id]: r.data };
+    });
+    this.catalogos.getEstados(id).subscribe((r) => {
+      if (r.success) this.estadosByDom = { ...this.estadosByDom, [id]: r.data };
     });
     if (this.isSystemAdmin()) {
       this.catalogos.getAdministradoresDelDominio(id).subscribe((r) => {
@@ -277,6 +286,56 @@ export class ConfiguracionDominiosComponent implements OnInit {
           this.loadDominioConfig(domId);
         },
         error: (e) => this.notificaciones.errorHttp(e, 'No se pudo desvincular al administrador.')
+      });
+    });
+  }
+
+  // ---- Estados de artículo ----
+  get estados(): EstadoArticulo[] {
+    return this.selectedId ? this.estadosByDom[this.selectedId] ?? [] : [];
+  }
+
+  openNewEstado(): void {
+    this.editingEstadoId = null;
+    this.estadoForm = { nombre: '' };
+    this.showEstadoDialog = true;
+  }
+
+  openEditEstado(s: EstadoArticulo): void {
+    this.editingEstadoId = s.id ?? null;
+    this.estadoForm = { nombre: s.nombre };
+    this.showEstadoDialog = true;
+  }
+
+  saveEstado(): void {
+    const nombre = this.estadoForm.nombre.trim();
+    if (!nombre || !this.selectedId) return;
+    const domId = this.selectedId;
+    const esEdicion = !!this.editingEstadoId;
+    const done = () => {
+      this.notificaciones.exito(esEdicion ? `Estado "${nombre}" actualizado.` : `Estado "${nombre}" creado.`);
+      this.showEstadoDialog = false;
+      this.loadDominioConfig(domId);
+    };
+
+    if (this.editingEstadoId) {
+      this.catalogos.updateEstado(this.editingEstadoId, nombre).subscribe(done);
+    } else {
+      this.catalogos.createEstado(nombre, domId).subscribe(done);
+    }
+  }
+
+  deleteEstado(s: EstadoArticulo): void {
+    if (!s.id || !this.selectedId) return;
+    const id = s.id;
+    const domId = this.selectedId;
+    this.confirmUi.eliminar(`¿Eliminar el estado "${s.nombre}"? Los artículos que lo usan lo impiden.`, () => {
+      this.catalogos.deleteEstado(id).subscribe({
+        next: () => {
+          this.notificaciones.exito(`Estado "${s.nombre}" eliminado.`);
+          this.loadDominioConfig(domId);
+        },
+        error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el estado.'),
       });
     });
   }

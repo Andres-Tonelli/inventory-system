@@ -13,6 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
 import { Agrupador, AgrupadoresService } from '../core/services/agrupadores.service';
 
 @Component({
@@ -20,7 +21,8 @@ import { Agrupador, AgrupadoresService } from '../core/services/agrupadores.serv
   standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
-    TableModule, ButtonModule, DialogModule, InputTextModule, SelectModule
+    TableModule, ButtonModule, DialogModule, InputTextModule, SelectModule,
+    TooltipModule
   ],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.scss'
@@ -749,7 +751,7 @@ export class InventarioComponent implements OnInit {
         this.loadAgrupadores();
       }
     });
-    this.catalogosService.getEstados().subscribe(res => {
+    this.catalogosService.getEstados(this.dominioId).subscribe(res => {
       if(res.success) this.estadosArticulo = res.data;
     });
     this.loadLotes();
@@ -1019,9 +1021,11 @@ export class InventarioComponent implements OnInit {
     if (!def) return '';
     let val: any;
     if (def.nivel === 'MODELO') {
-      val = articulo.modelo?.atributos?.[def.clave];
+      const attrs = this.getParsedAtributos(articulo.modelo?.atributos);
+      val = this.getAttributeValue(attrs, def);
     } else {
-      val = articulo.atributos?.[def.clave];
+      const attrs = this.getParsedAtributos(articulo.atributos);
+      val = this.getAttributeValue(attrs, def);
     }
     if (val == null) return '';
     if (def.tipoDato === 'BOOLEANO') {
@@ -1036,9 +1040,11 @@ export class InventarioComponent implements OnInit {
     if (!def) return '';
     let val: any;
     if (def.nivel === 'MODELO') {
-      val = articulo.modelo?.atributos?.[def.clave];
+      const attrs = this.getParsedAtributos(articulo.modelo?.atributos);
+      val = this.getAttributeValue(attrs, def);
     } else {
-      val = articulo.atributos?.[def.clave];
+      const attrs = this.getParsedAtributos(articulo.atributos);
+      val = this.getAttributeValue(attrs, def);
     }
     if (val == null) return '';
     if (def.tipoDato === 'BOOLEANO') {
@@ -1110,11 +1116,102 @@ export class InventarioComponent implements OnInit {
     return '';
   }
 
+  private getParsedAtributos(atributos: any): any {
+    if (!atributos) return {};
+    if (typeof atributos === 'string') {
+      try {
+        return JSON.parse(atributos);
+      } catch {
+        return {};
+      }
+    }
+    return atributos;
+  }
+
+  getObjectKeys(obj: any): string[] {
+    if (!obj) return [];
+    try {
+      if (typeof obj === 'string') {
+        const parsed = JSON.parse(obj);
+        return Object.keys(parsed);
+      }
+      return Object.keys(obj);
+    } catch {
+      return [];
+    }
+  }
+
+  getParsedAttribute(modelo: any, obj: any, key: string): string {
+    if (!obj) return '';
+    let val: any;
+    try {
+      if (typeof obj === 'string') {
+        const parsed = JSON.parse(obj);
+        val = parsed[key];
+      } else {
+        val = obj[key];
+      }
+    } catch {
+      return '';
+    }
+    if (val == null) return '';
+    
+    // Check if attribute is boolean
+    if (modelo?.categoriaId) {
+      const cat = this.categorias.find(c => c.id === modelo.categoriaId);
+      if (cat?.atributos) {
+        const lowerKey = key.toLowerCase();
+        const def = cat.atributos.find((a: any) => a.clave.toLowerCase() === lowerKey || a.nombre.toLowerCase() === lowerKey);
+        if (def && def.tipoDato === 'BOOLEANO') {
+          return (val === true || val === 1 || val === '1' || val === 'true') ? 'SI' : 'NO';
+        }
+      }
+    }
+    return String(val);
+  }
+
+  getAttributeName(modelo: any, key: string): string {
+    if (!modelo?.categoriaId) return key;
+    const cat = this.categorias.find(c => c.id === modelo.categoriaId);
+    if (!cat?.atributos) return key;
+    
+    const lowerKey = key.toLowerCase();
+    const def = cat.atributos.find((a: any) => a.clave.toLowerCase() === lowerKey || a.nombre.toLowerCase() === lowerKey);
+    return def ? def.nombre : key;
+  }
+
+  private getAttributeValue(attrs: any, a: any): any {
+    if (!attrs || !a) return null;
+    
+    // 1. Direct match on clave
+    if (attrs[a.clave] != null && attrs[a.clave] !== '') return attrs[a.clave];
+    
+    // 2. Direct match on nombre
+    if (attrs[a.nombre] != null && attrs[a.nombre] !== '') return attrs[a.nombre];
+    
+    // 3. Case-insensitive search on keys (matches any casing of key or name)
+    const keys = Object.keys(attrs);
+    const lowerClave = a.clave.toLowerCase();
+    const lowerNombre = a.nombre.toLowerCase();
+    
+    for (const k of keys) {
+      const lowerK = k.toLowerCase();
+      if (lowerK === lowerClave || lowerK === lowerNombre) {
+        if (attrs[k] != null && attrs[k] !== '') {
+          return attrs[k];
+        }
+      }
+    }
+    
+    return null;
+  }
+
   hasModelSpecs(modelo: any): boolean {
     if (!modelo?.atributos || !modelo?.categoriaId) return false;
     const cat = this.categorias.find(c => c.id === modelo.categoriaId);
     if (!cat?.atributos) return false;
-    return cat.atributos.some((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '');
+    const attrs = this.getParsedAtributos(modelo.atributos);
+    return cat.atributos.some((a: any) => this.getAttributeValue(attrs, a) != null);
   }
 
   getModelSpecsList(modelo: any): { nombre: string, valor: string }[] {
@@ -1122,18 +1219,40 @@ export class InventarioComponent implements OnInit {
     const cat = this.categorias.find(c => c.id === modelo.categoriaId);
     if (!cat?.atributos) return [];
     
+    const attrs = this.getParsedAtributos(modelo.atributos);
     return cat.atributos
-      .filter((a: any) => a.nivel === 'MODELO' && modelo.atributos[a.clave] != null && modelo.atributos[a.clave] !== '')
       .map((a: any) => {
-        let val = modelo.atributos[a.clave];
-        if (a.tipoDato === 'BOOLEANO') {
+        const val = this.getAttributeValue(attrs, a);
+        return {
+          attr: a,
+          val: val
+        };
+      })
+      .filter((item: any) => item.val != null)
+      .map((item: any) => {
+        let val = item.val;
+        if (item.attr.tipoDato === 'BOOLEANO') {
           val = (val === true || val === 1 || val === '1' || val === 'true') ? 'SI' : 'NO';
         }
         return {
-          nombre: a.nombre,
+          nombre: item.attr.nombre,
           valor: String(val)
         };
       });
+  }
+
+  getModelTooltipHtml(modelo: any): string {
+    const list = this.getModelSpecsList(modelo);
+    if (list.length === 0) return '';
+    
+    let html = '<div style="font-weight: 700; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); padding-bottom: 0.25rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: inherit;">Especificaciones del Modelo</div>';
+    for (const spec of list) {
+      html += `<div style="display: flex; justify-content: space-between; gap: 1.5rem; font-size: 12.5px; margin-bottom: 0.25rem; font-family: inherit; line-height: 1.4;">
+        <span style="font-weight: 600; opacity: 0.85; margin-right: 1.5rem; white-space: nowrap;">${spec.nombre}:</span>
+        <span style="font-weight: 500; text-align: right; word-break: break-word;">${spec.valor}</span>
+      </div>`;
+    }
+    return html;
   }
 
   getLoteSpecsText(lote: any): string {

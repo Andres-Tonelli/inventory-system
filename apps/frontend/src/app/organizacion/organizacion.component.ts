@@ -8,7 +8,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 
 import { EmpleadosService, Empleado, Area } from '../core/services/empleados.service';
-import { CatalogosService, EstadoArticulo } from '../core/services/catalogos.service';
 import { ConfirmacionUiService } from '../core/confirmacion-ui.service';
 import { NotificacionesUiService } from '../core/notificaciones-ui.service';
 import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
@@ -21,29 +20,24 @@ import { PaginadorComponent, paginar } from '../core/ui/paginador.component';
   styleUrl: './organizacion.component.scss',
 })
 export class OrganizacionComponent implements OnInit {
-  activeTab: 'empleados' | 'areas' | 'estados' = 'empleados';
+  activeTab: 'empleados' | 'areas' = 'empleados';
 
   empleados: Empleado[] = [];
   areas: Area[] = [];
-  estados: EstadoArticulo[] = [];
 
   // Variables de paginación
   paginaEmpleados = 1;
   paginaAreas = 1;
-  paginaEstados = 1;
 
   // Filtros de búsqueda
   searchEmpleado = '';
   searchArea = '';
-  searchEstado = '';
 
   // Ordenamiento
   sortEmpCol = '';
   sortEmpAsc = true;
   sortAreaCol = '';
   sortAreaAsc = true;
-  sortEstCol = '';
-  sortEstAsc = true;
 
   toggleSortEmp(col: string) {
     if (this.sortEmpCol === col) {
@@ -63,15 +57,6 @@ export class OrganizacionComponent implements OnInit {
     }
   }
 
-  toggleSortEst(col: string) {
-    if (this.sortEstCol === col) {
-      this.sortEstAsc = !this.sortEstAsc;
-    } else {
-      this.sortEstCol = col;
-      this.sortEstAsc = true;
-    }
-  }
-
   getSortEmpIcon(col: string): string {
     if (this.sortEmpCol !== col) return 'pi-sort';
     return this.sortEmpAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
@@ -80,11 +65,6 @@ export class OrganizacionComponent implements OnInit {
   getSortAreaIcon(col: string): string {
     if (this.sortAreaCol !== col) return 'pi-sort';
     return this.sortAreaAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
-  }
-
-  getSortEstIcon(col: string): string {
-    if (this.sortEstCol !== col) return 'pi-sort';
-    return this.sortEstAsc ? 'pi-sort-amount-up' : 'pi-sort-amount-down';
   }
 
   get filteredAndSortedEmpleados(): Empleado[] {
@@ -129,37 +109,12 @@ export class OrganizacionComponent implements OnInit {
     return result;
   }
 
-  get filteredAndSortedEstados(): EstadoArticulo[] {
-    let result = [...this.estados];
-    const search = this.searchEstado.toLowerCase().trim();
-    if (search) {
-      result = result.filter(e => 
-        (e.nombre || '').toLowerCase().includes(search) ||
-        (e.codigo || '').toLowerCase().includes(search)
-      );
-    }
-    if (this.sortEstCol) {
-      result.sort((a, b) => {
-        let valA: any = a[this.sortEstCol as keyof EstadoArticulo];
-        let valB: any = b[this.sortEstCol as keyof EstadoArticulo];
-        valA = valA ? String(valA).toLowerCase() : '';
-        valB = valB ? String(valB).toLowerCase() : '';
-        return this.sortEstAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-      });
-    }
-    return result;
-  }
-
   get paginatedEmpleados(): Empleado[] {
     return paginar(this.filteredAndSortedEmpleados, this.paginaEmpleados);
   }
 
   get paginatedAreas(): Area[] {
     return paginar(this.filteredAndSortedAreas, this.paginaAreas);
-  }
-
-  get paginatedEstados(): EstadoArticulo[] {
-    return paginar(this.filteredAndSortedEstados, this.paginaEstados);
   }
 
   showEmpDialog = false;
@@ -170,13 +125,8 @@ export class OrganizacionComponent implements OnInit {
   editAreaId: number | null = null;
   areaForm = { nombre: '' };
 
-  showEstadoDialog = false;
-  editEstadoId: number | null = null;
-  estadoForm = { nombre: '' };
-
   constructor(
     private empleadosSvc: EmpleadosService,
-    private catalogosSvc: CatalogosService,
     private confirmUi: ConfirmacionUiService,
     private notificaciones: NotificacionesUiService,
     private router: Router,
@@ -196,9 +146,6 @@ export class OrganizacionComponent implements OnInit {
     });
     this.empleadosSvc.getAreas().subscribe((r) => {
       if (r.success) this.areas = r.data;
-    });
-    this.catalogosSvc.getEstados().subscribe((r) => {
-      if (r.success) this.estados = r.data;
     });
   }
 
@@ -278,40 +225,5 @@ export class OrganizacionComponent implements OnInit {
     });
   }
 
-  // ---- Estados ----
-  openNewEstado(): void {
-    this.editEstadoId = null;
-    this.estadoForm = { nombre: '' };
-    this.showEstadoDialog = true;
-  }
-  openEditEstado(s: EstadoArticulo): void {
-    this.editEstadoId = s.id ?? null;
-    this.estadoForm = { nombre: s.nombre };
-    this.showEstadoDialog = true;
-  }
-  saveEstado(): void {
-    const nombre = this.estadoForm.nombre.trim();
-    if (!nombre) return;
-    const esEdicion = !!this.editEstadoId;
-    const done = () => {
-      this.notificaciones.exito(esEdicion ? `Estado "${nombre}" actualizado.` : `Estado "${nombre}" creado.`);
-      this.showEstadoDialog = false;
-      this.loadAll();
-    };
-    if (this.editEstadoId) this.catalogosSvc.updateEstado(this.editEstadoId, nombre).subscribe(done);
-    else this.catalogosSvc.createEstado(nombre).subscribe(done);
-  }
-  deleteEstado(s: EstadoArticulo): void {
-    if (!s.id) return;
-    const id = s.id;
-    this.confirmUi.eliminar(`¿Eliminar el estado "${s.nombre}"? Los artículos que lo usan lo impiden.`, () => {
-      this.catalogosSvc.deleteEstado(id).subscribe({
-        next: () => {
-          this.notificaciones.exito(`Estado "${s.nombre}" eliminado.`);
-          this.loadAll();
-        },
-        error: (x) => this.notificaciones.errorHttp(x, 'No se pudo eliminar el estado.'),
-      });
-    });
-  }
+
 }

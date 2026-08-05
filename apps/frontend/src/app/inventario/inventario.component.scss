@@ -228,66 +228,33 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 650; }
   display: inline-block;
   cursor: help;
   border-bottom: 1px dotted var(--border-soft);
-  
-  &:hover .model-hover-card {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
-.model-hover-card {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: #ffffff;
-  color: var(--ink);
-  border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  padding: 0.75rem 1rem;
-  z-index: 1000;
-  min-width: 220px;
-  max-width: 280px;
-  white-space: normal;
-  transition: all 0.2s ease-in-out;
-  pointer-events: none; // so it doesn't block mouse movement
-  
-  .mh-header {
-    font-weight: 700;
-    font-size: 11px;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border-soft);
-    padding-bottom: 0.25rem;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+::ng-deep .custom-model-tooltip {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  opacity: 1 !important;
+
+  .p-tooltip-text {
+    background: #ffffff !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--border-soft) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    padding: 0.75rem 1rem !important;
+    min-width: 220px !important;
+    max-width: 280px !important;
+    white-space: normal !important;
+    font-family: inherit !important;
+    text-align: left !important;
   }
-  
-  .mh-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 1.5rem;
-    font-size: 12.5px;
-    margin-bottom: 0.25rem;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-    
-    .mh-key {
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-    
-    .mh-val {
-      font-weight: 600;
-      color: var(--ink);
-      text-align: right;
-    }
+
+  &.p-tooltip-top .p-tooltip-arrow {
+    border-top-color: var(--border-soft) !important;
+  }
+  &.p-tooltip-bottom .p-tooltip-arrow {
+    border-bottom-color: var(--border-soft) !important;
   }
 }
 

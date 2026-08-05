@@ -18,6 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-asignaciones',
@@ -25,7 +26,7 @@ import { InputTextModule } from 'primeng/inputtext';
   imports: [
     CommonModule, FormsModule,
     TableModule, ButtonModule, DialogModule, SelectModule, InputTextModule,
-    PaginadorComponent
+    TooltipModule, PaginadorComponent
   ],
   templateUrl: './asignaciones.component.html',
   styleUrl: './asignaciones.component.scss'
@@ -350,5 +351,84 @@ export class AsignacionesComponent implements OnInit {
         cantidad: this.newAsignacion.cantidad
       }).subscribe({ next: done(`Se entregaron ${this.newAsignacion.cantidad} unidades`), error: onErr });
     }
+  }
+
+  private getParsedAtributos(atributos: any): any {
+    if (!atributos) return {};
+    if (typeof atributos === 'string') {
+      try {
+        return JSON.parse(atributos);
+      } catch {
+        return {};
+      }
+    }
+    return atributos;
+  }
+
+  private getAttributeValue(attrs: any, a: any): any {
+    if (!attrs || !a) return null;
+    
+    // 1. Direct match on clave
+    if (attrs[a.clave] != null && attrs[a.clave] !== '') return attrs[a.clave];
+    
+    // 2. Direct match on nombre
+    if (attrs[a.nombre] != null && attrs[a.nombre] !== '') return attrs[a.nombre];
+    
+    // 3. Case-insensitive search on keys
+    const keys = Object.keys(attrs);
+    const lowerClave = a.clave.toLowerCase();
+    const lowerNombre = a.nombre.toLowerCase();
+    
+    for (const k of keys) {
+      const lowerK = k.toLowerCase();
+      if (lowerK === lowerClave || lowerK === lowerNombre) {
+        if (attrs[k] != null && attrs[k] !== '') {
+          return attrs[k];
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  getModelSpecsList(modelo: any): { nombre: string, valor: string }[] {
+    if (!modelo?.atributos || !modelo?.categoriaId) return [];
+    const cat = this.categorias.find(c => c.id === modelo.categoriaId);
+    if (!cat?.atributos) return [];
+    
+    const attrs = this.getParsedAtributos(modelo.atributos);
+    return cat.atributos
+      .map((a: any) => {
+        const val = this.getAttributeValue(attrs, a);
+        return {
+          attr: a,
+          val: val
+        };
+      })
+      .filter((item: any) => item.val != null)
+      .map((item: any) => {
+        let val = item.val;
+        if (item.attr.tipoDato === 'BOOLEANO') {
+          val = (val === true || val === 1 || val === '1' || val === 'true') ? 'SI' : 'NO';
+        }
+        return {
+          nombre: item.attr.nombre,
+          valor: String(val)
+        };
+      });
+  }
+
+  getModelTooltipHtml(modelo: any): string {
+    const list = this.getModelSpecsList(modelo);
+    if (list.length === 0) return '';
+    
+    let html = '<div style="font-weight: 700; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); padding-bottom: 0.25rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: inherit;">Especificaciones del Modelo</div>';
+    for (const spec of list) {
+      html += `<div style="display: flex; justify-content: space-between; gap: 1.5rem; font-size: 12.5px; margin-bottom: 0.25rem; font-family: inherit; line-height: 1.4;">
+        <span style="font-weight: 600; opacity: 0.85; margin-right: 1.5rem; white-space: nowrap;">${spec.nombre}:</span>
+        <span style="font-weight: 500; text-align: right; word-break: break-word;">${spec.valor}</span>
+      </div>`;
+    }
+    return html;
   }
 }

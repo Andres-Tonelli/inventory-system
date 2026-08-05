@@ -7,14 +7,11 @@
 
   <section class="panel">
     <div class="tabs" role="tablist">
-      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'empleados'" (click)="activeTab = 'empleados'; paginaEmpleados = 1; paginaAreas = 1; paginaEstados = 1;">
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'empleados'" (click)="activeTab = 'empleados'; paginaEmpleados = 1; paginaAreas = 1;">
         Empleados <span class="count">{{ empleados.length }}</span>
       </button>
-      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'areas'" (click)="activeTab = 'areas'; paginaEmpleados = 1; paginaAreas = 1; paginaEstados = 1;">
+      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'areas'" (click)="activeTab = 'areas'; paginaEmpleados = 1; paginaAreas = 1;">
         Áreas <span class="count">{{ areas.length }}</span>
-      </button>
-      <button class="tab" role="tab" [attr.aria-selected]="activeTab === 'estados'" (click)="activeTab = 'estados'; paginaEmpleados = 1; paginaAreas = 1; paginaEstados = 1;">
-        Estados de artículo <span class="count">{{ estados.length }}</span>
       </button>
     </div>
 
@@ -88,45 +85,6 @@
       <app-paginador [total]="filteredAndSortedAreas.length" [pagina]="paginaAreas" (paginaChange)="paginaAreas = $event"></app-paginador>
       <ng-template #emptyArea><div class="empty">Sin áreas.</div></ng-template>
     </div>
-
-    <!-- Estados -->
-    <div class="tabpanel" *ngIf="activeTab === 'estados'">
-      <div class="panel-note">
-        <i class="pi pi-info-circle"></i>
-        <span>La condición de cada artículo (Disponible, En uso, etc.). El <b>código</b> es estable e interno; sólo se edita el nombre visible.</span>
-      </div>
-      <div class="toolbar">
-        <span class="inp search sm"><i class="pi pi-search"></i><input pInputText [(ngModel)]="searchEstado" placeholder="Buscar por nombre o código…" (ngModelChange)="paginaEstados = 1" /></span>
-        <button class="btn primary sm" (click)="openNewEstado()"><i class="pi pi-plus"></i>Nuevo estado</button>
-      </div>
-      <table *ngIf="filteredAndSortedEstados.length > 0; else emptyEstado">
-        <thead>
-          <tr>
-            <th (click)="toggleSortEst('nombre')" style="cursor: pointer; user-select: none;">
-              Nombre <i class="pi" [ngClass]="getSortEstIcon('nombre')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
-            </th>
-            <th (click)="toggleSortEst('codigo')" style="cursor: pointer; user-select: none;">
-              Código <i class="pi" [ngClass]="getSortEstIcon('codigo')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
-            </th>
-            <th class="ta-right"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let s of paginatedEstados">
-            <td class="cell-name">{{ s.nombre }}</td>
-            <td><code>{{ s.codigo }}</code></td>
-            <td>
-              <div class="row-actions">
-                <button class="btn ghost sm" (click)="openEditEstado(s)">Editar</button>
-                <button class="btn ghost sm" (click)="deleteEstado(s)">Eliminar</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <app-paginador [total]="filteredAndSortedEstados.length" [pagina]="paginaEstados" (paginaChange)="paginaEstados = $event"></app-paginador>
-      <ng-template #emptyEstado><div class="empty">Sin estados.</div></ng-template>
-    </div>
   </section>
 </div>
 
@@ -157,19 +115,5 @@
   <ng-template pTemplate="footer">
     <button class="btn ghost" (click)="showAreaDialog = false">Cancelar</button>
     <button class="btn primary" (click)="saveArea()">Guardar</button>
-  </ng-template>
-</p-dialog>
-
-<!-- Diálogo Estado -->
-<p-dialog [(visible)]="showEstadoDialog" [modal]="true" [draggable]="false" [dismissableMask]="true"
-  [style]="{ width: '420px' }" [header]="editEstadoId ? 'Editar estado' : 'Nuevo estado'">
-  <div class="form">
-    <label>Nombre</label>
-    <input pInputText [(ngModel)]="estadoForm.nombre" placeholder="Ej: En reparación" (keyup.enter)="saveEstado()" />
-    <small class="hint" *ngIf="!editEstadoId">El código estable se genera automáticamente a partir del nombre.</small>
-  </div>
-  <ng-template pTemplate="footer">
-    <button class="btn ghost" (click)="showEstadoDialog = false">Cancelar</button>
-    <button class="btn primary" (click)="saveEstado()">Guardar</button>
   </ng-template>
 </p-dialog>

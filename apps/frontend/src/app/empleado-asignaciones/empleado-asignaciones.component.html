@@ -116,7 +116,11 @@
                   {{ art.alias || 'Sin alias' }}
                 </span>
               </td>
-              <td class="mut">{{ art.modelo?.nombre || '—' }}</td>
+              <td class="mut">
+                <span class="model-hover-container" [pTooltip]="getModelTooltipHtml(art.modelo)" escape="false" tooltipPosition="top" appendTo="body" tooltipStyleClass="custom-model-tooltip">
+                  {{ art.modelo?.nombre || '—' }}
+                </span>
+              </td>
               <td class="mono">{{ art.nroSerie || '—' }}</td>
               <td><span [ngClass]="estadoPillClass(art)"><span class="dot"></span>{{ estadoNombre(art) }}</span></td>
               <td class="mut">{{ art.fechaEntrega | date:'dd/MM/yyyy' }}</td>
@@ -176,8 +180,8 @@
       <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Atributos del Artículo</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
         <div *ngFor="let k of getObjectKeys(d.atributos)" style="display: flex; flex-direction: column;">
-          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ k }}</span>
-          <span style="font-weight: 500;">{{ getParsedAttribute(d.atributos, k) }}</span>
+          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ getAttributeName(d.modelo, k) }}</span>
+          <span style="font-weight: 500;">{{ getParsedAttribute(d.modelo, d.atributos, k) }}</span>
         </div>
       </div>
     </ng-container>
@@ -187,8 +191,8 @@
       <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Especificaciones del Modelo</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
         <div *ngFor="let k of getObjectKeys(d.modelo.atributos)" style="display: flex; flex-direction: column;">
-          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ k }}</span>
-          <span style="font-weight: 500;">{{ getParsedAttribute(d.modelo.atributos, k) }}</span>
+          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ getAttributeName(d.modelo, k) }}</span>
+          <span style="font-weight: 500;">{{ getParsedAttribute(d.modelo, d.modelo.atributos, k) }}</span>
         </div>
       </div>
     </ng-container>
@@ -215,7 +219,9 @@
       <div style="display: flex; flex-direction: column; gap: 0.4rem;">
         <div *ngFor="let sa of g.articulos" style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background-color: var(--bg-hover); border: 1px solid var(--border-soft); border-radius: 6px; font-size: 0.85rem;">
           <span style="font-weight: 600; color: var(--ink);">{{ sa.alias || sa.nroSerie }}</span>
-          <span style="color: var(--muted);">{{ sa.modelo?.nombre || '—' }}</span>
+          <span style="color: var(--muted);" class="model-hover-container" [pTooltip]="getModelTooltipHtml(sa.modelo)" escape="false" tooltipPosition="top" appendTo="body" tooltipStyleClass="custom-model-tooltip">
+            {{ sa.modelo?.nombre || '—' }}
+          </span>
         </div>
       </div>
     </div>
