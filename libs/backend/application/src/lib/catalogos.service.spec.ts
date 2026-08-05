@@ -67,13 +67,13 @@ describe('CatalogosService', () => {
       ['  En tránsito  ', 'EN_TRANSITO'],
       ['Añejado', 'ANEJADO'],
     ])('deriva "%s" → "%s"', async (nombre, esperado) => {
-      await service.createEstado(nombre);
+      await service.createEstado(nombre, 1);
       expect(estadoRepo.creados.at(-1)?.codigo).toBe(esperado);
     });
 
     it('respeta un código explícito si se lo pasan', async () => {
-      await service.createEstado('Prestado a terceros', 'PRESTAMO');
-      expect(estadoRepo.creados.at(-1)).toEqual({ nombre: 'Prestado a terceros', codigo: 'PRESTAMO' });
+      await service.createEstado('Prestado a terceros', 1, 'PRESTAMO');
+      expect(estadoRepo.creados.at(-1)).toEqual({ nombre: 'Prestado a terceros', codigo: 'PRESTAMO', dominioId: 1 });
     });
   });
 

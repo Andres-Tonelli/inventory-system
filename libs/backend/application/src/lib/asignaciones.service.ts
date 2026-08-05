@@ -51,7 +51,13 @@ export class AsignacionesService {
     });
   }
 
-  private async cascadeAgrupadorEstado(agrupadorId: number, estadoAgrupador: 'ASIGNADO' | 'DISPONIBLE', estadoArticuloCodigo: string) {
+  private async cascadeAgrupadorEstado(
+    agrupadorId: number,
+    estadoAgrupador: 'ASIGNADO' | 'DISPONIBLE',
+    estadoArticuloCodigo: string,
+    empleadoId?: number,
+    observaciones?: string
+  ) {
     const agrupador: any = await this.agrupadorRepo.findById(agrupadorId);
     if (!agrupador) return;
 
@@ -61,8 +67,24 @@ export class AsignacionesService {
           if (art.estado?.codigo === EstadoCodigo.EN_USO) {
             await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
           }
+          // Cerrar asignación activa del artículo
+          const criteria = new Criteria();
+          criteria.filters.push({ field: 'articuloId', operator: 'eq', value: art.id });
+          const allAsgs = await this.asignacionRepo.search(criteria);
+          const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
+          for (const asg of activeAsgs) {
+            asg.fechaDevolucion = new Date();
+            await this.asignacionRepo.save(asg);
+          }
         } else {
           await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
+          // Crear asignación activa para el artículo
+          await this.asignacionRepo.save({
+            articuloId: art.id,
+            empleadoId: empleadoId!,
+            fechaEntrega: new Date(),
+            observaciones: observaciones || null,
+          } as any);
         }
       }
     }
@@ -71,7 +93,28 @@ export class AsignacionesService {
       for (const sub of agrupador.subAgrupadores) {
         sub.estado = estadoAgrupador;
         await this.agrupadorRepo.save(sub);
-        await this.cascadeAgrupadorEstado(sub.id, estadoAgrupador, estadoArticuloCodigo);
+
+        if (estadoAgrupador === 'DISPONIBLE') {
+          // Cerrar asignación del sub-agrupador
+          const criteria = new Criteria();
+          criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: sub.id });
+          const allAsgs = await this.asignacionAgrupadorRepo.search(criteria);
+          const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
+          for (const asg of activeAsgs) {
+            asg.fechaDevolucion = new Date();
+            await this.asignacionAgrupadorRepo.save(asg);
+          }
+        } else {
+          // Crear asignación para el sub-agrupador
+          await this.asignacionAgrupadorRepo.save({
+            agrupadorId: sub.id,
+            empleadoId: empleadoId!,
+            fechaEntrega: new Date(),
+            observaciones: observaciones || null,
+          } as any);
+        }
+
+        await this.cascadeAgrupadorEstado(sub.id, estadoAgrupador, estadoArticuloCodigo, empleadoId, observaciones);
       }
     }
   }
@@ -92,7 +135,7 @@ export class AsignacionesService {
       await this.agrupadorRepo.save(agrupador);
 
       // Cascada recursiva a todos los sub-agrupadores y artículos contenidos
-      await this.cascadeAgrupadorEstado(agrupadorId, 'ASIGNADO', EstadoCodigo.EN_USO);
+      await this.cascadeAgrupadorEstado(agrupadorId, 'ASIGNADO', EstadoCodigo.EN_USO, empleadoId, observaciones);
 
       await this.asignacionAgrupadorRepo.save({
         agrupadorId,
@@ -141,7 +184,7 @@ export class AsignacionesService {
     }
 
     const articulos = asigArt
-      .filter((a) => !a.fechaDevolucion)
+      .filter((a) => !a.fechaDevolucion && a.articulo?.agrupadorId == null)
       .map((asg) => ({
         ...(asg.articulo ?? {}),
         fechaEntrega: asg.fechaEntrega,

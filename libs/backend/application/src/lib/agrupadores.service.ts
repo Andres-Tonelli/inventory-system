@@ -1,6 +1,6 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { UnitOfWork, Repository, Criteria, EstadoCodigo } from '@inventory-system/backend-domain';
-import { Agrupador, Articulo } from '@prisma/client';
+import { Agrupador, Articulo, AsignacionArticulo, AsignacionAgrupador } from '@prisma/client';
 
 @Injectable()
 export class AgrupadoresService {
@@ -8,6 +8,8 @@ export class AgrupadoresService {
     @Inject('UnitOfWork') private readonly uow: UnitOfWork,
     @Inject('AgrupadorRepository') private readonly agrupadorRepo: Repository<Agrupador>,
     @Inject('ArticuloRepository') private readonly articuloRepo: Repository<Articulo>,
+    @Inject('AsignacionRepository') private readonly asignacionRepo: Repository<AsignacionArticulo>,
+    @Inject('AsignacionAgrupadorRepository') private readonly asignacionAgrupadorRepo: Repository<AsignacionAgrupador>,
   ) {}
 
   async create(data: any) {
@@ -66,6 +68,60 @@ export class AgrupadoresService {
     }
   }
 
+  private async cascadeAgrupadorAsignacion(
+    agrupadorId: number,
+    empleadoId: number,
+    isDevolucion: boolean
+  ) {
+    const agrupador: any = await this.agrupadorRepo.findById(agrupadorId);
+    if (!agrupador) return;
+
+    if (agrupador.articulos && agrupador.articulos.length > 0) {
+      for (const art of agrupador.articulos) {
+        if (isDevolucion) {
+          const criteria = new Criteria();
+          criteria.filters.push({ field: 'articuloId', operator: 'eq', value: art.id });
+          const allAsgs = await this.asignacionRepo.search(criteria);
+          const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
+          for (const asg of activeAsgs) {
+            asg.fechaDevolucion = new Date();
+            await this.asignacionRepo.save(asg);
+          }
+        } else {
+          await this.asignacionRepo.save({
+            articuloId: art.id,
+            empleadoId,
+            fechaEntrega: new Date(),
+            observaciones: null,
+          } as any);
+        }
+      }
+    }
+
+    if (agrupador.subAgrupadores && agrupador.subAgrupadores.length > 0) {
+      for (const sub of agrupador.subAgrupadores) {
+        if (isDevolucion) {
+          const criteria = new Criteria();
+          criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: sub.id });
+          const allAsgs = await this.asignacionAgrupadorRepo.search(criteria);
+          const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
+          for (const asg of activeAsgs) {
+            asg.fechaDevolucion = new Date();
+            await this.asignacionAgrupadorRepo.save(asg);
+          }
+        } else {
+          await this.asignacionAgrupadorRepo.save({
+            agrupadorId: sub.id,
+            empleadoId,
+            fechaEntrega: new Date(),
+            observaciones: null,
+          } as any);
+        }
+        await this.cascadeAgrupadorAsignacion(sub.id, empleadoId, isDevolucion);
+      }
+    }
+  }
+
   async addArticulo(agrupadorId: number, articuloId: number) {
     return this.uow.execute(async () => {
       const parent: any = await this.agrupadorRepo.findById(agrupadorId);
@@ -77,12 +133,27 @@ export class AgrupadoresService {
         throw new BadRequestException('Artículo asignado a empleado. No puede ser agregado.');
       }
 
-      // Si el agrupador está asignado, el artículo pasa a "en uso"
       articulo.agrupadorId = agrupadorId;
       if (parent.estado === 'ASIGNADO') {
         articulo.estadoCodigo = EstadoCodigo.EN_USO;
+        await this.articuloRepo.save(articulo);
+
+        // Buscar asignación activa del agrupador padre
+        const criteria = new Criteria();
+        criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: agrupadorId });
+        const parentAsgs = await this.asignacionAgrupadorRepo.search(criteria);
+        const activeParentAsg = parentAsgs.find((a) => !a.fechaDevolucion);
+        if (activeParentAsg) {
+          await this.asignacionRepo.save({
+            articuloId: articulo.id,
+            empleadoId: activeParentAsg.empleadoId,
+            fechaEntrega: new Date(),
+            observaciones: null,
+          } as any);
+        }
+      } else {
+        await this.articuloRepo.save(articulo);
       }
-      await this.articuloRepo.save(articulo);
       return { success: true };
     });
   }
@@ -99,6 +170,17 @@ export class AgrupadoresService {
         articulo.estadoCodigo = EstadoCodigo.DISPONIBLE;
       }
       await this.articuloRepo.save(articulo);
+
+      // Cerrar asignación activa de este artículo
+      const criteria = new Criteria();
+      criteria.filters.push({ field: 'articuloId', operator: 'eq', value: articuloId });
+      const allAsgs = await this.asignacionRepo.search(criteria);
+      const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
+      for (const asg of activeAsgs) {
+        asg.fechaDevolucion = new Date();
+        await this.asignacionRepo.save(asg);
+      }
+
       return { success: true };
     });
   }
@@ -129,6 +211,21 @@ export class AgrupadoresService {
         child.estado = 'ASIGNADO';
         await this.agrupadorRepo.save(child);
         await this.cascadeAgrupadorEstado(child.id, 'ASIGNADO', EstadoCodigo.EN_USO);
+
+        // Buscar asignación activa del agrupador padre
+        const criteria = new Criteria();
+        criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: parentAgrupadorId });
+        const parentAsgs = await this.asignacionAgrupadorRepo.search(criteria);
+        const activeParentAsg = parentAsgs.find((a) => !a.fechaDevolucion);
+        if (activeParentAsg) {
+          await this.asignacionAgrupadorRepo.save({
+            agrupadorId: child.id,
+            empleadoId: activeParentAsg.empleadoId,
+            fechaEntrega: new Date(),
+            observaciones: null,
+          } as any);
+          await this.cascadeAgrupadorAsignacion(child.id, activeParentAsg.empleadoId, false);
+        }
       } else {
         await this.agrupadorRepo.save(child);
       }
@@ -150,6 +247,19 @@ export class AgrupadoresService {
           child.estado = 'DISPONIBLE';
           await this.agrupadorRepo.save(child);
           await this.cascadeAgrupadorEstado(child.id, 'DISPONIBLE', EstadoCodigo.DISPONIBLE);
+
+          // Cerrar asignación del sub-agrupador
+          const criteria = new Criteria();
+          criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: child.id });
+          const allAsgs = await this.asignacionAgrupadorRepo.search(criteria);
+          const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
+          for (const asg of activeAsgs) {
+            asg.fechaDevolucion = new Date();
+            await this.asignacionAgrupadorRepo.save(asg);
+          }
+
+          // Cerrar recursivamente todas las asignaciones internas
+          await this.cascadeAgrupadorAsignacion(child.id, 0, true);
         } else {
           await this.agrupadorRepo.save(child);
         }

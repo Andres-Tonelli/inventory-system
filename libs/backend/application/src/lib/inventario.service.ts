@@ -37,7 +37,11 @@ export class InventarioService {
     if (!articulo) {
       throw new BadRequestException('Artículo no encontrado');
     }
-    const estados = await this.estadoRepo.listar();
+    const dominioId = (articulo as any).modelo?.categoria?.dominioId;
+    if (!dominioId) {
+      throw new BadRequestException('No se pudo determinar el dominio del artículo');
+    }
+    const estados = await this.estadoRepo.listar(dominioId);
     if (!estados.some((e) => e.codigo === estadoCodigo)) {
       throw new BadRequestException(`Estado inválido: ${estadoCodigo}`);
     }

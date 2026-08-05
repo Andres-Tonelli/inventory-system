@@ -16,16 +16,51 @@ export class PrismaArticuloRepository implements Repository<Articulo> {
       entity;
     const data: any = { ...rest };
 
+    // Obtener el dominioId para poder encontrar el estado correcto
+    let dominioId: number | null = null;
+    const modeloId = data.modeloId || entity.modelo?.id || entity.modeloId;
+    if (modeloId) {
+      const mod = await this.prisma.modelo.findUnique({
+        where: { id: modeloId },
+        include: { categoria: true },
+      });
+      if (mod?.categoria) {
+        dominioId = mod.categoria.dominioId;
+      }
+    } else if (data.id) {
+      const existing = await this.prisma.articulo.findUnique({
+        where: { id: data.id },
+        include: { modelo: { include: { categoria: true } } },
+      });
+      if (existing?.modelo?.categoria) {
+        dominioId = existing.modelo.categoria.dominioId;
+      }
+    }
+
     // Resolver estado por CÓDIGO estable (nunca por id mágico). Ver ADR-0004 D4.
-    if (estadoCodigo) {
-      const e = await this.prisma.estadoArticulo.findUnique({ where: { codigo: estadoCodigo } });
+    if (estadoCodigo && dominioId) {
+      const e = await this.prisma.estadoArticulo.findUnique({
+        where: {
+          codigo_dominioId: {
+            codigo: estadoCodigo,
+            dominioId,
+          },
+        },
+      });
       if (e) data.estadoId = e.id;
     }
     delete data.estadoCodigo;
 
     // Default en creación: DISPONIBLE.
-    if (!data.id && data.estadoId == null) {
-      const disp = await this.prisma.estadoArticulo.findUnique({ where: { codigo: 'DISPONIBLE' } });
+    if (!data.id && data.estadoId == null && dominioId) {
+      const disp = await this.prisma.estadoArticulo.findUnique({
+        where: {
+          codigo_dominioId: {
+            codigo: 'DISPONIBLE',
+            dominioId,
+          },
+        },
+      });
       if (disp) data.estadoId = disp.id;
     }
 

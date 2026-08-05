@@ -108,7 +108,15 @@ describe('AsignacionesService', () => {
       // ...y SÍ se cascadea a sub-agrupadores: el sub 20 debe ser guardado como ASIGNADO
       expect(agrupadorRepo.savedWith.some((a) => a.id === 20 && a.estado === 'ASIGNADO')).toBe(true);
       // Queda la asignación registrada.
-      expect([...asignacionAgrupadorRepo.items.values()][0]).toMatchObject({ agrupadorId: 10, empleadoId: 7 });
+      const allAgrupadorAsgs = [...asignacionAgrupadorRepo.items.values()];
+      expect(allAgrupadorAsgs).toHaveLength(2);
+      expect(allAgrupadorAsgs.some(a => a.agrupadorId === 10 && a.empleadoId === 7)).toBe(true);
+      expect(allAgrupadorAsgs.some(a => a.agrupadorId === 20 && a.empleadoId === 7)).toBe(true);
+
+      const allArtAsgs = [...asignacionRepo.items.values()];
+      expect(allArtAsgs).toHaveLength(2);
+      expect(allArtAsgs.some(a => a.articuloId === 1 && a.empleadoId === 7)).toBe(true);
+      expect(allArtAsgs.some(a => a.articuloId === 2 && a.empleadoId === 7)).toBe(true);
     });
   });
 

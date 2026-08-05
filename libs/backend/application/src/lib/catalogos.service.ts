@@ -23,6 +23,13 @@ export class CatalogosService {
     } as DominioInventario;
     try {
       await this.dominioRepo.save(nuevo);
+      // Recuperar el dominio recién creado para obtener su ID autogenerado
+      const creados = await this.getDominios({ nombre: data.nombre });
+      const creado = creados.find((d) => d.nombre === data.nombre);
+      if (creado && creado.id) {
+        await this.estadoRepo.crear('Disponible', 'DISPONIBLE', creado.id);
+        await this.estadoRepo.crear('En uso', 'EN_USO', creado.id);
+      }
     } catch (e: any) {
       if (e?.code === 'P2002') {
         throw new BadRequestException('Ya existe un dominio con ese nombre.');
@@ -160,7 +167,7 @@ export class CatalogosService {
     return this.tipoAgrupadorRepo.search(criteria);
   }
 
-  async createEstado(nombre: string, codigo?: string): Promise<void> {
+  async createEstado(nombre: string, dominioId: number, codigo?: string): Promise<void> {
     // El código estable se deriva del nombre si no se provee explícito.
     const cod = (codigo ?? nombre)
       .trim()
@@ -173,11 +180,11 @@ export class CatalogosService {
       .replace(/Ñ/g, 'N')
       .replace(/[^A-Z0-9]+/g, '_')
       .replace(/^_+|_+$/g, '');
-    await this.estadoRepo.crear(nombre, cod);
+    await this.estadoRepo.crear(nombre, cod, dominioId);
   }
 
-  async getEstados(): Promise<EstadoArticulo[]> {
-    return this.estadoRepo.listar();
+  async getEstados(dominioId: number): Promise<EstadoArticulo[]> {
+    return this.estadoRepo.listar(dominioId);
   }
 
   // ---- UPDATE / DELETE (config de dominios) ----

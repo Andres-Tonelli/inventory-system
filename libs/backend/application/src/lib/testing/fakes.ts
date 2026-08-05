@@ -87,12 +87,12 @@ export class InMemoryEstadoRepo {
     { id: 3, codigo: 'EN_REPARACION', nombre: 'Para reparación' },
     { id: 4, codigo: 'BAJA', nombre: 'Fuera de uso/Roto' },
   ];
-  readonly creados: Array<{ nombre: string; codigo: string }> = [];
+  readonly creados: Array<{ nombre: string; codigo: string; dominioId: number }> = [];
 
-  async crear(nombre: string, codigo: string): Promise<void> {
-    this.creados.push({ nombre, codigo });
+  async crear(nombre: string, codigo: string, dominioId: number): Promise<void> {
+    this.creados.push({ nombre, codigo, dominioId });
   }
-  async listar() {
+  async listar(dominioId: number) {
     return this.estados;
   }
   async actualizar(): Promise<void> {

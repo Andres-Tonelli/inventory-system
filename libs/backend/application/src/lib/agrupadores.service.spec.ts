@@ -7,12 +7,22 @@ import { fakeUow, InMemoryRepo } from './testing/fakes';
 describe('AgrupadoresService', () => {
   let agrupadorRepo: InMemoryRepo<any>;
   let articuloRepo: InMemoryRepo<any>;
+  let asignacionRepo: InMemoryRepo<any>;
+  let asignacionAgrupadorRepo: InMemoryRepo<any>;
   let service: AgrupadoresService;
 
   beforeEach(() => {
     agrupadorRepo = new InMemoryRepo();
     articuloRepo = new InMemoryRepo();
-    service = new AgrupadoresService(fakeUow() as any, agrupadorRepo as any, articuloRepo as any);
+    asignacionRepo = new InMemoryRepo();
+    asignacionAgrupadorRepo = new InMemoryRepo();
+    service = new AgrupadoresService(
+      fakeUow() as any,
+      agrupadorRepo as any,
+      articuloRepo as any,
+      asignacionRepo as any,
+      asignacionAgrupadorRepo as any
+    );
   });
 
   describe('addArticulo (vincular a un agrupador)', () => {
@@ -33,14 +43,16 @@ describe('AgrupadoresService', () => {
       expect(articuloRepo.savedWith[0].estadoCodigo).toBeUndefined();
     });
 
-    it('si se agrega un artículo a un agrupador ASIGNADO, el artículo pasa a EN_USO', async () => {
+    it('si se agrega un artículo a un agrupador ASIGNADO, el artículo pasa a EN_USO y se crea su asignación', async () => {
       agrupadorRepo.seed({ id: 10, estado: 'ASIGNADO' });
       articuloRepo.seed({ id: 1, estado: { codigo: 'DISPONIBLE' }, agrupadorId: null });
+      asignacionAgrupadorRepo.seed({ id: 100, agrupadorId: 10, empleadoId: 7, fechaDevolucion: null });
 
       await service.addArticulo(10, 1);
 
       expect(articuloRepo.items.get(1).agrupadorId).toBe(10);
       expect(articuloRepo.savedWith[0].estadoCodigo).toBe('EN_USO');
+      expect([...asignacionRepo.items.values()][0]).toMatchObject({ articuloId: 1, empleadoId: 7 });
     });
   });
 

@@ -52,3 +52,6 @@ Thumbs.db
 __screenshots__/
 
 /generated/prisma
+
+/scratch/
+/modulos-derivados.zip

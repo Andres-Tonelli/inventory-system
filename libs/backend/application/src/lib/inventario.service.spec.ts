@@ -23,12 +23,30 @@ describe('InventarioService', () => {
     });
 
     it('valida el código contra la tabla de estados (nada de valores mágicos)', async () => {
-      articuloRepo.seed({ id: 1 });
+      articuloRepo.seed({
+        id: 1,
+        modelo: {
+          id: 10,
+          categoria: {
+            id: 20,
+            dominioId: 1,
+          },
+        },
+      });
       await expect(service.cambiarEstadoArticulo(1, 'ROTO_MAL')).rejects.toThrow(/Estado inválido/i);
     });
 
     it('camino feliz: persiste {id, estadoCodigo} y deja la resolución a id en la persistencia', async () => {
-      articuloRepo.seed({ id: 1 });
+      articuloRepo.seed({
+        id: 1,
+        modelo: {
+          id: 10,
+          categoria: {
+            id: 20,
+            dominioId: 1,
+          },
+        },
+      });
       await service.cambiarEstadoArticulo(1, 'EN_REPARACION');
       expect(articuloRepo.savedWith[0]).toMatchObject({ id: 1, estadoCodigo: 'EN_REPARACION' });
     });

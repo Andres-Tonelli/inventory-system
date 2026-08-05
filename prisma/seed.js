@@ -41,19 +41,29 @@ async function main() {
     create: { nombre: 'EPP' },
   });
 
-  // 4. Estados de artículo (código estable; sólo condición — ver ADR-0004 D4)
-  const estados = [
-    { codigo: 'DISPONIBLE', nombre: 'Disponible' },
-    { codigo: 'EN_USO', nombre: 'En uso' },
-    { codigo: 'EN_REPARACION', nombre: 'Para reparación' },
-    { codigo: 'BAJA', nombre: 'Fuera de uso/Roto' },
-  ];
-  for (const e of estados) {
-    await prisma.estadoArticulo.upsert({
-      where: { codigo: e.codigo },
-      update: { nombre: e.nombre },
-      create: e,
-    });
+  // 4. Estados de artículo requeridos por el sistema para cada dominio
+  const domains = await prisma.dominioInventario.findMany();
+  for (const d of domains) {
+    const estadosBase = [
+      { codigo: 'DISPONIBLE', nombre: 'Disponible' },
+      { codigo: 'EN_USO', nombre: 'En uso' },
+    ];
+    for (const e of estadosBase) {
+      await prisma.estadoArticulo.upsert({
+        where: {
+          codigo_dominioId: {
+            codigo: e.codigo,
+            dominioId: d.id,
+          },
+        },
+        update: { nombre: e.nombre },
+        create: {
+          codigo: e.codigo,
+          nombre: e.nombre,
+          dominioId: d.id,
+        },
+      });
+    }
   }
 
   console.log("Seeding finished.");

@@ -10,12 +10,15 @@ export class PrismaEstadoArticuloRepository implements EstadoArticuloRepository 
     return this.ctx.client;
   }
 
-  async crear(nombre: string, codigo: string): Promise<void> {
-    await this.prisma.estadoArticulo.create({ data: { nombre, codigo } });
+  async crear(nombre: string, codigo: string, dominioId: number): Promise<void> {
+    await this.prisma.estadoArticulo.create({ data: { nombre, codigo, dominioId } });
   }
 
-  async listar(): Promise<EstadoArticulo[]> {
-    return this.prisma.estadoArticulo.findMany({ orderBy: { id: 'asc' } });
+  async listar(dominioId: number): Promise<EstadoArticulo[]> {
+    return this.prisma.estadoArticulo.findMany({
+      where: { dominioId },
+      orderBy: { id: 'asc' },
+    });
   }
 
   async actualizar(id: number, nombre: string): Promise<void> {
