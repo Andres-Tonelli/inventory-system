@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards, Req, BadRequestException } from '@nestjs/common';
 import { CatalogosService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DomainAdminGuard } from '../auth/domain-admin.guard';
@@ -123,13 +123,14 @@ export class CatalogosController {
   // ---- ESTADOS DE ARTÍCULO ----
   @Post('estados')
   async createEstado(@Body() body: CreateEstadoDto) {
-    await this.catalogosService.createEstado(body.nombre, body.codigo);
+    await this.catalogosService.createEstado(body.nombre, body.dominioId, body.codigo);
     return { success: true, message: 'Estado de artículo creado exitosamente' };
   }
 
   @Get('estados')
-  async getEstados() {
-    const resultados = await this.catalogosService.getEstados();
+  async getEstados(@Query('dominioId') dominioId: string) {
+    if (!dominioId) throw new BadRequestException('Se requiere dominioId');
+    const resultados = await this.catalogosService.getEstados(+dominioId);
     return { success: true, data: resultados };
   }
 

@@ -67,6 +67,7 @@ export class CreateTipoAgrupadorDto implements ICreateTipoAgrupadorDto {
 
 export class CreateEstadoDto implements ICreateEstadoDto {
   @IsString() @MinLength(1) @MaxLength(100) nombre!: string;
+  @IsInt() dominioId!: number;
   @IsOptional() @IsString() @MaxLength(50) codigo?: string;
 }
 

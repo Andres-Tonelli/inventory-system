@@ -53,5 +53,5 @@ RUN npm install prisma@5.22.0 --no-save --legacy-peer-deps
 
 EXPOSE 3000
 
-# Set entrypoint to push database schema, seed, register admin, and start the backend NestJS app
-CMD ["sh", "-c", "npx prisma db push && node prisma/seed.js && node add-system-admin.js admin && node dist/apps/backend/main.js"]
+# Set entrypoint to run migrations, seed, register admin, and start the backend NestJS app
+CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.js && node add-system-admin.js admin && node dist/apps/backend/main.js"]

@@ -28,12 +28,20 @@ export class NotificacionesUiService {
 
   /**
    * Toast de error a partir de una respuesta HTTP del backend.
-   * `error.message` puede ser string o string[] (el ValidationPipe de Nest
-   * devuelve un array con un mensaje por regla violada).
+   * Si la respuesta contiene un error estructurado del backend con código de error
+   * y correlationId, formatea un mensaje detallado para reportar al programador.
    */
   errorHttp(err: unknown, fallback: string): void {
-    const m = (err as any)?.error?.message;
-    const detalle = Array.isArray(m) ? m.join(' · ') : m || fallback;
-    this.error(detalle);
+    const res = (err as any)?.error;
+    if (res && res.correlationId) {
+      const m = res.message;
+      const msgStr = Array.isArray(m) ? m.join(' · ') : m;
+      const detail = `${msgStr} [Cod: ${res.errorCode} | ID: ${res.correlationId} | ${res.method} ${res.path}]`;
+      this.error(detail, 'Error del Sistema');
+    } else {
+      const m = res?.message;
+      const detalle = Array.isArray(m) ? m.join(' · ') : m || fallback;
+      this.error(detalle);
+    }
   }
 }

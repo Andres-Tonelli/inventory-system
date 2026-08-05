@@ -133,6 +133,7 @@ export interface CreateTipoAgrupadorDto {
 
 export interface CreateEstadoDto {
   nombre: string;
+  dominioId: number;
   /** Código estable opcional; si no viene, el backend lo deriva del nombre. */
   codigo?: string;
 }
