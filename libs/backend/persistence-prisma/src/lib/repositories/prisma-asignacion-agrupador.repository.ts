@@ -42,7 +42,18 @@ export class PrismaAsignacionAgrupadorRepository implements AsignacionAgrupadorR
     }
     return this.prisma.asignacionAgrupador.findMany({ 
       where, 
-      include: { empleado: { include: { area: true } }, agrupador: { include: { tipoAgrupador: true } } } 
+      include: {
+        empleado: { include: { area: true } },
+        agrupador: {
+          include: {
+            tipoAgrupador: {
+              include: {
+                dominio: true
+              }
+            }
+          }
+        }
+      } 
     });
   }
 

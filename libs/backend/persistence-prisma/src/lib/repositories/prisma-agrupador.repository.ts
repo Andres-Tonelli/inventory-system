@@ -42,6 +42,7 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
       include: {
         tipoAgrupador: {
           include: {
+            dominio: true,
             categoriasRecomendadas: { include: { categoria: true } },
             subTiposRecomendados: { include: { childTipo: true } }
           }
@@ -138,6 +139,7 @@ export class PrismaAgrupadorRepository implements AgrupadorRepository {
         },
         tipoAgrupador: {
           include: {
+            dominio: true,
             categoriasRecomendadas: { include: { categoria: true } },
             subTiposRecomendados: { include: { childTipo: true } }
           }

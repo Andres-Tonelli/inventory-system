@@ -37,7 +37,7 @@ export class CatalogosController {
     const user = req.user;
     let resultados = await this.catalogosService.getDominios({ nombre });
     
-    if (user && user.rol !== 'SISTEMA') {
+    if (user && user.rol === 'DOMINIO') {
       resultados = resultados.filter((d: any) => user.dominios && user.dominios.includes(d.id));
     }
     

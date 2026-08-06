@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, Get, Query, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Patch, Body, Get, Query, Param, UseGuards, ParseIntPipe, Req, ForbiddenException } from '@nestjs/common';
 import { AsignacionesService } from '@inventory-system/backend-application';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DomainAdminGuard } from '../auth/domain-admin.guard';
@@ -38,7 +38,11 @@ export class AsignacionesController {
   }
 
   @Get('empleado/:id')
-  async getAsignacionesDeEmpleado(@Param('id', ParseIntPipe) id: number) {
+  async getAsignacionesDeEmpleado(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    const user = req.user;
+    if (user && user.rol === 'COLABORADOR' && user.empleadoId !== id) {
+      throw new ForbiddenException('No tienes permisos para ver las asignaciones de otro empleado');
+    }
     const resultados = await this.asignacionesService.getAsignacionesDeEmpleado(id);
     return { success: true, data: resultados };
   }

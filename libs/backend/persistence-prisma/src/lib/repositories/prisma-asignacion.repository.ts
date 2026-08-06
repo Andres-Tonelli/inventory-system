@@ -45,7 +45,21 @@ export class PrismaAsignacionRepository implements Repository<AsignacionArticulo
     return this.prisma.asignacionArticulo.findMany({
       where,
       include: {
-        articulo: { include: { modelo: true, estado: true } },
+        articulo: {
+          include: {
+            modelo: {
+              include: {
+                categoria: {
+                  include: {
+                    dominio: true
+                  }
+                },
+                marca: true
+              }
+            },
+            estado: true
+          }
+        },
         empleado: { include: { area: true } },
       },
     });

@@ -8,6 +8,7 @@ import { AsignacionesModule } from './asignaciones/asignaciones.module';
 import { EmpleadosModule } from './empleados/empleados.module';
 import { AgrupadoresModule } from './agrupadores/agrupadores.module';
 import { AuthModule } from './auth/auth.module';
+import { SolicitudesModule } from './solicitudes/solicitudes.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthModule } from './auth/auth.module';
     AsignacionesModule,
     EmpleadosModule,
     AgrupadoresModule,
+    SolicitudesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

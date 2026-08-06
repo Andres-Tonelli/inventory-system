@@ -201,6 +201,7 @@ export class AsignacionesService {
           fechaEntrega: a.fechaEntrega,
           fechaDevolucion: a.fechaDevolucion,
           observaciones: a.observaciones,
+          dominio: a.agrupador?.tipoAgrupador?.dominio ?? null,
         })),
       ...asigArt
         .filter((a) => a.fechaDevolucion)
@@ -211,6 +212,7 @@ export class AsignacionesService {
           fechaEntrega: a.fechaEntrega,
           fechaDevolucion: a.fechaDevolucion,
           observaciones: a.observaciones,
+          dominio: a.articulo?.modelo?.categoria?.dominio ?? null,
         })),
     ].sort((x, y) => new Date(y.fechaDevolucion).getTime() - new Date(x.fechaDevolucion).getTime());
 
