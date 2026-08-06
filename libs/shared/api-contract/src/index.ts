@@ -16,3 +16,4 @@ export * from './lib/agrupadores';
 export * from './lib/inventario';
 export * from './lib/asignaciones';
 export * from './lib/routes';
+export * from './lib/solicitudes';
