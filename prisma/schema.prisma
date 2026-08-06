@@ -27,22 +27,24 @@ model Empleado {
   asignaciones          AsignacionArticulo[]
   area                  Area                  @relation(fields: [areaId], references: [id])
   entregas              EntregaConsumible[]
+  solicitudes           Solicitud[]
 
   @@index([areaId])
 }
 
 model DominioInventario {
-  id             Int                  @id @default(autoincrement())
-  nombre         String               @unique
-  icono          String?
-  color          String?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-  categorias     Categoria[]
-  marcas         Marca[]
-  tiposAgrupador TipoAgrupador[]
+  id              Int                  @id @default(autoincrement())
+  nombre          String               @unique
+  icono           String?
+  color           String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  categorias      Categoria[]
+  marcas          Marca[]
+  tiposAgrupador  TipoAgrupador[]
   administradores AdministradorDominio[]
-  estados        EstadoArticulo[]
+  estados         EstadoArticulo[]
+  solicitudes     Solicitud[]
 }
 
 model Categoria {
@@ -56,6 +58,7 @@ model Categoria {
   modelos                    Modelo[]
   atributos                  AtributoDefinicion[]
   tiposAgrupadorRecomendados CategoriasEnTipoAgrupador[]
+  solicitudes                Solicitud[]
 
   @@unique([nombre, dominioId])
   @@index([dominioId])
@@ -87,6 +90,7 @@ model Modelo {
   categoria   Categoria   @relation(fields: [categoriaId], references: [id])
   marca       Marca       @relation(fields: [marcaId], references: [id])
   lotesStock  StockLote[]
+  solicitudes Solicitud[]
 
   @@unique([nombre, marcaId, categoriaId])
   @@index([marcaId])
@@ -128,6 +132,7 @@ model Articulo {
   atributos Json @default("{}")
 
   asignaciones AsignacionArticulo[]
+  solicitudes  Solicitud[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -315,6 +320,47 @@ model AdministradorDominio {
 
   @@unique([administradorId, dominioId])
   @@index([administradorId])
+  @@index([dominioId])
+}
+
+enum TipoSolicitud {
+  ROTURA
+  ESCASEZ
+  TEMPORAL
+  GENERAL
+}
+
+enum EstadoSolicitud {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  ENTREGADA
+}
+
+model Solicitud {
+  id                  Int               @id @default(autoincrement())
+  tipo                TipoSolicitud
+  estado              EstadoSolicitud   @default(PENDIENTE)
+  empleadoId          Int
+  empleado            Empleado          @relation(fields: [empleadoId], references: [id])
+  dominioId           Int?
+  dominio             DominioInventario? @relation(fields: [dominioId], references: [id], onDelete: Cascade)
+  articuloId          Int?              
+  articulo            Articulo?         @relation(fields: [articuloId], references: [id], onDelete: SetNull)
+  categoriaId         Int?              
+  categoria           Categoria?        @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  modeloId            Int?              
+  modelo              Modelo?           @relation(fields: [modeloId], references: [id], onDelete: SetNull)
+  cantidad            Int               @default(1)
+  fechaInicio         DateTime?
+  fechaFin            DateTime?
+  titulo              String?
+  motivo              String            
+  observacionesAdmin  String?           
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([empleadoId])
   @@index([dominioId])
 }
 
