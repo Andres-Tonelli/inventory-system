@@ -43,6 +43,11 @@ export class DomainSelectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    const user = this.authService.currentUser();
+    if (user && user.rol === 'COLABORADOR') {
+      this.router.navigate(['/mis-asignaciones']);
+      return;
+    }
     this.domainContext.clearDomain();
     this.catalogosService.getDominios().subscribe({
       next: (res) => {

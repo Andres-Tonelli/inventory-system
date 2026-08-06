@@ -1,0 +1,738 @@
+<div class="page">
+  <!-- Profile Header -->
+  <div class="profile-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div class="avatar"><i class="pi pi-user"></i></div>
+      <div class="meta">
+        <div class="eyebrow">Mis asignaciones activas</div>
+        <h1>{{ nombreEmpleado }}</h1>
+        <div class="sub">
+          <span class="legajo" *ngIf="legajoEmpleado">Legajo: {{ legajoEmpleado }}</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <button class="btn primary" (click)="abrirModalGeneral()">
+        <i class="pi pi-question-circle" style="margin-right: 4px;"></i> Solicitud General / Soporte
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="muted-center">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--indigo); margin-bottom: 0.5rem;"></i>
+    <div>Cargando tus asignaciones…</div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <!-- Domain Tabs Selector -->
+    <div class="tabs-container" *ngIf="dominios.length > 0">
+      <div 
+        *ngFor="let d of dominios" 
+        class="tab-pill" 
+        [class.active]="selectedDomainId === d.id"
+        (click)="selectDomain(d.id!)"
+      >
+        <i class="pi" [ngClass]="'pi-' + (d.icono || 'box')"></i>
+        <span>{{ d.nombre }}</span>
+        <span class="count-badge">
+          {{ getAgrupadoresForDomain(d.id!).length + getArticulosForDomain(d.id!).length }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Active domain content -->
+    <div class="tab-content" *ngIf="selectedDomainId !== null">
+      <!-- Acciones Rápidas -->
+      <div class="acciones-rapidas-bar">
+        <span class="acciones-label"><i class="pi pi-bolt"></i> Acciones rápidas:</span>
+        <div class="acciones-buttons">
+          <button class="btn primary outline" (click)="abrirModalRotura()">
+            <i class="pi pi-exclamation-triangle" style="margin-right: 4px;"></i> Reportar Rotura
+          </button>
+          <button class="btn primary outline" (click)="abrirModalInsumo()">
+            <i class="pi pi-shopping-cart" style="margin-right: 4px;"></i> Solicitar Insumo
+          </button>
+          <button class="btn primary outline" (click)="abrirModalPrestamo()">
+            <i class="pi pi-calendar-plus" style="margin-right: 4px;"></i> Préstamo Temporal
+          </button>
+        </div>
+      </div>
+
+      <!-- GRUPO 1: Inventario y Asignaciones -->
+      <div class="group-container inventory-group">
+        <div class="group-header">
+          <i class="pi pi-box"></i>
+          <span>Bienes y Asignaciones Activas</span>
+        </div>
+        
+        <div class="group-content">
+          <!-- Stats summary for the selected domain -->
+          <div class="domain-stats-summary" *ngIf="totalAssetsForSelectedDomain > 0">
+            <div class="stat-card">
+              <span class="value">{{ getAgrupadoresForDomain(selectedDomainId).length }}</span>
+              <span class="label">Agrupadores / Conjuntos</span>
+            </div>
+            <div class="stat-card">
+              <span class="value">{{ totalArticulosEnConjuntos }}</span>
+              <span class="label">Artículos en conjuntos</span>
+            </div>
+            <div class="stat-card">
+              <span class="value">{{ getArticulosForDomain(selectedDomainId).length }}</span>
+              <span class="label">Artículos individuales</span>
+            </div>
+          </div>
+
+          <!-- Empty State for the selected domain -->
+          <div class="empty-state-card" *ngIf="totalAssetsForSelectedDomain === 0" style="margin-bottom: 0;">
+            <div class="empty-icon"><i class="pi pi-briefcase"></i></div>
+            <h3>Sin asignaciones activas</h3>
+            <p>No tienes agrupadores ni artículos individuales asignados en el dominio seleccionado.</p>
+          </div>
+
+          <ng-container *ngIf="totalAssetsForSelectedDomain > 0">
+            <!-- Agrupadores asignados -->
+            <div *ngIf="getAgrupadoresForDomain(selectedDomainId).length > 0">
+              <div class="section-lbl" style="margin-top: 0; margin-bottom: 12px;">Agrupadores / Conjuntos asignados</div>
+              
+              <div class="ag-card" *ngFor="let ag of paginatedAgrupadores">
+                <div class="ag-head" (click)="toggleAgrupador(ag.id)">
+                  <div class="ag-title">
+                    <span class="pill indigo">{{ ag.tipoAgrupador?.nombre || 'Agrupador' }}</span>
+                    <span class="ag-name">{{ ag.nombre }}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="ag-date" *ngIf="ag.fechaEntrega">Desde {{ ag.fechaEntrega | date:'dd/MM/yyyy' }}</span>
+                    <i class="pi" [ngClass]="isAgrupadorExpanded(ag.id) ? 'pi-chevron-up' : 'pi-chevron-down'" style="color: var(--muted-2); font-size: 13px;"></i>
+                  </div>
+                </div>
+                
+                <div class="ag-detail-body" *ngIf="isAgrupadorExpanded(ag.id)">
+                  <div class="sub-section">
+                    <div class="md-lbl">Componentes / Artículos Vinculados</div>
+                    
+                    <div class="predefined-slots" *ngIf="getPredefinedSlots(ag).length > 0">
+                      <div *ngFor="let slot of getPredefinedSlots(ag)" class="slot-item">
+                        <i class="pi" [ngClass]="slot.articulo ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.articulo ? '#10b981' : '#94a3b8';"></i>
+                        <span class="slot-cat">{{ slot.categoria.nombre }}:</span>
+                        <span *ngIf="slot.articulo" class="clickable-detail" (click)="verDetalleArticulo(slot.articulo)">
+                          {{ slot.articulo.alias || slot.articulo.nroSerie || 'Artículo' }} <small *ngIf="slot.articulo.modelo?.nombre">({{ slot.articulo.modelo.nombre }})</small>
+                        </span>
+                        <span *ngIf="!slot.articulo" class="empty-text">(Vacío)</span>
+                      </div>
+                    </div>
+
+                    <div class="chips-grid" *ngIf="getAdditionalArticles(ag).length > 0">
+                      <span class="chip-item clickable-detail" *ngFor="let art of getAdditionalArticles(ag)" (click)="verDetalleArticulo(art)">
+                        <span>{{ art.alias || art.nroSerie || 'Artículo' }} <small *ngIf="art.modelo?.categoria?.nombre">({{ art.modelo.categoria.nombre }})</small></span>
+                      </span>
+                    </div>
+                    
+                    <div *ngIf="getPredefinedSlots(ag).length === 0 && getAdditionalArticles(ag).length === 0" class="empty-sub-text">
+                      Sin componentes vinculados.
+                    </div>
+                  </div>
+
+                  <div class="sub-section">
+                    <div class="md-lbl">Sub-conjuntos</div>
+                    
+                    <div class="predefined-slots" *ngIf="getPredefinedSubSlots(ag).length > 0">
+                      <div *ngFor="let slot of getPredefinedSubSlots(ag)" class="slot-item">
+                        <i class="pi" [ngClass]="slot.subAgrupador ? 'pi-check-circle text-success' : 'pi-circle'" style="font-size: 1.05rem; color: slot.subAgrupador ? '#10b981' : '#94a3b8';"></i>
+                        <span class="slot-cat">{{ slot.tipoAgrupador.nombre }}:</span>
+                        <span *ngIf="slot.subAgrupador" class="clickable-detail" (click)="verDetalleAgrupador(slot.subAgrupador)">
+                          {{ slot.subAgrupador.nombre }}
+                        </span>
+                        <span *ngIf="!slot.subAgrupador" class="empty-text">(Vacío)</span>
+                      </div>
+                    </div>
+
+                    <div class="chips-grid" *ngIf="getAdditionalSubAgrupadores(ag).length > 0">
+                      <span class="chip-item alt clickable-detail" *ngFor="let sub of getAdditionalSubAgrupadores(ag)" (click)="verDetalleAgrupador(sub)">
+                        <i class="pi pi-sitemap" style="font-size: 0.8rem; color: var(--primary); margin-right: 0.25rem;"></i>
+                        <span>{{ sub.nombre }} <small *ngIf="sub.tipoAgrupador?.nombre">({{ sub.tipoAgrupador.nombre }})</small></span>
+                      </span>
+                    </div>
+                    
+                    <div *ngIf="getPredefinedSubSlots(ag).length === 0 && getAdditionalSubAgrupadores(ag).length === 0" class="empty-sub-text">
+                      Sin sub-conjuntos vinculados.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <app-paginador 
+                *ngIf="getAgrupadoresForDomain(selectedDomainId).length > 0" 
+                [total]="getAgrupadoresForDomain(selectedDomainId).length" 
+                [pagina]="paginaAgrupadores" 
+                (paginaChange)="paginaAgrupadores = $event"
+              ></app-paginador>
+            </div>
+
+            <!-- Artículos sueltos -->
+            <div *ngIf="getArticulosForDomain(selectedDomainId).length > 0" class="section-lbl-wrapper" style="margin-top: 12px;">
+              <div class="section-lbl mt" style="margin-top: 0; margin-bottom: 12px;">Artículos asignados directamente</div>
+              <div class="tablecard" style="margin-top: 0;">
+                <div class="tablescroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Artículo</th>
+                        <th>Modelo</th>
+                        <th>Nº serie</th>
+                        <th>Estado</th>
+                        <th>Desde</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let art of paginatedArticulos">
+                        <td class="cell-name">
+                          <span class="clickable-detail" (click)="verDetalleArticulo(art)">
+                            {{ art.alias || 'Sin alias' }}
+                          </span>
+                        </td>
+                        <td class="mut">
+                          <span class="model-hover-container" [pTooltip]="getModelTooltipHtml(art.modelo)" escape="false" tooltipPosition="top" appendTo="body" tooltipStyleClass="custom-model-tooltip">
+                            {{ art.modelo?.nombre || '—' }}
+                          </span>
+                        </td>
+                        <td class="mono">{{ art.nroSerie || '—' }}</td>
+                        <td>
+                          <span [ngClass]="estadoPillClass(art)">
+                            <span class="dot"></span>{{ estadoNombre(art) }}
+                          </span>
+                        </td>
+                        <td class="mut">{{ art.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <app-paginador 
+                *ngIf="getArticulosForDomain(selectedDomainId).length > 0" 
+                [total]="getArticulosForDomain(selectedDomainId).length" 
+                [pagina]="paginaArticulos" 
+                (paginaChange)="paginaArticulos = $event"
+              ></app-paginador>
+            </div>
+          </ng-container>
+
+          <!-- Historial de devoluciones por dominio (Contraído) -->
+          <div class="collapsible-panel-card" [class.expanded]="showHistorialDetails" *ngIf="selectedDomainId !== null" style="margin-top: 12px;">
+            <div 
+              class="panel-header" 
+              [class.has-border]="showHistorialDetails"
+              (click)="toggleHistorial()"
+            >
+              <div class="panel-title">
+                <i class="pi" [ngClass]="showHistorialDetails ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                <span>Historial de bienes devueltos</span>
+              </div>
+              <span class="panel-badge">{{ getHistorialForDomain(selectedDomainId).length }}</span>
+            </div>
+            
+            <div class="panel-content" *ngIf="showHistorialDetails">
+              <div class="empty-card" *ngIf="getHistorialForDomain(selectedDomainId).length === 0" style="border: none; background: transparent; padding: 1.5rem 0 0.5rem;">
+                No registras devoluciones en este dominio.
+              </div>
+              <div class="tablecard" *ngIf="getHistorialForDomain(selectedDomainId).length > 0" style="border: none; box-shadow: none; padding: 0;">
+                <div class="tablescroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Tipo</th>
+                        <th>Nombre</th>
+                        <th>Detalle</th>
+                        <th>Entrega</th>
+                        <th>Devolución</th>
+                        <th>Observaciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let h of paginatedHistorial">
+                        <td>
+                          <span class="pill" [class.indigo]="h.tipo === 'AGRUPADOR'" [class.slate]="h.tipo !== 'AGRUPADOR'">
+                            {{ h.tipo === 'AGRUPADOR' ? 'Agrupador' : 'Artículo' }}
+                          </span>
+                        </td>
+                        <td class="cell-name">{{ h.nombre }}</td>
+                        <td class="mut">{{ h.detalle || '—' }}</td>
+                        <td class="mut">{{ h.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+                        <td class="mut">{{ h.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
+                        <td class="mut">{{ h.observaciones || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <app-paginador 
+                *ngIf="getHistorialForDomain(selectedDomainId).length > 0" 
+                [total]="getHistorialForDomain(selectedDomainId).length" 
+                [pagina]="paginaHistorial" 
+                (paginaChange)="paginaHistorial = $event"
+              ></app-paginador>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRUPO 2: Gestión de Solicitudes y Soporte -->
+      <div class="group-container requests-group">
+        <div class="group-header">
+          <i class="pi pi-file-edit"></i>
+          <span>Gestión de Solicitudes y Soporte</span>
+        </div>
+        
+        <div class="group-content">
+          <!-- Solicitudes y reportes en curso -->
+          <div class="collapsible-panel-card" [class.expanded]="showSolicitudesDetails" *ngIf="selectedDomainId !== null" style="margin-top: 0;">
+            <div 
+              class="panel-header" 
+              [class.has-border]="showSolicitudesDetails"
+              (click)="toggleSolicitudes()"
+            >
+              <div class="panel-title">
+                <i class="pi" [ngClass]="showSolicitudesDetails ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                <span>Mis solicitudes y reportes</span>
+              </div>
+              <span class="panel-badge">{{ getSolicitudesForDomain(selectedDomainId).length }}</span>
+            </div>
+            
+            <div class="panel-content" *ngIf="showSolicitudesDetails">
+              <div class="empty-card" *ngIf="getSolicitudesForDomain(selectedDomainId).length === 0" style="border: none; background: transparent; padding: 1.5rem 0 0.5rem;">
+                No registras solicitudes o reportes en este dominio.
+              </div>
+              <div class="tablecard" *ngIf="getSolicitudesForDomain(selectedDomainId).length > 0" style="border: none; box-shadow: none; padding: 0;">
+                <div class="tablescroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Tipo</th>
+                        <th>Detalle del Pedido</th>
+                        <th>Motivo / Justificación</th>
+                        <th>Fecha Solicitud</th>
+                        <th>Estado</th>
+                        <th>Resolución / Observaciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let s of paginatedSolicitudes">
+                        <td>
+                          <span class="pill" [class.indigo]="s.tipo === 'ROTURA'" [class.blue]="s.tipo === 'TEMPORAL'" [class.amber]="s.tipo === 'ESCASEZ'">
+                            {{ s.tipo === 'ROTURA' ? 'Rotura' : s.tipo === 'TEMPORAL' ? 'Préstamo' : 'Falta Insumo' }}
+                          </span>
+                        </td>
+                        <td class="cell-name">
+                          <span *ngIf="s.tipo === 'ROTURA' && s.articulo">
+                            <strong>{{ s.articulo.alias || s.articulo.nroSerie }}</strong> ({{ s.articulo.modelo?.nombre }})
+                          </span>
+                          <span *ngIf="s.tipo === 'ESCASEZ' && s.categoria">
+                            {{ s.cantidad }}x {{ s.categoria.nombre }}
+                          </span>
+                          <span *ngIf="s.tipo === 'TEMPORAL' && s.categoria">
+                            Préstamo {{ s.categoria.nombre }} <br/>
+                            <small class="mut">Desde {{ s.fechaInicio | date:'dd/MM/yyyy' }} hasta {{ s.fechaFin | date:'dd/MM/yyyy' }}</small>
+                          </span>
+                        </td>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [pTooltip]="s.motivo" tooltipPosition="top">
+                          {{ s.motivo }}
+                        </td>
+                        <td class="mut">{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                        <td>
+                          <span class="pill" 
+                            [class.green]="s.estado === 'ENTREGADA'" 
+                            [class.blue]="s.estado === 'APROBADA'" 
+                            [class.slate]="s.estado === 'PENDIENTE'" 
+                            [class.amber]="s.estado === 'RECHAZADA'"
+                          >
+                            <span class="dot"></span>
+                            {{ s.estado === 'PENDIENTE' ? 'Pendiente' : s.estado === 'APROBADA' ? 'En Curso' : s.estado === 'ENTREGADA' ? 'Resuelta' : 'Rechazada' }}
+                          </span>
+                        </td>
+                        <td class="mut">{{ s.observacionesAdmin || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <app-paginador 
+                *ngIf="getSolicitudesForDomain(selectedDomainId).length > 0" 
+                [total]="getSolicitudesForDomain(selectedDomainId).length" 
+                [pagina]="paginaSolicitudes" 
+                (paginaChange)="paginaSolicitudes = $event"
+              ></app-paginador>
+            </div>
+          </div>
+
+          <!-- Solicitudes Generales (Soporte) -->
+          <div class="collapsible-panel-card" [class.expanded]="showGeneralDetails" style="margin-top: 0;">
+            <div 
+              class="panel-header" 
+              [class.has-border]="showGeneralDetails"
+              (click)="toggleGeneral()"
+            >
+              <div class="panel-title">
+                <i class="pi" [ngClass]="showGeneralDetails ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                <span>Mantenimiento y Soporte General</span>
+              </div>
+              <span class="panel-badge">{{ getSolicitudesGenerales().length }}</span>
+            </div>
+            
+            <div class="panel-content" *ngIf="showGeneralDetails">
+              <div class="empty-card" *ngIf="getSolicitudesGenerales().length === 0" style="border: none; background: transparent; padding: 1.5rem 0 0.5rem;">
+                No registras solicitudes generales o reportes de mantenimiento.
+              </div>
+              <div class="tablecard" *ngIf="getSolicitudesGenerales().length > 0" style="border: none; box-shadow: none; padding: 0;">
+                <div class="tablescroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Concepto / Reporte</th>
+                        <th>Detalles / Motivo</th>
+                        <th>Fecha Solicitud</th>
+                        <th>Estado</th>
+                        <th>Resolución / Observaciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let s of paginatedSolicitudesGenerales">
+                        <td class="cell-name">
+                          <strong>{{ s.titulo }}</strong>
+                        </td>
+                        <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [pTooltip]="s.motivo" tooltipPosition="top">
+                          {{ s.motivo }}
+                        </td>
+                        <td class="mut">{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                        <td>
+                          <span class="pill" 
+                            [class.green]="s.estado === 'ENTREGADA'" 
+                            [class.blue]="s.estado === 'APROBADA'" 
+                            [class.slate]="s.estado === 'PENDIENTE'" 
+                            [class.amber]="s.estado === 'RECHAZADA'"
+                          >
+                            <span class="dot"></span>
+                            {{ s.estado === 'PENDIENTE' ? 'Pendiente' : s.estado === 'APROBADA' ? 'En Curso' : s.estado === 'ENTREGADA' ? 'Resuelta' : 'Rechazada' }}
+                          </span>
+                        </td>
+                        <td class="mut">{{ s.observacionesAdmin || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <app-paginador 
+                *ngIf="getSolicitudesGenerales().length > 0" 
+                [total]="getSolicitudesGenerales().length" 
+                [pagina]="paginaSolicitudesGenerales" 
+                (paginaChange)="paginaSolicitudesGenerales = $event"
+              ></app-paginador>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<!-- Modal Detalle del Artículo -->
+<p-dialog header="Detalle del artículo" [(visible)]="showDetalleArticuloDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '500px' }">
+  <div class="form" *ngIf="selectedArticuloDetalle as d" style="display: flex; flex-direction: column; gap: 1rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.75rem; margin-bottom: 0.5rem;">
+      <div style="font-size: 1.15rem; font-weight: 700; color: var(--ink);">{{ d.alias || 'Artículo' }}</div>
+      <span [ngClass]="estadoPillClass(d)"><span class="dot"></span>{{ estadoNombre(d) }}</span>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Modelo</span><span style="font-weight: 500;">{{ d.modelo?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Marca</span><span style="font-weight: 500;">{{ d.modelo?.marca?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Categoría</span><span style="font-weight: 500;">{{ d.modelo?.categoria?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Nº de Serie</span><span style="font-weight: 500; font-family: var(--mono);">{{ d.nroSerie || 'Sin serie' }}</span></div>
+    </div>
+
+    <div *ngIf="d.detalle" style="background-color: var(--border-soft); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-soft);">
+      <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Detalle</span>
+      <p style="margin: 0; font-size: 0.9rem; color: var(--ink); white-space: pre-wrap;">{{ d.detalle }}</p>
+    </div>
+
+    <!-- Atributos del Artículo -->
+    <ng-container *ngIf="d.atributos && getObjectKeys(d.atributos).length > 0">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Atributos del Artículo</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+        <div *ngFor="let k of getObjectKeys(d.atributos)" style="display: flex; flex-direction: column;">
+          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ getAttributeName(d.modelo, k) }}</span>
+          <span style="font-weight: 500;">{{ getParsedAttribute(d.modelo, d.atributos, k) }}</span>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Atributos del Modelo -->
+    <ng-container *ngIf="d.modelo?.atributos && getObjectKeys(d.modelo.atributos).length > 0">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Especificaciones del Modelo</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+        <div *ngFor="let k of getObjectKeys(d.modelo.atributos)" style="display: flex; flex-direction: column;">
+          <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500;">{{ getAttributeName(d.modelo, k) }}</span>
+          <span style="font-weight: 500;">{{ getParsedAttribute(d.modelo, d.modelo.atributos, k) }}</span>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn primary" (click)="showDetalleArticuloDialog = false">Cerrar</button></ng-template>
+</p-dialog>
+
+<!-- Modal Detalle del Agrupador -->
+<p-dialog [header]="selectedAgrupadorDetalle?.tipoAgrupador?.nombre || 'Detalle del agrupador'" [(visible)]="showDetalleAgrupadorDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '500px' }">
+  <div class="form" *ngIf="selectedAgrupadorDetalle as g" style="display: flex; flex-direction: column; gap: 1rem;">
+    <div style="border-bottom: 1px solid var(--border-soft); padding-bottom: 0.75rem; margin-bottom: 0.5rem;">
+      <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; display: block;">Agrupador</span>
+      <div style="font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-top: 0.15rem;">{{ g.nombre }}</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Tipo</span><span style="font-weight: 500;">{{ g.tipoAgrupador?.nombre || '—' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Agrupador Padre</span><span style="font-weight: 500;">{{ g.agrupadorPadre?.nombre || '—' }}</span></div>
+    </div>
+
+    <!-- Lista de Artículos Contenidos -->
+    <div *ngIf="g.articulos?.length">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Artículos Contenidos</div>
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <div *ngFor="let sa of g.articulos" style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background-color: var(--bg-hover); border: 1px solid var(--border-soft); border-radius: 6px; font-size: 0.85rem;">
+          <span style="font-weight: 600; color: var(--ink);">{{ sa.alias || sa.nroSerie }}</span>
+          <span style="color: var(--muted);" class="model-hover-container" [pTooltip]="getModelTooltipHtml(sa.modelo)" escape="false" tooltipPosition="top" appendTo="body" tooltipStyleClass="custom-model-tooltip">
+            {{ sa.modelo?.nombre || '—' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Sub-agrupadores Contenidos -->
+    <div *ngIf="g.subAgrupadores?.length">
+      <div class="section-lbl" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">Sub-agrupadores Contenidos</div>
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <div *ngFor="let s of g.subAgrupadores" style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background-color: var(--bg-hover); border: 1px solid var(--border-soft); border-radius: 6px; font-size: 0.85rem;">
+          <span style="font-weight: 600; color: var(--ink);">{{ s.nombre }}</span>
+          <span style="color: var(--muted);">{{ s.tipoAgrupador?.nombre || '—' }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="!g.articulos?.length && !g.subAgrupadores?.length" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; text-align: center; padding: 1rem;">
+      Este agrupador no contiene artículos ni sub-agrupadores vinculados.
+    </div>
+  </div>
+  <ng-template pTemplate="footer"><button class="btn primary" (click)="showDetalleAgrupadorDialog = false">Cerrar</button></ng-template>
+</p-dialog>
+
+<!-- Modal Reportar Rotura -->
+<p-dialog header="Reportar rotura de artículo" [(visible)]="showRoturaModal" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '450px' }">
+  <div class="form" *ngIf="selectedDomainId !== null" style="display: flex; flex-direction: column; gap: 1rem;">
+    <p style="font-size: 0.85rem; color: var(--muted); margin: 0;">
+      Informa la avería física o falla técnica de un artículo asignado a tu nombre en este dominio. El equipo de soporte será notificado.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Artículo dañado *</label>
+      <p-select 
+        [options]="getArticulosDisponiblesParaReportar(selectedDomainId)" 
+        [(ngModel)]="selectedArticuloId" 
+        optionLabel="dropdownLabel" 
+        optionValue="id" 
+        placeholder="Selecciona el artículo" 
+        appendTo="body" 
+        styleClass="w-full" 
+        [filter]="true" 
+        filterPlaceholder="Buscar artículo..."
+      >
+        <ng-template let-art pTemplate="item">
+          <div style="display: flex; flex-direction: column; font-size: 0.85rem;">
+            <strong>{{ art.alias || 'Sin alias' }}</strong>
+            <small style="color: var(--muted);">SN: {{ art.nroSerie || 'Sin serie' }} | {{ art.modelo?.nombre }}</small>
+          </div>
+        </ng-template>
+      </p-select>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Descripción del daño o falla *</label>
+      <textarea 
+        pInputText 
+        [(ngModel)]="motivoSolicitud" 
+        rows="4" 
+        placeholder="Detalla qué sucedió con el equipo..." 
+        style="width: 100%; border: 1px solid var(--border-soft); border-radius: 6px; padding: 0.5rem; resize: vertical;"
+      ></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showRoturaModal = false" [disabled]="solicitudSubmitting">Cancelar</button>
+    <button class="btn primary" (click)="enviarRotura()" [disabled]="solicitudSubmitting">
+      <i class="pi pi-spin pi-spinner" *ngIf="solicitudSubmitting" style="margin-right: 4px;"></i>
+      Enviar Reporte
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Solicitar Insumo (Escasez) -->
+<p-dialog header="Solicitar insumos / consumibles" [(visible)]="showInsumoModal" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '450px' }">
+  <div class="form" *ngIf="selectedDomainId !== null" style="display: flex; flex-direction: column; gap: 1rem;">
+    <p style="font-size: 0.85rem; color: var(--muted); margin: 0;">
+      Solicita consumibles o insumos por lote de este dominio (ej. cables, toners, cuadernos, EPP descartables).
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Insumo solicitado *</label>
+      <p-select 
+        [options]="getCategoriasLoteForDomain(selectedDomainId)" 
+        [(ngModel)]="selectedCategoriaId" 
+        optionLabel="nombre" 
+        optionValue="id" 
+        placeholder="Selecciona el insumo" 
+        appendTo="body" 
+        styleClass="w-full" 
+        [filter]="true" 
+        filterPlaceholder="Buscar insumo..."
+      ></p-select>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Cantidad requerida *</label>
+      <input 
+        pInputText 
+        type="number" 
+        [(ngModel)]="cantidadSolicitud" 
+        min="1" 
+        style="width: 100%;"
+      />
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Justificación o motivo *</label>
+      <textarea 
+        pInputText 
+        [(ngModel)]="motivoSolicitud" 
+        rows="4" 
+        placeholder="¿Para qué actividad necesitas estos insumos?..." 
+        style="width: 100%; border: 1px solid var(--border-soft); border-radius: 6px; padding: 0.5rem; resize: vertical;"
+      ></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showInsumoModal = false" [disabled]="solicitudSubmitting">Cancelar</button>
+    <button class="btn primary" (click)="enviarInsumo()" [disabled]="solicitudSubmitting">
+      <i class="pi pi-spin pi-spinner" *ngIf="solicitudSubmitting" style="margin-right: 4px;"></i>
+      Solicitar
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Solicitar Préstamo Temporal -->
+<p-dialog header="Solicitar préstamo temporal" [(visible)]="showPrestamoModal" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '450px' }">
+  <div class="form" *ngIf="selectedDomainId !== null" style="display: flex; flex-direction: column; gap: 1rem;">
+    <p style="font-size: 0.85rem; color: var(--muted); margin: 0;">
+      Solicita equipamiento de seguimiento unitario por un plazo de tiempo específico (ej: proyector de conferencias, herramientas de repuesto).
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Categoría de equipo *</label>
+      <p-select 
+        [options]="getCategoriasUnitarioForDomain(selectedDomainId)" 
+        [(ngModel)]="selectedCategoriaId" 
+        optionLabel="nombre" 
+        optionValue="id" 
+        placeholder="Selecciona la categoría" 
+        appendTo="body" 
+        styleClass="w-full" 
+        [filter]="true" 
+        filterPlaceholder="Buscar categoría..."
+      ></p-select>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+      <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Fecha desde *</label>
+        <input 
+          pInputText 
+          type="date" 
+          [(ngModel)]="fechaInicioSolicitud" 
+          style="width: 100%;"
+        />
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Fecha hasta *</label>
+        <input 
+          pInputText 
+          type="date" 
+          [(ngModel)]="fechaFinSolicitud" 
+          style="width: 100%;"
+        />
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Motivo del préstamo *</label>
+      <textarea 
+        pInputText 
+        [(ngModel)]="motivoSolicitud" 
+        rows="4" 
+        placeholder="Justificación detallada y uso del equipamiento..." 
+        style="width: 100%; border: 1px solid var(--border-soft); border-radius: 6px; padding: 0.5rem; resize: vertical;"
+      ></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showPrestamoModal = false" [disabled]="solicitudSubmitting">Cancelar</button>
+    <button class="btn primary" (click)="enviarPrestamo()" [disabled]="solicitudSubmitting">
+      <i class="pi pi-spin pi-spinner" *ngIf="solicitudSubmitting" style="margin-right: 4px;"></i>
+      Solicitar Préstamo
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal para Solicitud General -->
+<p-dialog 
+  header="Solicitud General / Reporte de Mantenimiento" 
+  [(visible)]="showGeneralModal" 
+  [modal]="true" 
+  [draggable]="false" 
+  [dismissableMask]="true" 
+  [style]="{ width: '100%', maxWidth: '450px' }"
+>
+  <div class="form" style="display: flex; flex-direction: column; gap: 1rem;">
+    <p style="font-size: 0.85rem; color: var(--muted); margin: 0; line-height: 1.4;">
+      Usa este formulario para reportar incidentes edilicios, de mantenimiento o solicitar bienes no clasificados en los dominios de inventario.
+    </p>
+
+    <!-- Título / Concepto -->
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">¿Qué solicitas o reportas? *</label>
+      <input 
+        pInputText 
+        [(ngModel)]="tituloSolicitud" 
+        placeholder="Ej: Reparar persiana de oficina, Nuevo perchero..." 
+        style="width: 100%; border: 1px solid var(--border-soft); border-radius: 6px; padding: 0.5rem;"
+      />
+    </div>
+
+    <!-- Motivo / Detalles -->
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Detalles / Motivo *</label>
+      <textarea 
+        pInputText 
+        [(ngModel)]="motivoSolicitudGeneral" 
+        rows="4" 
+        placeholder="Describe detalladamente el problema o el pedido para ayudar a resolverlo..." 
+        style="width: 100%; border: 1px solid var(--border-soft); border-radius: 6px; padding: 0.5rem; resize: vertical;"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showGeneralModal = false" [disabled]="solicitudSubmitting">Cancelar</button>
+    <button 
+      class="btn primary" 
+      (click)="enviarSolicitudGeneral()" 
+      [disabled]="solicitudSubmitting"
+    >
+      <i class="pi pi-spin pi-spinner" *ngIf="solicitudSubmitting" style="margin-right: 4px;"></i>
+      Enviar Reporte
+    </button>
+  </ng-template>
+</p-dialog>

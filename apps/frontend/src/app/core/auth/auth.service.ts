@@ -7,8 +7,9 @@ export interface Administrador {
   id: number;
   username: string;
   nombre: string;
-  rol: 'SISTEMA' | 'DOMINIO';
+  rol: 'SISTEMA' | 'DOMINIO' | 'COLABORADOR';
   dominios: number[];
+  empleadoId?: number;
 }
 
 @Injectable({
@@ -72,6 +73,11 @@ export class AuthService {
       return false;
     }
     return this.currentUser() !== null;
+  }
+
+  isAdmin(): boolean {
+    const user = this.currentUser();
+    return user ? (user.rol === 'SISTEMA' || user.rol === 'DOMINIO') : false;
   }
 
   isSystemAdmin(): boolean {

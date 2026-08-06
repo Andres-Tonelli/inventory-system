@@ -85,6 +85,10 @@ export class App implements OnInit {
     return this.authService.currentUser()?.username || '';
   }
 
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
   isSystemAdmin(): boolean {
     return this.authService.isSystemAdmin();
   }

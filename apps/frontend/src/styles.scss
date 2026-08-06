@@ -422,11 +422,21 @@ body {
 
   .p-select {
     padding: 0 !important;
+    display: inline-flex !important;
+    width: 100% !important;
+    align-items: center !important;
     
     .p-select-label {
       padding: 0.8rem 1rem !important;
       font-size: 0.95rem !important;
       background: transparent !important;
+      display: block !important;
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
   }
 

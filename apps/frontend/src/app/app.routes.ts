@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { authGuard, systemAdminGuard, domainGuard, guestGuard } from './core/auth/auth.guard';
+import { authGuard, systemAdminGuard, domainGuard, guestGuard, adminGuard } from './core/auth/auth.guard';
 
 export const appRoutes: Route[] = [
   {
@@ -14,6 +14,11 @@ export const appRoutes: Route[] = [
       {
         path: '',
         loadComponent: () => import('./domain-selection/domain-selection.component').then(m => m.DomainSelectionComponent)
+      },
+      {
+        path: 'solicitudes',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./solicitudes-admin/solicitudes-admin.component').then(m => m.SolicitudesAdminComponent)
       },
       {
         path: 'configuracion/dominios',
@@ -42,6 +47,10 @@ export const appRoutes: Route[] = [
       {
         path: 'asignaciones',
         loadComponent: () => import('./asignaciones/asignaciones.component').then(m => m.AsignacionesComponent)
+      },
+      {
+        path: 'mis-asignaciones',
+        loadComponent: () => import('./mis-asignaciones/mis-asignaciones.component').then(m => m.MisAsignacionesComponent)
       }
     ]
   },

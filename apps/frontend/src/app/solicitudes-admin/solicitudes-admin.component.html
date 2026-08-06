@@ -1,0 +1,294 @@
+<div class="page">
+  <!-- Header -->
+  <div class="profile-header">
+    <div class="avatar"><i class="pi pi-envelope"></i></div>
+    <div>
+      <span class="eyebrow">Administración</span>
+      <h1>Solicitudes e Incidentes</h1>
+      <span class="legajo" style="font-family: inherit;">Bandeja de entrada de reportes de usuarios</span>
+    </div>
+  </div>
+
+  <!-- Filter & Actions Bar -->
+  <div class="filters-bar">
+    <!-- Domain filter -->
+    <div class="filter-group" *ngIf="dominios.length > 0">
+      <label>Dominio</label>
+      <p-select 
+        [options]="dominios" 
+        [(ngModel)]="selectedDomainId" 
+        optionLabel="nombre" 
+        optionValue="id" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Selecciona el dominio"
+        styleClass="w-full sm-select"
+      ></p-select>
+    </div>
+
+    <!-- Status Filter Pills -->
+    <div class="filter-group">
+      <label>Estado</label>
+      <div class="status-pills">
+        <button 
+          class="pill-btn" 
+          [class.active]="selectedEstado === 'PENDIENTE'" 
+          (click)="selectedEstado = 'PENDIENTE'; pagina = 1"
+        >
+          Entrantes <span class="badge">{{ totalPending }}</span>
+        </button>
+        <button 
+          class="pill-btn" 
+          [class.active]="selectedEstado === 'EN_CURSO'" 
+          (click)="selectedEstado = 'EN_CURSO'; pagina = 1"
+        >
+          En Curso <span class="badge resolved">{{ totalEnCurso }}</span>
+        </button>
+        <button 
+          class="pill-btn" 
+          [class.active]="selectedEstado === 'CERRADAS'" 
+          (click)="selectedEstado = 'CERRADAS'; pagina = 1"
+        >
+          Cerradas <span class="badge resolved">{{ totalClosed }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="muted-center" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem; margin-bottom: 12px; color: var(--indigo);"></i>
+    <span>Cargando solicitudes...</span>
+  </div>
+
+  <!-- Main Content -->
+  <ng-container *ngIf="!loading">
+    <!-- Empty State -->
+    <div class="empty-card" *ngIf="filteredSolicitudes.length === 0" style="margin-top: 1rem;">
+      <i class="pi pi-inbox" style="font-size: 2.5rem; color: var(--muted-2); display: block; margin-bottom: 12px;"></i>
+      <h3>No hay solicitudes</h3>
+      <p>No se encontraron registros que coincidan con los filtros seleccionados.</p>
+    </div>
+
+    <!-- Table -->
+    <div class="tablecard" *ngIf="filteredSolicitudes.length > 0" style="margin-top: 1rem;">
+      <div class="tablescroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Empleado</th>
+              <th>Dominio</th>
+              <th>Tipo</th>
+              <th>Detalle del Pedido</th>
+              <th>Motivo / Falla</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th style="text-align: center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of paginatedSolicitudes">
+              <!-- Empleado -->
+              <td class="cell-name">
+                <div>{{ s.empleado?.nombre }}</div>
+                <small class="mono">Legajo: {{ s.empleado?.legajo }}</small>
+              </td>
+
+              <!-- Dominio -->
+              <td>
+                <span class="domain-tag" *ngIf="s.dominio">
+                  <i class="pi" [ngClass]="'pi-' + (s.dominio.icono || 'box')"></i>
+                  <span>{{ s.dominio.nombre }}</span>
+                </span>
+                <span class="domain-tag" *ngIf="!s.dominio" style="background-color: #f1f5f9; color: #475569; border-color: #cbd5e1;">
+                  <i class="pi pi-question-circle"></i>
+                  <span>Soporte General</span>
+                </span>
+              </td>
+
+              <!-- Tipo -->
+              <td>
+                <span class="pill" [class.indigo]="s.tipo === 'ROTURA'" [class.blue]="s.tipo === 'TEMPORAL'" [class.amber]="s.tipo === 'ESCASEZ'" [class.slate]="s.tipo === 'GENERAL'">
+                  {{ s.tipo === 'ROTURA' ? 'Rotura' : s.tipo === 'TEMPORAL' ? 'Préstamo' : s.tipo === 'ESCASEZ' ? 'Falta Insumo' : 'General' }}
+                </span>
+              </td>
+
+              <!-- Detalle -->
+              <td>
+                <!-- Rotura -->
+                <span *ngIf="s.tipo === 'ROTURA' && s.articulo">
+                  <strong>{{ s.articulo.alias || s.articulo.nroSerie }}</strong> ({{ s.articulo.modelo?.nombre }})
+                </span>
+                
+                <!-- Escasez -->
+                <span *ngIf="s.tipo === 'ESCASEZ' && s.categoria">
+                  {{ s.cantidad }}x {{ s.categoria.nombre }}
+                </span>
+
+                <!-- Temporal -->
+                <span *ngIf="s.tipo === 'TEMPORAL' && s.categoria">
+                  {{ s.categoria.nombre }} <br/>
+                  <small class="mut">Plazo: {{ s.fechaInicio | date:'dd/MM/yyyy' }} al {{ s.fechaFin | date:'dd/MM/yyyy' }}</small>
+                </span>
+
+                <!-- General -->
+                <span *ngIf="s.tipo === 'GENERAL'">
+                  <strong>{{ s.titulo }}</strong>
+                </span>
+              </td>
+
+              <!-- Justificación -->
+              <td style="max-width: 200px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" [pTooltip]="s.motivo" tooltipPosition="top">
+                {{ s.motivo }}
+              </td>
+
+              <!-- Fecha -->
+              <td class="mut">{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+
+              <!-- Estado -->
+              <td>
+                <span class="pill" 
+                  [class.green]="s.estado === 'ENTREGADA'" 
+                  [class.blue]="s.estado === 'APROBADA'" 
+                  [class.slate]="s.estado === 'PENDIENTE'" 
+                  [class.amber]="s.estado === 'RECHAZADA'"
+                >
+                  <span class="dot"></span>
+                  {{ s.estado === 'PENDIENTE' ? 'Pendiente' : s.estado === 'APROBADA' ? 'En Curso' : s.estado === 'ENTREGADA' ? 'Resuelta' : 'Rechazada' }}
+                </span>
+              </td>
+
+              <!-- Acciones -->
+              <td style="text-align: center; white-space: nowrap;">
+                <!-- Acciones para Entrantes (PENDIENTE) -->
+                <ng-container *ngIf="s.estado === 'PENDIENTE'">
+                  <button class="btn btn-action-approve" (click)="abrirResolver(s, 'APROBADA')" pTooltip="Aprobar / Procesar" tooltipPosition="top">
+                    <i class="pi pi-check"></i>
+                  </button>
+                  <button class="btn btn-action-reject" (click)="abrirResolver(s, 'RECHAZADA')" pTooltip="Rechazar" tooltipPosition="top" style="margin-left: 8px;">
+                    <i class="pi pi-times"></i>
+                  </button>
+                </ng-container>
+
+                <!-- Acciones para En Curso (APROBADA) -->
+                <ng-container *ngIf="s.estado === 'APROBADA'">
+                  <button class="btn btn-action-approve" (click)="abrirResolver(s, 'ENTREGADA')" pTooltip="Entregar / Finalizar" tooltipPosition="top" style="background-color: var(--indigo-soft); border-color: var(--indigo); color: var(--indigo-600);">
+                    <i class="pi pi-check-square"></i>
+                  </button>
+                  <button class="btn btn-action-reject" (click)="abrirResolver(s, 'RECHAZADA')" pTooltip="Cancelar / Rechazar" tooltipPosition="top" style="margin-left: 8px;">
+                    <i class="pi pi-times"></i>
+                  </button>
+                </ng-container>
+
+                <span class="mut text-xs" *ngIf="s.estado === 'ENTREGADA' || s.estado === 'RECHAZADA'">
+                  Cerrada
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Paginador -->
+    <app-paginador 
+      *ngIf="filteredSolicitudes.length > 0" 
+      [total]="filteredSolicitudes.length" 
+      [pagina]="pagina" 
+      (paginaChange)="pagina = $event"
+    ></app-paginador>
+  </ng-container>
+</div>
+
+<!-- Modal para Resolver Solicitudes -->
+<p-dialog 
+  [header]="nuevoEstado === 'APROBADA' ? 'Aprobar Solicitud' : nuevoEstado === 'ENTREGADA' ? 'Entregar y Cerrar Solicitud' : 'Rechazar Solicitud'" 
+  [(visible)]="showResolverDialog" 
+  [modal]="true" 
+  [draggable]="false" 
+  [dismissableMask]="true" 
+  [style]="{ width: '100%', maxWidth: '450px' }"
+>
+  <div class="form" *ngIf="selectedSolicitud" style="display: flex; flex-direction: column; gap: 1rem;">
+    <!-- Resumen de solicitud -->
+    <div class="solicitud-resumen-card">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 0.25rem;">
+        Solicitud #{{ selectedSolicitud.id }} - {{ selectedSolicitud.empleado?.nombre }}
+      </div>
+      <div style="font-size: 0.95rem; font-weight: 700; color: var(--ink);">
+        <span *ngIf="selectedSolicitud.tipo === 'ROTURA' && selectedSolicitud.articulo">
+          Rotura de {{ selectedSolicitud.articulo.alias || selectedSolicitud.articulo.nroSerie }}
+        </span>
+        <span *ngIf="selectedSolicitud.tipo === 'ESCASEZ' && selectedSolicitud.categoria">
+          Falta de {{ selectedSolicitud.cantidad }}x {{ selectedSolicitud.categoria.nombre }}
+        </span>
+        <span *ngIf="selectedSolicitud.tipo === 'TEMPORAL' && selectedSolicitud.categoria">
+          Préstamo de {{ selectedSolicitud.categoria.nombre }}
+        </span>
+        <span *ngIf="selectedSolicitud.tipo === 'GENERAL'">
+          {{ selectedSolicitud.titulo }}
+        </span>
+      </div>
+      <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); line-height: 1.4;">
+        <strong>Justificación:</strong> "{{ selectedSolicitud.motivo }}"
+      </div>
+    </div>
+
+    <!-- Controles condicionales para APROBAR/ENTREGAR una ROTURA -->
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;" *ngIf="(nuevoEstado === 'APROBADA' || nuevoEstado === 'ENTREGADA') && selectedSolicitud.tipo === 'ROTURA' && selectedSolicitud.articuloId">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Establecer nuevo estado del Artículo *</label>
+      <p-select 
+        [options]="estadosDisponibles" 
+        [(ngModel)]="nuevoEstadoArticuloCodigo" 
+        optionLabel="nombre" 
+        optionValue="codigo" 
+        placeholder="Selecciona el estado" 
+        appendTo="body" 
+        styleClass="w-full"
+      ></p-select>
+      <small style="color: var(--muted); font-size: 0.75rem; margin-top: 0.15rem;">
+        Al guardar, el artículo cambiará a este estado y se dará de baja automáticamente de las asignaciones del empleado.
+      </small>
+    </div>
+
+    <!-- Checkbox para resolver inmediatamente (si es PENDIENTE y se está APROBANDO) -->
+    <div style="display: flex; align-items: center; gap: 8px; margin-top: 0.25rem;" *ngIf="nuevoEstado === 'APROBADA' && selectedSolicitud.estado === 'PENDIENTE'">
+      <input 
+        type="checkbox" 
+        id="resolverInmediatamente" 
+        [(ngModel)]="resolverInmediatamente"
+        style="width: 16px; height: 16px; cursor: pointer;"
+      />
+      <label for="resolverInmediatamente" style="margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--ink); cursor: pointer;">
+        ¿Entregar y resolver inmediatamente?
+      </label>
+    </div>
+
+    <!-- Comentarios -->
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">
+        {{ (nuevoEstado === 'APROBADA' || nuevoEstado === 'ENTREGADA') ? 'Observaciones administrativas (Opcional)' : 'Motivo del Rechazo *' }}
+      </label>
+      <textarea 
+        pInputText 
+        [(ngModel)]="observacionesAdmin" 
+        rows="4" 
+        placeholder="Escribe comentarios de resolución..." 
+        style="width: 100%; border: 1px solid var(--border-soft); border-radius: 6px; padding: 0.5rem; resize: vertical;"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showResolverDialog = false" [disabled]="submitting">Cancelar</button>
+    <button 
+      class="btn" 
+      [class.primary]="nuevoEstado === 'APROBADA' || nuevoEstado === 'ENTREGADA'" 
+      [class.btn-reject]="nuevoEstado === 'RECHAZADA'" 
+      (click)="guardarResolucion()" 
+      [disabled]="submitting"
+    >
+      <i class="pi pi-spin pi-spinner" *ngIf="submitting" style="margin-right: 4px;"></i>
+      {{ nuevoEstado === 'APROBADA' ? (resolverInmediatamente ? 'Resolver y Entregar' : 'Aprobar Solicitud') : nuevoEstado === 'ENTREGADA' ? 'Entregar y Cerrar' : 'Confirmar Rechazo' }}
+    </button>
+  </ng-template>
+</p-dialog>

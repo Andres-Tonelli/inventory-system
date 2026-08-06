@@ -7,36 +7,48 @@
     </div>
     
     <nav class="navbar-menu">
-      <a routerLink="/" [class.active]="isRouteActive('/')">
-        <i class="pi pi-home"></i>
-        <span>Dashboard</span>
-      </a>
-      
-      <ng-container *ngIf="hasSelectedDomain()">
-        <a [routerLink]="['/dominios', getSelectedDomainId()]" [class.active]="isDomainActive()">
-          <i class="pi pi-server"></i>
-          <span>{{ getSelectedDomainName() }}</span>
+      <ng-container *ngIf="isAdmin()">
+        <a routerLink="/" [class.active]="isRouteActive('/')">
+          <i class="pi pi-home"></i>
+          <span>Dashboard</span>
+        </a>
+        
+        <ng-container *ngIf="hasSelectedDomain()">
+          <a [routerLink]="['/dominios', getSelectedDomainId()]" [class.active]="isDomainActive()">
+            <i class="pi pi-server"></i>
+            <span>{{ getSelectedDomainName() }}</span>
+          </a>
+        </ng-container>
+  
+        <a routerLink="/asignaciones" [class.active]="isAsignacionesActive()" *ngIf="hasSelectedDomain()">
+          <i class="pi pi-users"></i>
+          <span>Asignaciones</span>
+        </a>
+
+        <a routerLink="/solicitudes" [class.active]="isRouteActive('/solicitudes')">
+          <i class="pi pi-envelope"></i>
+          <span>Solicitudes</span>
+        </a>
+        
+        <a routerLink="/configuracion/dominios" [class.active]="isConfiguracionActive()">
+          <i class="pi pi-cog"></i>
+          <span>Configuración</span>
+        </a>
+  
+        <a routerLink="/configuracion/administradores" [class.active]="isAdministradoresActive()" *ngIf="isSystemAdmin()">
+          <i class="pi pi-users"></i>
+          <span>Administradores</span>
+        </a>
+  
+        <a routerLink="/configuracion/organizacion" [class.active]="isOrganizacionActive()" *ngIf="isSystemAdmin()">
+          <i class="pi pi-sliders-h"></i>
+          <span>Organización</span>
         </a>
       </ng-container>
 
-      <a routerLink="/asignaciones" [class.active]="isAsignacionesActive()" *ngIf="hasSelectedDomain()">
-        <i class="pi pi-users"></i>
-        <span>Asignaciones</span>
-      </a>
-      
-      <a routerLink="/configuracion/dominios" [class.active]="isConfiguracionActive()">
-        <i class="pi pi-cog"></i>
-        <span>Configuración</span>
-      </a>
-
-      <a routerLink="/configuracion/administradores" [class.active]="isAdministradoresActive()" *ngIf="isSystemAdmin()">
-        <i class="pi pi-users"></i>
-        <span>Administradores</span>
-      </a>
-
-      <a routerLink="/configuracion/organizacion" [class.active]="isOrganizacionActive()" *ngIf="isSystemAdmin()">
-        <i class="pi pi-sliders-h"></i>
-        <span>Organización</span>
+      <a routerLink="/mis-asignaciones" [class.active]="isRouteActive('/mis-asignaciones')">
+        <i class="pi pi-briefcase"></i>
+        <span>Mis Asignaciones</span>
       </a>
     </nav>
 
@@ -86,34 +98,44 @@
     </div>
     
     <ul class="sidebar-menu">
-      <li class="menu-item" [class.active]="isRouteActive('/')">
-        <a routerLink="/"><i class="pi pi-home"></i>Dashboard</a>
-      </li>
-      
-      <!-- Menú dinámico si hay dominio seleccionado -->
-      <ng-container *ngIf="hasSelectedDomain()">
-        <li class="menu-item" [class.active]="isDomainActive()">
-          <a [routerLink]="['/dominios', getSelectedDomainId()]">
-            <i class="pi pi-server text-primary-light"></i>
-            <span class="font-bold text-white">{{ getSelectedDomainName() }}</span>
-          </a>
+      <ng-container *ngIf="isAdmin()">
+        <li class="menu-item" [class.active]="isRouteActive('/')">
+          <a routerLink="/"><i class="pi pi-home"></i>Dashboard</a>
+        </li>
+        
+        <!-- Menú dinámico si hay dominio seleccionado -->
+        <ng-container *ngIf="hasSelectedDomain()">
+          <li class="menu-item" [class.active]="isDomainActive()">
+            <a [routerLink]="['/dominios', getSelectedDomainId()]">
+              <i class="pi pi-server text-primary-light"></i>
+              <span class="font-bold text-white">{{ getSelectedDomainName() }}</span>
+            </a>
+          </li>
+        </ng-container>
+  
+        <li class="menu-item" [class.active]="isAsignacionesActive()" *ngIf="hasSelectedDomain()">
+          <a routerLink="/asignaciones"><i class="pi pi-users"></i>Asignaciones</a>
+        </li>
+
+        <li class="menu-item" [class.active]="isRouteActive('/solicitudes')">
+          <a routerLink="/solicitudes"><i class="pi pi-envelope"></i>Solicitudes</a>
+        </li>
+        
+        <li class="menu-item" [class.active]="isConfiguracionActive()">
+          <a routerLink="/configuracion/dominios"><i class="pi pi-cog"></i>Configuración</a>
+        </li>
+  
+        <li class="menu-item" [class.active]="isAdministradoresActive()" *ngIf="isSystemAdmin()">
+          <a routerLink="/configuracion/administradores"><i class="pi pi-users"></i>Administradores</a>
+        </li>
+  
+        <li class="menu-item" [class.active]="isOrganizacionActive()" *ngIf="isSystemAdmin()">
+          <a routerLink="/configuracion/organizacion"><i class="pi pi-sliders-h"></i>Organización</a>
         </li>
       </ng-container>
 
-      <li class="menu-item" [class.active]="isAsignacionesActive()" *ngIf="hasSelectedDomain()">
-        <a routerLink="/asignaciones"><i class="pi pi-users"></i>Asignaciones</a>
-      </li>
-      
-      <li class="menu-item" [class.active]="isConfiguracionActive()">
-        <a routerLink="/configuracion/dominios"><i class="pi pi-cog"></i>Configuración</a>
-      </li>
-
-      <li class="menu-item" [class.active]="isAdministradoresActive()" *ngIf="isSystemAdmin()">
-        <a routerLink="/configuracion/administradores"><i class="pi pi-users"></i>Administradores</a>
-      </li>
-
-      <li class="menu-item" [class.active]="isOrganizacionActive()" *ngIf="isSystemAdmin()">
-        <a routerLink="/configuracion/organizacion"><i class="pi pi-sliders-h"></i>Organización</a>
+      <li class="menu-item" [class.active]="isRouteActive('/mis-asignaciones')">
+        <a routerLink="/mis-asignaciones"><i class="pi pi-briefcase"></i>Mis Asignaciones</a>
       </li>
     </ul>
 
