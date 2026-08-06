@@ -6,18 +6,19 @@
   - A unique constraint covering the columns `[nombre,marcaId,categoriaId]` on the table `Modelo` will be added. If there are existing duplicate values, this will fail.
 
 */
+
 -- AlterEnum
 ALTER TYPE "TipoSolicitud" ADD VALUE 'GENERAL';
 
--- AlterTable
-ALTER TABLE "Solicitud" ADD COLUMN     "titulo" TEXT,
-ALTER COLUMN "dominioId" DROP NOT NULL;
+-- AlterTable (Agregar columna condicionalmente)
+ALTER TABLE "Solicitud" ADD COLUMN IF NOT EXISTS "titulo" TEXT;
+ALTER TABLE "Solicitud" ALTER COLUMN "dominioId" DROP NOT NULL;
 
--- AlterTable
-ALTER TABLE "StockLote" ADD COLUMN     "atributos" JSONB NOT NULL DEFAULT '{}';
+-- AlterTable (Agregar atributos condicionalmente)
+ALTER TABLE "StockLote" ADD COLUMN IF NOT EXISTS "atributos" JSONB NOT NULL DEFAULT '{}';
 
 -- CreateTable
-CREATE TABLE "SubTiposEnTipoAgrupador" (
+CREATE TABLE IF NOT EXISTS "SubTiposEnTipoAgrupador" (
     "parentTipoId" INTEGER NOT NULL,
     "childTipoId" INTEGER NOT NULL,
 
@@ -25,7 +26,7 @@ CREATE TABLE "SubTiposEnTipoAgrupador" (
 );
 
 -- CreateTable
-CREATE TABLE "CategoriasEnTipoAgrupador" (
+CREATE TABLE IF NOT EXISTS "CategoriasEnTipoAgrupador" (
     "tipoAgrupadorId" INTEGER NOT NULL,
     "categoriaId" INTEGER NOT NULL,
 
@@ -33,34 +34,43 @@ CREATE TABLE "CategoriasEnTipoAgrupador" (
 );
 
 -- CreateIndex
-CREATE INDEX "SubTiposEnTipoAgrupador_parentTipoId_idx" ON "SubTiposEnTipoAgrupador"("parentTipoId");
+CREATE INDEX IF NOT EXISTS "SubTiposEnTipoAgrupador_parentTipoId_idx" ON "SubTiposEnTipoAgrupador"("parentTipoId");
 
 -- CreateIndex
-CREATE INDEX "SubTiposEnTipoAgrupador_childTipoId_idx" ON "SubTiposEnTipoAgrupador"("childTipoId");
+CREATE INDEX IF NOT EXISTS "SubTiposEnTipoAgrupador_childTipoId_idx" ON "SubTiposEnTipoAgrupador"("childTipoId");
 
 -- CreateIndex
-CREATE INDEX "CategoriasEnTipoAgrupador_tipoAgrupadorId_idx" ON "CategoriasEnTipoAgrupador"("tipoAgrupadorId");
+CREATE INDEX IF NOT EXISTS "CategoriasEnTipoAgrupador_tipoAgrupadorId_idx" ON "CategoriasEnTipoAgrupador"("tipoAgrupadorId");
 
 -- CreateIndex
-CREATE INDEX "CategoriasEnTipoAgrupador_categoriaId_idx" ON "CategoriasEnTipoAgrupador"("categoriaId");
+CREATE INDEX IF NOT EXISTS "CategoriasEnTipoAgrupador_categoriaId_idx" ON "CategoriasEnTipoAgrupador"("categoriaId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Agrupador_nombre_tipoAgrupadorId_key" ON "Agrupador"("nombre", "tipoAgrupadorId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Agrupador_nombre_tipoAgrupadorId_key" ON "Agrupador"("nombre", "tipoAgrupadorId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Categoria_nombre_dominioId_key" ON "Categoria"("nombre", "dominioId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Categoria_nombre_dominioId_key" ON "Categoria"("nombre", "dominioId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Modelo_nombre_marcaId_categoriaId_key" ON "Modelo"("nombre", "marcaId", "categoriaId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Modelo_nombre_marcaId_categoriaId_key" ON "Modelo"("nombre", "marcaId", "categoriaId");
 
 -- AddForeignKey
-ALTER TABLE "SubTiposEnTipoAgrupador" ADD CONSTRAINT "SubTiposEnTipoAgrupador_parentTipoId_fkey" FOREIGN KEY ("parentTipoId") REFERENCES "TipoAgrupador"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SubTiposEnTipoAgrupador_parentTipoId_fkey') THEN
+    ALTER TABLE "SubTiposEnTipoAgrupador" ADD CONSTRAINT "SubTiposEnTipoAgrupador_parentTipoId_fkey" FOREIGN KEY ("parentTipoId") REFERENCES "TipoAgrupador"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
 
--- AddForeignKey
-ALTER TABLE "SubTiposEnTipoAgrupador" ADD CONSTRAINT "SubTiposEnTipoAgrupador_childTipoId_fkey" FOREIGN KEY ("childTipoId") REFERENCES "TipoAgrupador"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SubTiposEnTipoAgrupador_childTipoId_fkey') THEN
+    ALTER TABLE "SubTiposEnTipoAgrupador" ADD CONSTRAINT "SubTiposEnTipoAgrupador_childTipoId_fkey" FOREIGN KEY ("childTipoId") REFERENCES "TipoAgrupador"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
 
--- AddForeignKey
-ALTER TABLE "CategoriasEnTipoAgrupador" ADD CONSTRAINT "CategoriasEnTipoAgrupador_tipoAgrupadorId_fkey" FOREIGN KEY ("tipoAgrupadorId") REFERENCES "TipoAgrupador"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CategoriasEnTipoAgrupador_tipoAgrupadorId_fkey') THEN
+    ALTER TABLE "CategoriasEnTipoAgrupador" ADD CONSTRAINT "CategoriasEnTipoAgrupador_tipoAgrupadorId_fkey" FOREIGN KEY ("tipoAgrupadorId") REFERENCES "TipoAgrupador"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
 
--- AddForeignKey
-ALTER TABLE "CategoriasEnTipoAgrupador" ADD CONSTRAINT "CategoriasEnTipoAgrupador_categoriaId_fkey" FOREIGN KEY ("categoriaId") REFERENCES "Categoria"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CategoriasEnTipoAgrupador_categoriaId_fkey') THEN
+    ALTER TABLE "CategoriasEnTipoAgrupador" ADD CONSTRAINT "CategoriasEnTipoAgrupador_categoriaId_fkey" FOREIGN KEY ("categoriaId") REFERENCES "Categoria"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END
+$$;
