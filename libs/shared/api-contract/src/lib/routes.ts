@@ -46,4 +46,14 @@ export const API_ROUTES = {
     agrupadores: `${API_PREFIX}/asignaciones/agrupadores`,
     consumibles: `${API_PREFIX}/asignaciones/consumibles`,
   },
+  checklists: {
+    base: `${API_PREFIX}/checklists`,
+    byId: (id: number | string) => `${API_PREFIX}/checklists/${id}`,
+    aspectos: (dominioId: number | string) =>
+      `${API_PREFIX}/catalogos/dominios/${dominioId}/aspectos`,
+    aspectosById: (dominioId: number | string, id: number | string) =>
+      `${API_PREFIX}/catalogos/dominios/${dominioId}/aspectos/${id}`,
+    instancias: `${API_PREFIX}/checklists/instancias`,
+    instanciaById: (id: number | string) => `${API_PREFIX}/checklists/instancias/${id}`,
+  },
 } as const;

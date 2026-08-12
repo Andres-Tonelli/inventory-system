@@ -11,6 +11,7 @@
   <div class="ptabs">
     <button class="ptab" [class.active]="activeMainTab === 'operar'" (click)="activeMainTab = 'operar'"><i class="pi pi-bolt"></i>Operar</button>
     <button class="ptab" [class.active]="activeMainTab === 'catalogo'" (click)="activeMainTab = 'catalogo'"><i class="pi pi-book"></i>Catálogo del dominio</button>
+    <button class="ptab" [class.active]="activeMainTab === 'checklist'" (click)="activeMainTab = 'checklist'"><i class="pi pi-list-check"></i>Checklists de Control</button>
   </div>
 
   <!-- Nivel 2: Operar -->
@@ -102,6 +103,7 @@
                 <td><div class="row-actions">
                   <button class="btn ghost sm" (click)="abrirEditarArticulo(art)"><i class="pi pi-pencil"></i>Editar</button>
                   <button class="btn ghost sm" (click)="abrirCambiarEstado(art)"><i class="pi pi-sync"></i>Estado</button>
+                  <button class="btn ghost sm" (click)="abrirHistorialChecklistArticulo(art)" title="Inspecciones y Checklists"><i class="pi pi-list-check"></i></button>
                   <button class="btn ghost sm" (click)="verDetalleArticulo(art)">Ver</button>
                 </div></td>
               </tr>
@@ -261,12 +263,17 @@
           <div class="md-detail-anchor">
           <div class="md-detail tablecard" #mdCard [style.top.px]="detailTop">
             <ng-container *ngIf="selectedAgrupadorDetalle as ag; else pickAg">
-              <div class="md-head">
-                <div class="md-title">{{ ag.nombre }}</div>
-                <div class="md-sub">
-                  <span class="pill" [class.blue]="ag.estado !== 'DISPONIBLE'" [class.green]="ag.estado === 'DISPONIBLE'"><span class="dot"></span>{{ ag.estado === 'DISPONIBLE' ? 'Disponible' : 'Asignado' }}</span>
-                  <span class="mut" *ngIf="getAgrupadorAsignatario(ag)">a {{ getAgrupadorAsignatario(ag) }}</span>
+              <div class="md-head" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div>
+                  <div class="md-title">{{ ag.nombre }}</div>
+                  <div class="md-sub">
+                    <span class="pill" [class.blue]="ag.estado !== 'DISPONIBLE'" [class.green]="ag.estado === 'DISPONIBLE'"><span class="dot"></span>{{ ag.estado === 'DISPONIBLE' ? 'Disponible' : 'Asignado' }}</span>
+                    <span class="mut" *ngIf="getAgrupadorAsignatario(ag)">a {{ getAgrupadorAsignatario(ag) }}</span>
+                  </div>
                 </div>
+                <button class="btn sm" (click)="abrirHistorialChecklistAgrupador(ag)" title="Inspecciones de checklist" style="color: var(--indigo); border-color: var(--indigo-soft); background: var(--indigo-soft); padding: 6px 10px;">
+                  <i class="pi pi-list-check"></i> Checklists
+                </button>
               </div>
               <div class="md-body">
                 <!-- Checklist de categorías preestablecidas si existen -->
@@ -474,6 +481,112 @@
         </tbody>
       </table></div></div>
     </div>
+
+    <!-- ===================== CHECKLISTS ===================== -->
+    <div class="panel-block" *ngIf="activeMainTab === 'checklist'">
+      <div style="display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start;">
+        
+        <!-- Left: Aspects Management -->
+        <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-soft); padding: 1.25rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+          <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.1rem; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 0.5rem;">
+            <i class="pi pi-tags" style="color: var(--primary);"></i> Aspectos de Control
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; margin-top: 0;">
+            Clasificaciones para agrupar checklists de control en este dominio.
+          </p>
+
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+            <input pInputText [(ngModel)]="newAspectoNombre" placeholder="Ej: Ergonomía" style="flex-grow: 1; font-size: 0.9rem; padding: 0.5rem;" (keydown.enter)="crearAspecto()" />
+            <button class="btn primary sm" (click)="crearAspecto()"><i class="pi pi-plus"></i></button>
+          </div>
+
+          <div *ngIf="aspectos.length === 0" style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem; font-style: italic; border: 1px dashed var(--border-soft); border-radius: 8px;">
+            Sin aspectos creados.
+          </div>
+
+          <div *ngIf="aspectos.length > 0" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto;">
+            <div *ngFor="let asp of aspectos" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.8rem; background: var(--bg-hover); border: 1px solid var(--border-soft); border-radius: 8px;">
+              <span style="font-weight: 500; font-size: 0.9rem; color: var(--ink);">{{ asp.nombre }}</span>
+              <button class="btn ghost sm danger" style="padding: 0.25rem; border-radius: 6px;" (click)="eliminarAspecto(asp.id)"><i class="pi pi-trash" style="font-size: 0.85rem;"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Checklist Templates -->
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="toolbar" style="margin-top: 0; background: none; padding: 0; border: none;">
+            <div>
+              <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--ink);">Plantillas de Checklist</h2>
+              <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                Definí los checklists que los usuarios verán y consultarán para sus bienes.
+              </p>
+            </div>
+            <button class="btn primary sm" (click)="abrirChecklistDialog()" [disabled]="aspectos.length === 0" [title]="aspectos.length === 0 ? 'Creá al menos un aspecto antes' : 'Nuevo checklist'">
+              <i class="pi pi-plus"></i> Nuevo Checklist
+            </button>
+          </div>
+
+          <div *ngIf="checklists.length === 0" style="text-align: center; padding: 3rem; background: var(--bg-card); border: 1px dashed var(--border-soft); border-radius: 12px; color: var(--text-muted);">
+            <i class="pi pi-list-check" style="font-size: 2.5rem; margin-bottom: 0.75rem; color: var(--muted-2);"></i>
+            <h3 style="margin: 0; font-size: 1.05rem;">Sin checklists creados</h3>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem;">Creá checklists asociados a tus artículos o agrupadores.</p>
+          </div>
+
+          <div class="tablecard" *ngIf="checklists.length > 0" style="margin-top: 0;">
+            <div class="tablescroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Título</th>
+                    <th>Aspecto</th>
+                    <th>Destinado a</th>
+                    <th>Items</th>
+                    <th class="ta-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let ch of checklists">
+                    <td class="cell-name"><span style="font-weight: 600;">{{ ch.titulo }}</span></td>
+                    <td><span class="pill blue">{{ ch.aspecto?.nombre || '—' }}</span></td>
+                    <td>
+                      <ng-container *ngIf="ch.ambito === 'ARTICULO'">
+                        <span *ngIf="ch.categoria" class="pill green" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                          <i class="pi pi-box"></i> Categoría: {{ ch.categoria.nombre }}
+                        </span>
+                        <span *ngIf="!ch.categoria" class="pill green" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem; opacity: 0.75;">
+                          <i class="pi pi-box"></i> Todos los Artículos
+                        </span>
+                      </ng-container>
+                      <ng-container *ngIf="ch.ambito === 'AGRUPADOR'">
+                        <span *ngIf="ch.tipoAgrupador" class="pill indigo" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                          <i class="pi pi-sitemap"></i> Tipo Agrupador: {{ ch.tipoAgrupador.nombre }}
+                        </span>
+                        <span *ngIf="!ch.tipoAgrupador" class="pill indigo" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem; opacity: 0.75;">
+                          <i class="pi pi-sitemap"></i> Todos los Agrupadores
+                        </span>
+                      </ng-container>
+                    </td>
+                    <td>
+                      <span class="pill slate" style="font-weight: 500; cursor: pointer; border: 1px solid var(--border-soft); display: inline-flex; align-items: center; gap: 0.25rem;" (click)="abrirVerChecklist(ch)">
+                        <i class="pi pi-eye"></i> {{ ch.items?.length || 0 }} ítems
+                      </span>
+                    </td>
+                    <td class="ta-right">
+                      <div class="row-actions justify-end">
+                        <button class="btn ghost sm" (click)="abrirInspeccionesTemplate(ch)" title="Consultar Inspecciones"><i class="pi pi-calendar"></i> Inspecciones</button>
+                        <button class="btn ghost sm" (click)="abrirEditarChecklist(ch)"><i class="pi pi-pencil"></i>Editar</button>
+                        <button class="btn ghost sm danger" (click)="eliminarChecklist(ch.id)"><i class="pi pi-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 </div>
 
@@ -664,7 +777,10 @@
       </div>
     </ng-container>
   </div>
-  <ng-template pTemplate="footer"><button class="btn primary" (click)="showDetalleArticuloDialog = false">Cerrar</button></ng-template>
+  <ng-template pTemplate="footer">
+    <button class="btn" style="color: var(--indigo);" (click)="abrirHistorialChecklistArticulo(selectedArticuloDetalle)"><i class="pi pi-list-check"></i> Checklists</button>
+    <button class="btn primary" (click)="showDetalleArticuloDialog = false">Cerrar</button>
+  </ng-template>
 </p-dialog>
 
 <!-- Cambiar estado del artículo -->
@@ -819,6 +935,381 @@
   <ng-template pTemplate="footer">
     <button class="btn ghost" (click)="showDesvincularArticuloDialog = false">Cancelar</button>
     <button class="btn primary" (click)="confirmarDesvincularArticulo()" [disabled]="!estadoDesvincularArticulo">Confirmar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo: Nuevo/Editar/Ver Checklist -->
+<p-dialog [header]="checklistMode === 'view' ? 'Ver Checklist de Control' : (checklistMode === 'edit' ? 'Editar Checklist de Control' : 'Nuevo Checklist de Control')" [(visible)]="showChecklistDialog" [modal]="true" [draggable]="false" [dismissableMask]="false" [style]="{ width: '100%', maxWidth: '650px' }">
+  <div class="form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="field">
+        <label>Título del Checklist *</label>
+        <input pInputText [(ngModel)]="newChecklist.titulo" placeholder="Ej: Control Pre-Viaje Vehículo" style="width: 100%;" [disabled]="checklistMode === 'view'" />
+      </div>
+      <div class="field">
+        <label>Aspecto de Control *</label>
+        <p-select [options]="aspectos" [(ngModel)]="newChecklist.aspectoId" optionLabel="nombre" optionValue="id" placeholder="Seleccionar aspecto" appendTo="body" styleClass="w-full" [disabled]="checklistMode === 'view'"></p-select>
+      </div>
+    </div>
+
+    <div style="border: 1px solid var(--border-soft); padding: 1rem; border-radius: 8px; background-color: var(--bg-hover); display: flex; flex-direction: column; gap: 1rem;">
+      <div style="font-weight: 600; font-size: 0.9rem; color: var(--ink);">Ámbito y Alcance</div>
+      
+      <!-- 1. Selección de Ámbito (Artículo o Agrupador) -->
+      <div class="field" style="display: flex; flex-direction: column; gap: 0.25rem;">
+        <label style="font-size: 0.85rem; font-weight: 500;">Ámbito de Control</label>
+        <p-selectButton [options]="ambitoOptions" [(ngModel)]="newChecklist.ambito" optionLabel="label" optionValue="value" [disabled]="checklistMode === 'view'"></p-selectButton>
+      </div>
+
+      <!-- 2. Selección de Alcance (Genérico o Filtrado) -->
+      <div class="field" style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px solid var(--border-soft); padding-top: 0.75rem;">
+        <label style="font-size: 0.85rem; font-weight: 500;">Alcance / Filtrado</label>
+        <p-selectButton [options]="alcanceOptions" [(ngModel)]="newChecklist.targetType" optionLabel="label" optionValue="value" [disabled]="checklistMode === 'view'"></p-selectButton>
+      </div>
+
+      <!-- Select Categoria (para Artículos filtrados) -->
+      <div *ngIf="newChecklist.ambito === 'ARTICULO' && newChecklist.targetType === 'filtrado'" class="field">
+        <label>Categoría de Artículo de Destino *</label>
+        <p-select [options]="categorias" [(ngModel)]="newChecklist.categoriaId" optionLabel="nombre" optionValue="id" placeholder="Seleccionar categoría de artículo..." appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar categoría..." [disabled]="checklistMode === 'view'"></p-select>
+      </div>
+
+      <!-- Select TipoAgrupador (para Agrupadores filtrados) -->
+      <div *ngIf="newChecklist.ambito === 'AGRUPADOR' && newChecklist.targetType === 'filtrado'" class="field">
+        <label>Tipo de Agrupador de Destino *</label>
+        <p-select [options]="tiposAgrupador" [(ngModel)]="newChecklist.tipoAgrupadorId" optionLabel="nombre" optionValue="id" placeholder="Seleccionar tipo de agrupador..." appendTo="body" styleClass="w-full" [filter]="true" filterBy="nombre" filterPlaceholder="Buscar tipo..." [disabled]="checklistMode === 'view'"></p-select>
+      </div>
+    </div>
+
+    <!-- Items / Questions List -->
+    <div>
+      <div style="font-weight: 600; font-size: 0.95rem; color: var(--ink); margin-bottom: 0.5rem;">Ítems de Control / Preguntas</div>
+      
+      <!-- List -->
+      <div *ngIf="newChecklist.items.length === 0" style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem; border: 1px dashed var(--border-soft); border-radius: 8px; margin-bottom: 1rem; font-style: italic;">
+        Sin preguntas agregadas. Agregá al menos una pregunta a continuación.
+      </div>
+      
+      <div *ngIf="newChecklist.items.length > 0" style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+        <div *ngFor="let item of newChecklist.items; let idx = index" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 6px; font-size: 0.85rem; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-grow: 1; min-width: 0;">
+            <span style="font-weight: 600; color: var(--primary); font-size: 0.85rem; min-width: 20px;">{{ idx + 1 }}.</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink);">{{ item.pregunta }}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0;" *ngIf="checklistMode !== 'view'">
+            <button class="btn ghost sm" style="padding: 0.15rem; border-radius: 4px;" (click)="subirItemChecklist(idx)" [disabled]="idx === 0"><i class="pi pi-arrow-up" style="font-size: 0.75rem;"></i></button>
+            <button class="btn ghost sm" style="padding: 0.15rem; border-radius: 4px;" (click)="bajarItemChecklist(idx)" [disabled]="idx === newChecklist.items.length - 1"><i class="pi pi-arrow-down" style="font-size: 0.75rem;"></i></button>
+            <button class="btn ghost sm danger" style="padding: 0.15rem; border-radius: 4px;" (click)="removerItemChecklist(idx)"><i class="pi pi-times" style="font-size: 0.75rem;"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Input -->
+      <div style="display: flex; gap: 0.5rem;" *ngIf="checklistMode !== 'view'">
+        <input pInputText [(ngModel)]="newChecklistItemText" placeholder="Ej: ¿El nivel de aceite es correcto?" style="flex-grow: 1; font-size: 0.9rem;" (keydown.enter)="agregarItemChecklist()" />
+        <button class="btn primary sm" (click)="agregarItemChecklist()"><i class="pi pi-plus" style="margin-right: 4px;"></i> Agregar Ítem</button>
+      </div>
+    </div>
+
+  </div>
+  <ng-template pTemplate="footer">
+    <ng-container *ngIf="checklistMode === 'view'">
+      <button class="btn primary" (click)="showChecklistDialog = false">Cerrar</button>
+    </ng-container>
+    <ng-container *ngIf="checklistMode !== 'view'">
+      <button class="btn ghost" (click)="showChecklistDialog = false">Cancelar</button>
+      <button class="btn primary" (click)="guardarChecklist()">Guardar Checklist</button>
+    </ng-container>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo: Historial e Instanciación de Checklists -->
+<p-dialog [header]="'Inspecciones y Checklists — ' + (selectedArticuloChecklist ? (selectedArticuloChecklist.alias || selectedArticuloChecklist.nroSerie || 'Artículo') : (selectedAgrupadorChecklist?.nombre || 'Agrupador'))" [(visible)]="showInstanciasDialog" [modal]="true" [draggable]="false" [dismissableMask]="false" [style]="{ width: '100%', maxWidth: '750px' }">
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    
+    <!-- Header/Bien details -->
+    <div style="background: var(--bg-hover); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-soft); font-size: 0.9rem; display: flex; gap: 1.5rem;">
+      <div *ngIf="selectedArticuloChecklist as art">
+        <span style="color: var(--muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Modelo / Categoría</span>
+        <span style="font-weight: 500; color: var(--ink);">{{ art.modelo?.marca?.nombre }} {{ art.modelo?.nombre }} ({{ art.modelo?.categoria?.nombre }})</span>
+      </div>
+      <div *ngIf="selectedAgrupadorChecklist as ag">
+        <span style="color: var(--muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Tipo de Agrupador</span>
+        <span style="font-weight: 500; color: var(--ink);">{{ ag.tipoAgrupador?.nombre }}</span>
+      </div>
+    </div>
+
+    <!-- Toggle between history list and new check form -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--ink);">
+        {{ showNuevaInstanciaForm ? 'Nueva Inspección de Control' : 'Historial de Controles' }}
+      </h3>
+      <button class="btn primary sm" *ngIf="!showNuevaInstanciaForm" (click)="iniciarNuevaInstancia()" [disabled]="checklistsDisponibles.length === 0" [title]="checklistsDisponibles.length === 0 ? 'No hay plantillas de checklist disponibles para este tipo de bien' : 'Registrar nueva inspección'">
+        <i class="pi pi-plus"></i> Nuevo Control
+      </button>
+      <button class="btn ghost sm" *ngIf="showNuevaInstanciaForm" (click)="showNuevaInstanciaForm = false">
+        <i class="pi pi-arrow-left"></i> Volver al Historial
+      </button>
+    </div>
+
+    <!-- 1. VIEW: History List -->
+    <div *ngIf="!showNuevaInstanciaForm">
+      <div *ngIf="loadingInstancias" style="text-align: center; padding: 2rem; color: var(--muted);">
+        <i class="pi pi-spin pi-spinner" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+        <div>Cargando historial...</div>
+      </div>
+
+      <div *ngIf="!loadingInstancias && instanciasArticuloUAgrupador.length === 0" style="text-align: center; padding: 3rem 1.5rem; border: 1px dashed var(--border-soft); border-radius: 8px; color: var(--muted); font-style: italic;">
+        <i class="pi pi-calendar-times" style="font-size: 2.2rem; margin-bottom: 0.5rem; opacity: 0.6;"></i>
+        <div>No se han registrado inspecciones de control sobre este bien.</div>
+      </div>
+
+      <div class="tablecard" *ngIf="!loadingInstancias && instanciasArticuloUAgrupador.length > 0">
+        <div class="tablescroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Checklist / Aspecto</th>
+                <th>Responsable</th>
+                <th>Resultado</th>
+                <th class="ta-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let inst of instanciasArticuloUAgrupador">
+                <td class="cell-name"><span style="font-weight: 600;">{{ inst.createdAt | date:'dd/MM/yyyy HH:mm' }}</span></td>
+                <td>
+                  <div style="font-weight: 500; color: var(--ink);">{{ inst.checklist?.titulo }}</div>
+                  <small style="color: var(--muted);">{{ inst.checklist?.aspecto?.nombre }}</small>
+                </td>
+                <td class="mut">{{ inst.responsable || '—' }}</td>
+                <td>
+                  <span class="pill green">
+                    Inspeccionado
+                  </span>
+                </td>
+                <td class="ta-right">
+                  <button class="btn ghost sm" (click)="verDetalleInstancia(inst)"><i class="pi pi-eye"></i> Ver Detalle</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. FORM: New Control Instance -->
+    <div *ngIf="showNuevaInstanciaForm" class="form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+      
+      <!-- Template Selector -->
+      <div class="field">
+        <label>Seleccionar Plantilla de Checklist *</label>
+        <p-select [options]="checklistsDisponibles" [(ngModel)]="selectedChecklistTemplate" optionLabel="titulo" placeholder="Seleccionar checklist para aplicar..." appendTo="body" styleClass="w-full" (onChange)="onTemplateSelected($event.value)"></p-select>
+      </div>
+
+      <!-- If Template selected, display the checklist questions -->
+      <div *ngIf="selectedChecklistTemplate" style="display: flex; flex-direction: column; gap: 1.25rem;">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="field">
+            <label>Responsable de la Inspección *</label>
+            <input pInputText [(ngModel)]="nuevaInstancia.responsable" placeholder="Ej: Inspector Juan Perez" style="width: 100%;" />
+          </div>
+          <div class="field">
+            <label>Aspecto de Control</label>
+            <input pInputText [value]="selectedChecklistTemplate.aspecto?.nombre" disabled style="width: 100%;" />
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight: 600; font-size: 0.95rem; color: var(--ink); margin-bottom: 0.75rem;">Ítems de Control / Verificación</div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div *ngFor="let item of nuevaInstancia.valores; let idx = index" style="background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 8px; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem; flex-grow: 1;">
+                  <span style="font-weight: 600; color: var(--primary); font-size: 0.9rem;">{{ idx + 1 }}.</span>
+                  <span style="font-weight: 500; color: var(--ink); font-size: 0.9rem;">{{ item.pregunta }}</span>
+                </div>
+                <!-- Toggle switch for checked/unchecked -->
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-size: 0.8rem; font-weight: 600;" [style.color]="item.valor ? 'var(--green)' : 'var(--muted)'">
+                    {{ item.valor ? 'PASA' : 'NO PASA' }}
+                  </span>
+                  <p-toggleSwitch [(ngModel)]="item.valor"></p-toggleSwitch>
+                </div>
+              </div>
+
+              <!-- Comment field for the item -->
+              <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem;">
+                <i class="pi pi-comment" style="color: var(--muted-2); font-size: 0.85rem;"></i>
+                <input pInputText [(ngModel)]="item.observacion" placeholder="Comentario opcional sobre este ítem..." style="flex-grow: 1; font-size: 0.8rem; padding: 0.35rem 0.5rem; height: 30px;" />
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Observaciones Generales</label>
+          <textarea pInputText [(ngModel)]="nuevaInstancia.observaciones" placeholder="Escriba comentarios, problemas identificados o notas del estado general del bien..." rows="3" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; font-family: inherit;"></textarea>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showInstanciasDialog = false">Cerrar</button>
+    <button class="btn primary" *ngIf="showNuevaInstanciaForm && selectedChecklistTemplate" (click)="guardarNuevaInstancia()">Guardar Inspección</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo: Detalle de Inspección Realizada (Histórico) -->
+<p-dialog header="Detalle de Inspección de Control" [(visible)]="showDetalleInstanciaDialog" [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '100%', maxWidth: '600px' }">
+  <div class="form" *ngIf="selectedInstanciaDetalle as inst" style="display: flex; flex-direction: column; gap: 1.25rem;">
+    
+    <div style="border-bottom: 1px solid var(--border-soft); padding-bottom: 0.75rem; margin-bottom: 0.25rem;">
+      <div style="font-size: 1.15rem; font-weight: 700; color: var(--ink);">{{ inst.checklist?.titulo }}</div>
+      <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">Aspecto: <span class="pill blue" style="font-size: 0.75rem;">{{ inst.checklist?.aspecto?.nombre }}</span></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Fecha</span><span style="font-weight: 500;">{{ inst.createdAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+      <div style="display: flex; flex-direction: column;"><span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Responsable</span><span style="font-weight: 500;">{{ inst.responsable || '—' }}</span></div>
+    </div>
+
+    <!-- Questions Responses -->
+    <div>
+      <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); padding-bottom: 0.25rem; margin-bottom: 0.75rem;">
+        Resultado de Ítems
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+        <div *ngFor="let val of inst.valores; let idx = index" style="background: var(--bg-hover); border: 1px solid var(--border-soft); border-radius: 8px; padding: 0.6rem 0.8rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+            <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+              <span style="font-weight: 600; color: var(--primary); font-size: 0.85rem;">{{ idx + 1 }}.</span>
+              <span style="font-weight: 500; color: var(--ink); font-size: 0.85rem;">{{ val.checklistItem?.pregunta }}</span>
+            </div>
+            <span class="pill" [class.green]="val.valor" [class.red]="!val.valor" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;">
+              {{ val.valor ? 'PASA' : 'NO PASA' }}
+            </span>
+          </div>
+
+          <div *ngIf="val.observacion" style="font-size: 0.8rem; color: var(--muted); margin-left: 1.25rem; display: flex; gap: 0.35rem; align-items: flex-start;">
+            <i class="pi pi-comment" style="margin-top: 0.15rem;"></i>
+            <span>{{ val.observacion }}</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Observations -->
+    <div *ngIf="inst.observaciones" style="background-color: var(--border-soft); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-soft);">
+      <span style="color: var(--muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Observaciones Generales</span>
+      <p style="margin: 0; font-size: 0.9rem; color: var(--ink); white-space: pre-wrap;">{{ inst.observaciones }}</p>
+    </div>
+
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn primary" (click)="showDetalleInstanciaDialog = false">Cerrar</button>
+  </ng-template>
+</p-dialog>
+
+<!-- Diálogo: Consulta de Inspecciones desde Plantilla -->
+<p-dialog [header]="'Inspecciones de la plantilla — ' + (selectedChecklistTemplateForQuery?.titulo || 'Checklist')" [(visible)]="showTemplateInstanciasDialog" [modal]="true" [draggable]="false" [dismissableMask]="false" [style]="{ width: '100%', maxWidth: '800px' }">
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    
+    <!-- Filtros de Búsqueda -->
+    <div style="background: var(--bg-hover); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-soft); display: flex; flex-direction: column; gap: 0.75rem;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div class="field" style="display: flex; flex-direction: column; gap: 0.25rem;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Inspector / Responsable</label>
+          <input pInputText [(ngModel)]="filterInstanciaResponsable" placeholder="Buscar por responsable..." style="font-size: 0.85rem; padding: 0.4rem;" (keyup.enter)="cargarInstanciasTemplate()" />
+        </div>
+        <div class="field" style="display: flex; flex-direction: column; gap: 0.25rem;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Artículo / Agrupador</label>
+          <input pInputText [(ngModel)]="filterInstanciaBien" placeholder="Alias, serie, modelo o agrupador..." style="font-size: 0.85rem; padding: 0.4rem;" (keyup.enter)="cargarInstanciasTemplate()" />
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div class="field" style="display: flex; flex-direction: column; gap: 0.25rem;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Fecha Desde</label>
+          <input pInputText type="date" [(ngModel)]="filterInstanciaFechaDesde" style="font-size: 0.85rem; padding: 0.4rem; height: 38px; border: 1px solid var(--border-soft); border-radius: 6px;" (change)="cargarInstanciasTemplate()" />
+        </div>
+        <div class="field" style="display: flex; flex-direction: column; gap: 0.25rem;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">Fecha Hasta</label>
+          <input pInputText type="date" [(ngModel)]="filterInstanciaFechaHasta" style="font-size: 0.85rem; padding: 0.4rem; height: 38px; border: 1px solid var(--border-soft); border-radius: 6px;" (change)="cargarInstanciasTemplate()" />
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem;">
+        <button class="btn ghost sm" (click)="limpiarFiltrosInstanciaTemplate()"><i class="pi pi-filter-slash"></i> Limpiar</button>
+        <button class="btn primary sm" (click)="cargarInstanciasTemplate()"><i class="pi pi-search"></i> Buscar</button>
+      </div>
+    </div>
+
+    <!-- Resultados -->
+    <div>
+      <div *ngIf="loadingTemplateInstancias" style="text-align: center; padding: 2rem; color: var(--muted);">
+        <i class="pi pi-spin pi-spinner" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+        <div>Cargando inspecciones...</div>
+      </div>
+
+      <div *ngIf="!loadingTemplateInstancias && templateInstancias.length === 0" style="text-align: center; padding: 3rem 1.5rem; border: 1px dashed var(--border-soft); border-radius: 8px; color: var(--muted); font-style: italic;">
+        <i class="pi pi-calendar-times" style="font-size: 2.2rem; margin-bottom: 0.5rem; opacity: 0.6;"></i>
+        <div>No se encontraron inspecciones con los filtros aplicados.</div>
+      </div>
+
+      <div class="tablecard" *ngIf="!loadingTemplateInstancias && templateInstancias.length > 0" style="margin-top: 0;">
+        <div class="tablescroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Bien Inspeccionado</th>
+                <th>Responsable</th>
+                <th>Resultado</th>
+                <th class="ta-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let inst of templateInstancias">
+                <td class="cell-name"><span style="font-weight: 600;">{{ inst.createdAt | date:'dd/MM/yyyy HH:mm' }}</span></td>
+                <td>
+                  <!-- Si es artículo -->
+                  <div *ngIf="inst.articulo" style="display: flex; flex-direction: column; gap: 0.15rem;">
+                    <span style="font-weight: 500; color: var(--ink);">{{ inst.articulo.alias || inst.articulo.nroSerie || 'Artículo' }}</span>
+                    <small style="color: var(--muted);">{{ inst.articulo.modelo?.marca?.nombre }} {{ inst.articulo.modelo?.nombre }} ({{ inst.articulo.modelo?.categoria?.nombre }})</small>
+                  </div>
+                  <!-- Si es agrupador -->
+                  <div *ngIf="inst.agrupador" style="display: flex; flex-direction: column; gap: 0.15rem;">
+                    <span style="font-weight: 500; color: var(--ink);">{{ inst.agrupador.nombre }}</span>
+                    <small style="color: var(--muted);">Agrupador · {{ inst.agrupador.tipoAgrupador?.nombre }}</small>
+                  </div>
+                </td>
+                <td class="mut">{{ inst.responsable || '—' }}</td>
+                <td>
+                  <span class="pill green">
+                    Inspeccionado
+                  </span>
+                </td>
+                <td class="ta-right">
+                  <button class="btn ghost sm" (click)="verDetalleInstancia(inst)"><i class="pi pi-eye"></i> Ver Detalle</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn ghost" (click)="showTemplateInstanciasDialog = false">Cerrar</button>
   </ng-template>
 </p-dialog>
 

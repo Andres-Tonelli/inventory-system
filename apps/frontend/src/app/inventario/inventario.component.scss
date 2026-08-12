@@ -270,3 +270,52 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 650; }
     border-bottom-style: solid;
   }
 }
+
+::ng-deep {
+  .p-selectbutton {
+    display: inline-flex !important;
+    gap: 4px !important;
+    background: #eceef6 !important;
+    border: 1px solid var(--border) !important;
+    padding: 4px !important;
+    border-radius: 11px !important;
+
+    .p-togglebutton {
+      appearance: none !important;
+      border: none !important;
+      background: transparent !important;
+      font: inherit !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 7px !important;
+      padding: 8px 15px !important;
+      border-radius: 8px !important;
+      font-size: 13px !important;
+      font-weight: 650 !important;
+      color: var(--muted) !important;
+      transition: all 0.2s ease !important;
+      
+      &:hover {
+        color: var(--ink) !important;
+        background: rgba(255,255,255,0.5) !important;
+      }
+
+      &.p-togglebutton-checked {
+        background: #ffffff !important;
+        color: var(--indigo-600) !important;
+        box-shadow: 0 1px 3px rgba(20,22,60,.08) !important;
+        font-weight: 700 !important;
+      }
+      
+      &.p-disabled {
+        opacity: 0.65 !important;
+        cursor: not-allowed !important;
+        &:hover {
+          background: transparent !important;
+          color: var(--muted) !important;
+        }
+      }
+    }
+  }
+}

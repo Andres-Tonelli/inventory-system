@@ -7,6 +7,7 @@ import { CatalogosService, Categoria, Modelo, AtributoDefinicion, Marca, TipoAgr
 import { InventarioService, Articulo } from '../core/services/inventario.service';
 import { DomainContextService } from '../core/domain-context.service';
 import { NotificacionesUiService } from '../core/notificaciones-ui.service';
+import { ChecklistsService } from '../core/services/checklists.service';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -14,6 +15,8 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Agrupador, AgrupadoresService } from '../core/services/agrupadores.service';
 
 @Component({
@@ -22,7 +25,7 @@ import { Agrupador, AgrupadoresService } from '../core/services/agrupadores.serv
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
     TableModule, ButtonModule, DialogModule, InputTextModule, SelectModule,
-    TooltipModule
+    TooltipModule, SelectButtonModule, ToggleSwitchModule
   ],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.scss'
@@ -32,7 +35,7 @@ export class InventarioComponent implements OnInit {
   dominioNombre = '';
 
   // Navegación del workspace (dos niveles)
-  activeMainTab: 'operar' | 'catalogo' = 'operar';
+  activeMainTab: 'operar' | 'catalogo' | 'checklist' = 'operar';
   activeSubTab = 'articulos'; // 'articulos' | 'consumibles' | 'agrupador-<tipoId>'
   activeCatTab: 'categorias' | 'marcas' | 'modelos' = 'categorias';
 
@@ -53,6 +56,77 @@ export class InventarioComponent implements OnInit {
   agrupadores: Agrupador[] = [];
   agrupadoresPorTipo: { [key: number]: Agrupador[] } = {};
   lotes: any[] = [];
+
+  // Checklists Module State
+  aspectos: any[] = [];
+  checklists: any[] = [];
+  loadingChecklists = false;
+  newAspectoNombre = '';
+
+  showChecklistDialog = false;
+  newChecklist = {
+    titulo: '',
+    aspectoId: null as number | null,
+    ambito: 'ARTICULO' as 'ARTICULO' | 'AGRUPADOR',
+    targetType: 'generico' as 'generico' | 'filtrado',
+    categoriaId: null as number | null,
+    tipoAgrupadorId: null as number | null,
+    items: [] as { pregunta: string; orden: number }[]
+  };
+  newChecklistItemText = '';
+  editingChecklistId: number | null = null;
+  checklistMode: 'create' | 'edit' | 'view' = 'create';
+
+  ambitoOptions = [
+    { label: 'Artículos', value: 'ARTICULO' },
+    { label: 'Agrupadores', value: 'AGRUPADOR' }
+  ];
+
+  get alcanceOptions(): any[] {
+    if (this.newChecklist.ambito === 'ARTICULO') {
+      return [
+        { label: 'Todos los Artículos (Genérico)', value: 'generico' },
+        { label: 'Por Categoría específica', value: 'filtrado' }
+      ];
+    } else {
+      return [
+        { label: 'Todos los Agrupadores (Genérico)', value: 'generico' },
+        { label: 'Por Tipo de Agrupador específico', value: 'filtrado' }
+      ];
+    }
+  }
+
+  // Checklist Instantiation State
+  showInstanciasDialog = false;
+  instanciasArticuloUAgrupador: any[] = [];
+  selectedArticuloChecklist: any = null;
+  selectedAgrupadorChecklist: any = null;
+  loadingInstancias = false;
+
+  checklistsDisponibles: any[] = [];
+  selectedChecklistTemplate: any = null;
+  showNuevaInstanciaForm = false;
+
+  nuevaInstancia = {
+    checklistId: null as number | null,
+    observaciones: '',
+    responsable: '',
+    valores: [] as { checklistItemId: number; pregunta: string; valor: boolean; observacion: string }[]
+  };
+
+  selectedInstanciaDetalle: any = null;
+  showDetalleInstanciaDialog = false;
+
+  // Query checklist template instances state
+  showTemplateInstanciasDialog = false;
+  selectedChecklistTemplateForQuery: any = null;
+  templateInstancias: any[] = [];
+  loadingTemplateInstancias = false;
+
+  filterInstanciaResponsable = '';
+  filterInstanciaFechaDesde = '';
+  filterInstanciaFechaHasta = '';
+  filterInstanciaBien = '';
 
   // Dialog State
   showNuevoDialog = false;
@@ -313,6 +387,7 @@ export class InventarioComponent implements OnInit {
     private inventarioService: InventarioService,
     private agrupadoresService: AgrupadoresService,
     private domainContext: DomainContextService,
+    private checklistsService: ChecklistsService,
     private fb: FormBuilder,
     private notificaciones: NotificacionesUiService
   ) {
@@ -755,6 +830,7 @@ export class InventarioComponent implements OnInit {
       if(res.success) this.estadosArticulo = res.data;
     });
     this.loadLotes();
+    this.loadChecklistData();
   }
 
   loadLotes() {
@@ -1669,6 +1745,440 @@ export class InventarioComponent implements OnInit {
       this.cantidadAAdicionar = 0;
       this.loadLotes();
     });
+  }
+
+  // ===================== CHECKLISTS SECTION =====================
+
+  loadChecklistData() {
+    this.loadingChecklists = true;
+    this.checklistsService.getAspectos(this.dominioId).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.aspectos = res.data;
+        }
+      }
+    });
+
+    this.checklistsService.getChecklists({ dominioId: this.dominioId }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.checklists = res.data;
+        }
+        this.loadingChecklists = false;
+      },
+      error: () => {
+        this.loadingChecklists = false;
+      }
+    });
+  }
+
+  crearAspecto() {
+    const nombre = this.newAspectoNombre.trim();
+    if (!nombre) {
+      this.notificaciones.error('El nombre del aspecto no puede estar vacío.');
+      return;
+    }
+    this.checklistsService.crearAspecto(this.dominioId, { nombre }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.newAspectoNombre = '';
+          this.notificaciones.exito('Aspecto de control creado con éxito.');
+          this.loadChecklistData();
+        }
+      },
+      error: (err) => this.notificaciones.errorHttp(err, 'No se pudo crear el aspecto.')
+    });
+  }
+
+  eliminarAspecto(id: number) {
+    if (!confirm('¿Estás seguro de eliminar este aspecto? Se eliminarán todos los checklists asociados.')) {
+      return;
+    }
+    this.checklistsService.eliminarAspecto(this.dominioId, id).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.notificaciones.exito('Aspecto de control eliminado.');
+          this.loadChecklistData();
+        }
+      },
+      error: (err) => this.notificaciones.errorHttp(err, 'No se pudo eliminar el aspecto.')
+    });
+  }
+
+  abrirChecklistDialog() {
+    this.editingChecklistId = null;
+    this.checklistMode = 'create';
+    this.newChecklist = {
+      titulo: '',
+      aspectoId: this.aspectos.length > 0 ? this.aspectos[0].id : null,
+      ambito: 'ARTICULO',
+      targetType: 'generico',
+      categoriaId: null,
+      tipoAgrupadorId: null,
+      items: []
+    };
+    this.newChecklistItemText = '';
+    this.showChecklistDialog = true;
+  }
+
+  abrirEditarChecklist(ch: any) {
+    this.editingChecklistId = ch.id;
+    this.checklistMode = 'edit';
+    const targetType = (ch.categoriaId || ch.tipoAgrupadorId) ? 'filtrado' : 'generico';
+
+    this.newChecklist = {
+      titulo: ch.titulo,
+      aspectoId: ch.aspectoId,
+      ambito: ch.ambito || 'ARTICULO',
+      targetType,
+      categoriaId: ch.categoriaId,
+      tipoAgrupadorId: ch.tipoAgrupadorId,
+      items: (ch.items || []).map((it: any) => ({
+        pregunta: it.pregunta,
+        orden: it.orden
+      }))
+    };
+    this.newChecklistItemText = '';
+    this.showChecklistDialog = true;
+  }
+
+  abrirVerChecklist(ch: any) {
+    this.editingChecklistId = ch.id;
+    this.checklistMode = 'view';
+    const targetType = (ch.categoriaId || ch.tipoAgrupadorId) ? 'filtrado' : 'generico';
+
+    this.newChecklist = {
+      titulo: ch.titulo,
+      aspectoId: ch.aspectoId,
+      ambito: ch.ambito || 'ARTICULO',
+      targetType,
+      categoriaId: ch.categoriaId,
+      tipoAgrupadorId: ch.tipoAgrupadorId,
+      items: (ch.items || []).map((it: any) => ({
+        pregunta: it.pregunta,
+        orden: it.orden
+      }))
+    };
+    this.newChecklistItemText = '';
+    this.showChecklistDialog = true;
+  }
+
+  agregarItemChecklist() {
+    const text = this.newChecklistItemText.trim();
+    if (!text) return;
+    
+    this.newChecklist.items.push({
+      pregunta: text,
+      orden: this.newChecklist.items.length + 1
+    });
+    this.newChecklistItemText = '';
+  }
+
+  removerItemChecklist(index: number) {
+    this.newChecklist.items.splice(index, 1);
+    this.reordenarItemsChecklist();
+  }
+
+  subirItemChecklist(index: number) {
+    if (index === 0) return;
+    const temp = this.newChecklist.items[index];
+    this.newChecklist.items[index] = this.newChecklist.items[index - 1];
+    this.newChecklist.items[index - 1] = temp;
+    this.reordenarItemsChecklist();
+  }
+
+  bajarItemChecklist(index: number) {
+    if (index === this.newChecklist.items.length - 1) return;
+    const temp = this.newChecklist.items[index];
+    this.newChecklist.items[index] = this.newChecklist.items[index + 1];
+    this.newChecklist.items[index + 1] = temp;
+    this.reordenarItemsChecklist();
+  }
+
+  private reordenarItemsChecklist() {
+    this.newChecklist.items.forEach((item, idx) => {
+      item.orden = idx + 1;
+    });
+  }
+
+  guardarChecklist() {
+    if (!this.newChecklist.titulo.trim()) {
+      this.notificaciones.error('El título del checklist es requerido.');
+      return;
+    }
+    if (!this.newChecklist.aspectoId) {
+      this.notificaciones.error('El aspecto de control es requerido.');
+      return;
+    }
+    if (this.newChecklist.items.length === 0) {
+      this.notificaciones.error('El checklist debe contener al menos un ítem.');
+      return;
+    }
+
+    const isArticulo = this.newChecklist.ambito === 'ARTICULO';
+    const categoriaId = (isArticulo && this.newChecklist.targetType === 'filtrado') ? Number(this.newChecklist.categoriaId) : null;
+    const tipoAgrupadorId = (!isArticulo && this.newChecklist.targetType === 'filtrado') ? Number(this.newChecklist.tipoAgrupadorId) : null;
+
+    const dto = {
+      dominioId: this.dominioId,
+      titulo: this.newChecklist.titulo,
+      aspectoId: Number(this.newChecklist.aspectoId),
+      ambito: this.newChecklist.ambito,
+      categoriaId,
+      tipoAgrupadorId,
+      items: this.newChecklist.items
+    };
+
+    if (this.editingChecklistId) {
+      this.checklistsService.actualizarChecklist(this.editingChecklistId, dto).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.showChecklistDialog = false;
+            this.notificaciones.exito('Checklist de control actualizado con éxito.');
+            this.loadChecklistData();
+          }
+        },
+        error: (err) => this.notificaciones.errorHttp(err, 'No se pudo actualizar el checklist.')
+      });
+    } else {
+      this.checklistsService.crearChecklist(dto).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.showChecklistDialog = false;
+            this.notificaciones.exito('Checklist de control creado con éxito.');
+            this.loadChecklistData();
+          }
+        },
+        error: (err) => this.notificaciones.errorHttp(err, 'No se pudo crear el checklist.')
+      });
+    }
+  }
+
+  eliminarChecklist(id: number) {
+    if (!confirm('¿Estás seguro de eliminar esta plantilla de checklist?')) {
+      return;
+    }
+    this.checklistsService.eliminarChecklist(id).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.notificaciones.exito('Checklist de control eliminado.');
+          this.loadChecklistData();
+        }
+      },
+      error: (err) => this.notificaciones.errorHttp(err, 'No se pudo eliminar el checklist.')
+    });
+  }
+
+  // --- INSTANCIACIÓN E HISTORIAL DE CHECKLISTS ---
+
+  abrirHistorialChecklistArticulo(art: any) {
+    this.selectedArticuloChecklist = art;
+    this.selectedAgrupadorChecklist = null;
+    this.showNuevaInstanciaForm = false;
+    this.selectedChecklistTemplate = null;
+    this.nuevaInstancia = {
+      checklistId: null,
+      observaciones: '',
+      responsable: '',
+      valores: []
+    };
+
+    this.loadingInstancias = true;
+    this.showInstanciasDialog = true;
+
+    this.checklistsService.getChecklistInstancias({ articuloId: art.id }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.instanciasArticuloUAgrupador = res.data;
+        }
+        this.loadingInstancias = false;
+      },
+      error: () => {
+        this.loadingInstancias = false;
+      }
+    });
+
+    this.checklistsService.getChecklists({ dominioId: this.dominioId, ambito: 'ARTICULO' }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          const catId = art.modelo?.categoriaId;
+          this.checklistsDisponibles = res.data.filter(c => c.categoriaId === catId || !c.categoriaId);
+        }
+      }
+    });
+  }
+
+  abrirHistorialChecklistAgrupador(ag: any) {
+    this.selectedAgrupadorChecklist = ag;
+    this.selectedArticuloChecklist = null;
+    this.showNuevaInstanciaForm = false;
+    this.selectedChecklistTemplate = null;
+    this.nuevaInstancia = {
+      checklistId: null,
+      observaciones: '',
+      responsable: '',
+      valores: []
+    };
+
+    this.loadingInstancias = true;
+    this.showInstanciasDialog = true;
+
+    this.checklistsService.getChecklistInstancias({ agrupadorId: ag.id }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.instanciasArticuloUAgrupador = res.data;
+        }
+        this.loadingInstancias = false;
+      },
+      error: () => {
+        this.loadingInstancias = false;
+      }
+    });
+
+    this.checklistsService.getChecklists({ dominioId: this.dominioId, ambito: 'AGRUPADOR' }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          const tipoId = ag.tipoAgrupadorId;
+          this.checklistsDisponibles = res.data.filter(c => c.tipoAgrupadorId === tipoId || !c.tipoAgrupadorId);
+        }
+      }
+    });
+  }
+
+  iniciarNuevaInstancia() {
+    this.showNuevaInstanciaForm = true;
+    this.selectedChecklistTemplate = null;
+    this.nuevaInstancia.checklistId = null;
+    this.nuevaInstancia.observaciones = '';
+    this.nuevaInstancia.responsable = '';
+    this.nuevaInstancia.valores = [];
+  }
+
+  onTemplateSelected(ch: any) {
+    if (!ch) {
+      this.selectedChecklistTemplate = null;
+      this.nuevaInstancia.checklistId = null;
+      this.nuevaInstancia.valores = [];
+      return;
+    }
+    this.selectedChecklistTemplate = ch;
+    this.nuevaInstancia.checklistId = ch.id;
+    this.nuevaInstancia.valores = (ch.items || []).map((item: any) => ({
+      checklistItemId: item.id,
+      pregunta: item.pregunta,
+      valor: false,
+      observacion: ''
+    }));
+  }
+
+  guardarNuevaInstancia() {
+    if (!this.nuevaInstancia.checklistId) {
+      this.notificaciones.error('Debe seleccionar una plantilla de checklist.');
+      return;
+    }
+    if (!this.nuevaInstancia.responsable.trim()) {
+      this.notificaciones.error('El nombre del responsable de la inspección es requerido.');
+      return;
+    }
+
+    const payload = {
+      checklistId: this.nuevaInstancia.checklistId,
+      articuloId: this.selectedArticuloChecklist?.id || null,
+      agrupadorId: this.selectedAgrupadorChecklist?.id || null,
+      observaciones: this.nuevaInstancia.observaciones,
+      responsable: this.nuevaInstancia.responsable,
+      valores: this.nuevaInstancia.valores.map(v => ({
+        checklistItemId: v.checklistItemId,
+        valor: v.valor,
+        observacion: v.observacion
+      }))
+    };
+
+    this.checklistsService.crearChecklistInstancia(payload).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.notificaciones.exito('Inspección de checklist registrada con éxito.');
+          this.showNuevaInstanciaForm = false;
+          
+          const art = this.selectedArticuloChecklist;
+          const ag = this.selectedAgrupadorChecklist;
+          if (art) this.abrirHistorialChecklistArticulo(art);
+          else if (ag) this.abrirHistorialChecklistAgrupador(ag);
+        }
+      },
+      error: (err) => this.notificaciones.errorHttp(err, 'No se pudo registrar la inspección.')
+    });
+  }
+
+  verDetalleInstancia(inst: any) {
+    this.checklistsService.getChecklistInstanciaById(inst.id).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.selectedInstanciaDetalle = res.data;
+          this.showDetalleInstanciaDialog = true;
+        }
+      },
+      error: (err) => this.notificaciones.errorHttp(err, 'No se pudo obtener el detalle del control.')
+    });
+  }
+
+  // --- CONSULTA DE INSPECCIONES DESDE PLANTILLAS ---
+
+  abrirInspeccionesTemplate(ch: any) {
+    this.selectedChecklistTemplateForQuery = ch;
+    this.showTemplateInstanciasDialog = true;
+    
+    // Clear filters
+    this.filterInstanciaResponsable = '';
+    this.filterInstanciaFechaDesde = '';
+    this.filterInstanciaFechaHasta = '';
+    this.filterInstanciaBien = '';
+    
+    this.cargarInstanciasTemplate();
+  }
+
+  cargarInstanciasTemplate() {
+    if (!this.selectedChecklistTemplateForQuery) return;
+    this.loadingTemplateInstancias = true;
+
+    const filters = {
+      checklistId: this.selectedChecklistTemplateForQuery.id,
+      responsable: this.filterInstanciaResponsable || undefined,
+      fechaDesde: this.filterInstanciaFechaDesde || undefined,
+      fechaHasta: this.filterInstanciaFechaHasta || undefined
+    };
+
+    this.checklistsService.getChecklistInstancias(filters).subscribe({
+      next: (res) => {
+        if (res.success) {
+          let list = res.data || [];
+          const query = this.filterInstanciaBien.trim().toLowerCase();
+          if (query) {
+            list = list.filter((inst: any) => {
+              const artName = (inst.articulo?.alias || '').toLowerCase();
+              const artSn = (inst.articulo?.nroSerie || '').toLowerCase();
+              const artModel = (inst.articulo?.modelo?.nombre || '').toLowerCase();
+              const agName = (inst.agrupador?.nombre || '').toLowerCase();
+              return artName.includes(query) || artSn.includes(query) || artModel.includes(query) || agName.includes(query);
+            });
+          }
+          this.templateInstancias = list;
+        }
+        this.loadingTemplateInstancias = false;
+      },
+      error: (err) => {
+        this.loadingTemplateInstancias = false;
+        this.notificaciones.errorHttp(err, 'No se pudieron cargar las inspecciones.');
+      }
+    });
+  }
+
+  limpiarFiltrosInstanciaTemplate() {
+    this.filterInstanciaResponsable = '';
+    this.filterInstanciaFechaDesde = '';
+    this.filterInstanciaFechaHasta = '';
+    this.filterInstanciaBien = '';
+    this.cargarInstanciasTemplate();
   }
 
 }

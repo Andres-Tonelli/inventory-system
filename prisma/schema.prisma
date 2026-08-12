@@ -33,18 +33,19 @@ model Empleado {
 }
 
 model DominioInventario {
-  id              Int                  @id @default(autoincrement())
-  nombre          String               @unique
-  icono           String?
-  color           String?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  categorias      Categoria[]
-  marcas          Marca[]
-  tiposAgrupador  TipoAgrupador[]
-  administradores AdministradorDominio[]
-  estados         EstadoArticulo[]
-  solicitudes     Solicitud[]
+  id                Int                  @id @default(autoincrement())
+  nombre            String               @unique
+  icono             String?
+  color             String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  categorias        Categoria[]
+  marcas            Marca[]
+  tiposAgrupador    TipoAgrupador[]
+  administradores   AdministradorDominio[]
+  estados           EstadoArticulo[]
+  solicitudes       Solicitud[]
+  aspectosChecklist AspectoChecklist[]
 }
 
 model Categoria {
@@ -59,6 +60,7 @@ model Categoria {
   atributos                  AtributoDefinicion[]
   tiposAgrupadorRecomendados CategoriasEnTipoAgrupador[]
   solicitudes                Solicitud[]
+  checklists                 Checklist[]
 
   @@unique([nombre, dominioId])
   @@index([dominioId])
@@ -133,6 +135,7 @@ model Articulo {
 
   asignaciones AsignacionArticulo[]
   solicitudes  Solicitud[]
+  checklistInstancias ChecklistInstancia[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +161,7 @@ model TipoAgrupador {
   categoriasRecomendadas  CategoriasEnTipoAgrupador[]
   subTiposRecomendados    SubTiposEnTipoAgrupador[]   @relation("ParentTipoRelation")
   parentTiposRecomendados SubTiposEnTipoAgrupador[]   @relation("ChildTipoRelation")
+  checklists              Checklist[]
 
   @@unique([nombre, dominioId])
   @@index([dominioId])
@@ -196,11 +200,12 @@ model Agrupador {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  agrupadorPadre Agrupador?            @relation("AgrupadorJerarquia", fields: [agrupadorPadreId], references: [id])
-  subAgrupadores Agrupador[]           @relation("AgrupadorJerarquia")
-  tipoAgrupador  TipoAgrupador         @relation(fields: [tipoAgrupadorId], references: [id])
-  articulos      Articulo[]
-  asignaciones   AsignacionAgrupador[]
+  agrupadorPadre   Agrupador?            @relation("AgrupadorJerarquia", fields: [agrupadorPadreId], references: [id])
+  subAgrupadores   Agrupador[]           @relation("AgrupadorJerarquia")
+  tipoAgrupador    TipoAgrupador         @relation(fields: [tipoAgrupadorId], references: [id])
+  articulos        Articulo[]
+  asignaciones     AsignacionAgrupador[]
+  checklistInstancias ChecklistInstancia[]
 
   @@unique([nombre, tipoAgrupadorId])
   @@index([tipoAgrupadorId])
@@ -362,5 +367,86 @@ model Solicitud {
 
   @@index([empleadoId])
   @@index([dominioId])
+}
+
+model AspectoChecklist {
+  id         Int               @id @default(autoincrement())
+  nombre     String
+  dominioId  Int
+  dominio    DominioInventario @relation(fields: [dominioId], references: [id], onDelete: Cascade)
+  checklists Checklist[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@unique([nombre, dominioId])
+  @@index([dominioId])
+}
+
+model Checklist {
+  id              Int                @id @default(autoincrement())
+  titulo          String
+  aspectoId       Int
+  aspecto         AspectoChecklist   @relation(fields: [aspectoId], references: [id], onDelete: Cascade)
+  ambito          String             @default("ARTICULO")
+  categoriaId     Int?
+  categoria       Categoria?         @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  tipoAgrupadorId Int?
+  tipoAgrupador   TipoAgrupador?     @relation(fields: [tipoAgrupadorId], references: [id], onDelete: SetNull)
+  items           ChecklistItem[]
+  instancias      ChecklistInstancia[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([aspectoId])
+  @@index([categoriaId])
+  @@index([tipoAgrupadorId])
+  @@index([ambito])
+}
+
+model ChecklistItem {
+  id          Int       @id @default(autoincrement())
+  checklistId Int
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  pregunta    String
+  orden       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  valores     ChecklistValor[]
+
+  @@index([checklistId])
+}
+
+model ChecklistInstancia {
+  id            Int              @id @default(autoincrement())
+  checklistId   Int
+  checklist     Checklist        @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  articuloId    Int?
+  articulo      Articulo?        @relation(fields: [articuloId], references: [id], onDelete: Cascade)
+  agrupadorId   Int?
+  agrupador     Agrupador?       @relation(fields: [agrupadorId], references: [id], onDelete: Cascade)
+  observaciones String?
+  responsable   String?
+  valores       ChecklistValor[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([checklistId])
+  @@index([articuloId])
+  @@index([agrupadorId])
+}
+
+model ChecklistValor {
+  id              Int                @id @default(autoincrement())
+  instanciaId     Int
+  instancia       ChecklistInstancia @relation(fields: [instanciaId], references: [id], onDelete: Cascade)
+  checklistItemId Int
+  checklistItem   ChecklistItem      @relation(fields: [checklistItemId], references: [id], onDelete: Cascade)
+  valor           Boolean            @default(false)
+  observacion     String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([instanciaId])
+  @@index([checklistItemId])
 }
 

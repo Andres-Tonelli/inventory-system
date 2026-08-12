@@ -17,3 +17,4 @@ export * from './lib/inventario';
 export * from './lib/asignaciones';
 export * from './lib/routes';
 export * from './lib/solicitudes';
+export * from './lib/checklist';

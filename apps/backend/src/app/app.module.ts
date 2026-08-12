@@ -9,6 +9,7 @@ import { EmpleadosModule } from './empleados/empleados.module';
 import { AgrupadoresModule } from './agrupadores/agrupadores.module';
 import { AuthModule } from './auth/auth.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
+import { ChecklistsModule } from './checklists/checklists.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SolicitudesModule } from './solicitudes/solicitudes.module';
     EmpleadosModule,
     AgrupadoresModule,
     SolicitudesModule,
+    ChecklistsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
