@@ -63,6 +63,7 @@ export class MisAsignacionesComponent implements OnInit {
   allArticulos: any[] = [];
   globalHistorial: any[] = [];
   categorias: any[] = [];
+  agrupadorHistory: any[] = [];
 
   // Paged arrays for the active tab/domain
   paginaAgrupadores = 1;
@@ -142,7 +143,7 @@ export class MisAsignacionesComponent implements OnInit {
       if (res.success) this.categorias = res.data;
     });
 
-    this.catalogosService.getDominios().subscribe((res) => {
+    this.catalogosService.getDominios(true).subscribe((res) => {
       if (res.success) {
         this.dominios = res.data;
         if (this.dominios.length > 0) {
@@ -405,7 +406,7 @@ export class MisAsignacionesComponent implements OnInit {
 
   // Domain filtering
   getAgrupadoresForDomain(domainId: number): any[] {
-    return this.allAgrupadores.filter(ag => ag.tipoAgrupador?.dominioId === domainId);
+    return this.allAgrupadores.filter(ag => ag.tipoAgrupador?.dominioId === domainId && ag.tipoAgrupador?.asignable !== false);
   }
 
   getArticulosForDomain(domainId: number): any[] {
@@ -478,9 +479,15 @@ export class MisAsignacionesComponent implements OnInit {
 
   getPredefinedSlots(ag: any): any[] {
     if (!ag || !ag.tipoAgrupador?.categoriasRecomendadas) return [];
+    const usedIds = new Set<number>();
     return ag.tipoAgrupador.categoriasRecomendadas.map((cr: any) => {
       const cat = cr.categoria;
-      const articulo = (ag.articulos || []).find((art: any) => art.modelo?.categoriaId === cat.id);
+      const articulo = (ag.articulos || []).find(
+        (art: any) => art.modelo?.categoriaId === cat.id && !usedIds.has(art.id)
+      );
+      if (articulo) {
+        usedIds.add(articulo.id);
+      }
       return {
         categoria: cat,
         articulo: articulo || null
@@ -490,17 +497,32 @@ export class MisAsignacionesComponent implements OnInit {
 
   getAdditionalArticles(ag: any): any[] {
     if (!ag) return [];
-    const recCatIds = new Set(
-      (ag.tipoAgrupador?.categoriasRecomendadas || []).map((cr: any) => cr.categoria.id).filter(Boolean)
-    );
-    return (ag.articulos || []).filter((art: any) => !recCatIds.has(art.modelo?.categoriaId));
+    const usedIds = new Set<number>();
+    if (ag.tipoAgrupador?.categoriasRecomendadas) {
+      for (const cr of ag.tipoAgrupador.categoriasRecomendadas) {
+        const cat = cr.categoria;
+        const articulo = (ag.articulos || []).find(
+          (art: any) => art.modelo?.categoriaId === cat.id && !usedIds.has(art.id)
+        );
+        if (articulo) {
+          usedIds.add(articulo.id);
+        }
+      }
+    }
+    return (ag.articulos || []).filter((art: any) => !usedIds.has(art.id));
   }
 
   getPredefinedSubSlots(ag: any): any[] {
     if (!ag || !ag.tipoAgrupador?.subTiposRecomendados) return [];
+    const usedIds = new Set<number>();
     return ag.tipoAgrupador.subTiposRecomendados.map((sr: any) => {
       const tipoChild = sr.childTipo;
-      const sub = (ag.subAgrupadores || []).find((subAg: any) => subAg.tipoAgrupadorId === tipoChild.id);
+      const sub = (ag.subAgrupadores || []).find(
+        (subAg: any) => subAg.tipoAgrupadorId === tipoChild.id && !usedIds.has(subAg.id)
+      );
+      if (sub) {
+        usedIds.add(sub.id);
+      }
       return {
         tipoAgrupador: tipoChild,
         subAgrupador: sub || null
@@ -510,10 +532,19 @@ export class MisAsignacionesComponent implements OnInit {
 
   getAdditionalSubAgrupadores(ag: any): any[] {
     if (!ag) return [];
-    const recTipoIds = new Set(
-      (ag.tipoAgrupador?.subTiposRecomendados || []).map((sr: any) => sr.childTipo.id).filter(Boolean)
-    );
-    return (ag.subAgrupadores || []).filter((subAg: any) => !recTipoIds.has(subAg.tipoAgrupadorId));
+    const usedIds = new Set<number>();
+    if (ag.tipoAgrupador?.subTiposRecomendados) {
+      for (const sr of ag.tipoAgrupador.subTiposRecomendados) {
+        const tipoChild = sr.childTipo;
+        const sub = (ag.subAgrupadores || []).find(
+          (subAg: any) => subAg.tipoAgrupadorId === tipoChild.id && !usedIds.has(subAg.id)
+        );
+        if (sub) {
+          usedIds.add(sub.id);
+        }
+      }
+    }
+    return (ag.subAgrupadores || []).filter((subAg: any) => !usedIds.has(subAg.id));
   }
 
   getObjectKeys(obj: any): string[] {
@@ -662,7 +693,10 @@ export class MisAsignacionesComponent implements OnInit {
     });
   }
 
-  verDetalleAgrupador(sub: any) {
+  verDetalleAgrupador(sub: any, clearHistory = true) {
+    if (clearHistory) {
+      this.agrupadorHistory = [];
+    }
     this.selectedAgrupadorDetalle = sub;
     this.agrupadorChecklists = [];
     this.loadingDetailsChecklists = true;
@@ -682,6 +716,20 @@ export class MisAsignacionesComponent implements OnInit {
         this.loadingDetailsChecklists = false;
       }
     });
+  }
+
+  verDetalleAgrupadorHijo(sub: any) {
+    if (this.selectedAgrupadorDetalle) {
+      this.agrupadorHistory.push(this.selectedAgrupadorDetalle);
+    }
+    this.verDetalleAgrupador(sub, false);
+  }
+
+  volverAgrupadorAnterior() {
+    if (this.agrupadorHistory.length > 0) {
+      const prev = this.agrupadorHistory.pop();
+      this.verDetalleAgrupador(prev, false);
+    }
   }
 
   // --- INSTANCIACIÓN E HISTORIAL DE CHECKLISTS ---

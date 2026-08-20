@@ -108,4 +108,29 @@ describe('AgrupadoresService', () => {
       expect(agrupadorRepo.items.get(2).agrupadorPadreId).toBeNull();
     });
   });
+
+  describe('multiAsignacion addArticulo y addSubAgrupador', () => {
+    it('al agregar un artículo a un agrupador con múltiples responsables, asigna el artículo a todos ellos', async () => {
+      agrupadorRepo.seed({
+        id: 10, estado: 'ASIGNADO',
+        tipoAgrupador: { asignable: true, multiAsignable: true }
+      });
+      articuloRepo.seed({ id: 5, estado: { codigo: 'DISPONIBLE' }, agrupadorId: null });
+
+      // Empleado 8 y Empleado 7 están asignados
+      asignacionAgrupadorRepo.seed(
+        { id: 1, agrupadorId: 10, empleadoId: 8 },
+        { id: 2, agrupadorId: 10, empleadoId: 7 }
+      );
+
+      await service.addArticulo(10, 5);
+
+      // El artículo se debió asignar a ambos empleados
+      const allArtAsgs = [...asignacionRepo.items.values()];
+      expect(allArtAsgs).toHaveLength(2);
+      expect(allArtAsgs.some(a => a.articuloId === 5 && a.empleadoId === 8)).toBe(true);
+      expect(allArtAsgs.some(a => a.articuloId === 5 && a.empleadoId === 7)).toBe(true);
+      expect(articuloRepo.items.get(5).estadoCodigo).toBe('EN_USO');
+    });
+  });
 });

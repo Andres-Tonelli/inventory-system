@@ -138,12 +138,12 @@ export class AgrupadoresService {
         articulo.estadoCodigo = EstadoCodigo.EN_USO;
         await this.articuloRepo.save(articulo);
 
-        // Buscar asignación activa del agrupador padre
+        // Buscar TODAS las asignaciones activas del agrupador padre
         const criteria = new Criteria();
         criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: agrupadorId });
         const parentAsgs = await this.asignacionAgrupadorRepo.search(criteria);
-        const activeParentAsg = parentAsgs.find((a) => !a.fechaDevolucion);
-        if (activeParentAsg) {
+        const activeParentAsgs = parentAsgs.filter((a) => !a.fechaDevolucion);
+        for (const activeParentAsg of activeParentAsgs) {
           await this.asignacionRepo.save({
             articuloId: articulo.id,
             empleadoId: activeParentAsg.empleadoId,
@@ -212,12 +212,12 @@ export class AgrupadoresService {
         await this.agrupadorRepo.save(child);
         await this.cascadeAgrupadorEstado(child.id, 'ASIGNADO', EstadoCodigo.EN_USO);
 
-        // Buscar asignación activa del agrupador padre
+        // Buscar TODAS las asignaciones activas del agrupador padre
         const criteria = new Criteria();
         criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: parentAgrupadorId });
         const parentAsgs = await this.asignacionAgrupadorRepo.search(criteria);
-        const activeParentAsg = parentAsgs.find((a) => !a.fechaDevolucion);
-        if (activeParentAsg) {
+        const activeParentAsgs = parentAsgs.filter((a) => !a.fechaDevolucion);
+        for (const activeParentAsg of activeParentAsgs) {
           await this.asignacionAgrupadorRepo.save({
             agrupadorId: child.id,
             empleadoId: activeParentAsg.empleadoId,

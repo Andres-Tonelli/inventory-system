@@ -33,11 +33,11 @@ export class CatalogosController {
   }
 
   @Get('dominios')
-  async getDominios(@Req() req: any, @Query('nombre') nombre?: string) {
+  async getDominios(@Req() req: any, @Query('nombre') nombre?: string, @Query('todos') todos?: string) {
     const user = req.user;
     let resultados = await this.catalogosService.getDominios({ nombre });
     
-    if (user && user.rol === 'DOMINIO') {
+    if (user && user.rol === 'DOMINIO' && todos !== 'true') {
       resultados = resultados.filter((d: any) => user.dominios && user.dominios.includes(d.id));
     }
     

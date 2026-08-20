@@ -64,54 +64,93 @@ export class AsignacionesService {
     if (agrupador.articulos && agrupador.articulos.length > 0) {
       for (const art of agrupador.articulos) {
         if (estadoAgrupador === 'DISPONIBLE') {
-          if (art.estado?.codigo === EstadoCodigo.EN_USO) {
-            await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
-          }
-          // Cerrar asignación activa del artículo
+          // Cerrar asignación activa del artículo para ESTE empleado
           const criteria = new Criteria();
           criteria.filters.push({ field: 'articuloId', operator: 'eq', value: art.id });
+          if (empleadoId) {
+            criteria.filters.push({ field: 'empleadoId', operator: 'eq', value: empleadoId });
+          }
           const allAsgs = await this.asignacionRepo.search(criteria);
           const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
           for (const asg of activeAsgs) {
             asg.fechaDevolucion = new Date();
             await this.asignacionRepo.save(asg);
           }
+
+          // Solo si no quedan otras asignaciones activas de este artículo, volver a DISPONIBLE
+          const activeCriteria = new Criteria();
+          activeCriteria.filters.push({ field: 'articuloId', operator: 'eq', value: art.id });
+          const allArtAsgs = await this.asignacionRepo.search(activeCriteria);
+          const remainingActive = allArtAsgs.filter((a) => !a.fechaDevolucion);
+          if (remainingActive.length === 0 && art.estado?.codigo === EstadoCodigo.EN_USO) {
+            await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
+          }
         } else {
-          await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
-          // Crear asignación activa para el artículo
-          await this.asignacionRepo.save({
-            articuloId: art.id,
-            empleadoId: empleadoId!,
-            fechaEntrega: new Date(),
-            observaciones: observaciones || null,
-          } as any);
+          // ASIGNADO:
+          // Check if already assigned to this employee to prevent duplicates
+          const criteria = new Criteria();
+          criteria.filters.push({ field: 'articuloId', operator: 'eq', value: art.id });
+          criteria.filters.push({ field: 'empleadoId', operator: 'eq', value: empleadoId! });
+          const allAsgs = await this.asignacionRepo.search(criteria);
+          const hasActive = allAsgs.some((a) => !a.fechaDevolucion);
+
+          if (!hasActive) {
+            await this.articuloRepo.save({ id: art.id, estadoCodigo: estadoArticuloCodigo } as any);
+            await this.asignacionRepo.save({
+              articuloId: art.id,
+              empleadoId: empleadoId!,
+              fechaEntrega: new Date(),
+              observaciones: observaciones || null,
+            } as any);
+          }
         }
       }
     }
 
     if (agrupador.subAgrupadores && agrupador.subAgrupadores.length > 0) {
       for (const sub of agrupador.subAgrupadores) {
-        sub.estado = estadoAgrupador;
-        await this.agrupadorRepo.save(sub);
-
         if (estadoAgrupador === 'DISPONIBLE') {
-          // Cerrar asignación del sub-agrupador
+          // Cerrar asignación del sub-agrupador para ESTE empleado
           const criteria = new Criteria();
           criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: sub.id });
+          if (empleadoId) {
+            criteria.filters.push({ field: 'empleadoId', operator: 'eq', value: empleadoId });
+          }
           const allAsgs = await this.asignacionAgrupadorRepo.search(criteria);
           const activeAsgs = allAsgs.filter((a) => !a.fechaDevolucion);
           for (const asg of activeAsgs) {
             asg.fechaDevolucion = new Date();
             await this.asignacionAgrupadorRepo.save(asg);
           }
+
+          // Solo si no quedan otras asignaciones activas de este sub-agrupador, volver a DISPONIBLE
+          const activeCriteria = new Criteria();
+          activeCriteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: sub.id });
+          const allSubAsgs = await this.asignacionAgrupadorRepo.search(activeCriteria);
+          const remainingActive = allSubAsgs.filter((a) => !a.fechaDevolucion);
+          if (remainingActive.length === 0) {
+            sub.estado = 'DISPONIBLE';
+            await this.agrupadorRepo.save(sub);
+          }
         } else {
-          // Crear asignación para el sub-agrupador
-          await this.asignacionAgrupadorRepo.save({
-            agrupadorId: sub.id,
-            empleadoId: empleadoId!,
-            fechaEntrega: new Date(),
-            observaciones: observaciones || null,
-          } as any);
+          // ASIGNADO:
+          // Check if already assigned to this employee
+          const criteria = new Criteria();
+          criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: sub.id });
+          criteria.filters.push({ field: 'empleadoId', operator: 'eq', value: empleadoId! });
+          const allAsgs = await this.asignacionAgrupadorRepo.search(criteria);
+          const hasActive = allAsgs.some((a) => !a.fechaDevolucion);
+
+          if (!hasActive) {
+            sub.estado = 'ASIGNADO';
+            await this.agrupadorRepo.save(sub);
+            await this.asignacionAgrupadorRepo.save({
+              agrupadorId: sub.id,
+              empleadoId: empleadoId!,
+              fechaEntrega: new Date(),
+              observaciones: observaciones || null,
+            } as any);
+          }
         }
 
         await this.cascadeAgrupadorEstado(sub.id, estadoAgrupador, estadoArticuloCodigo, empleadoId, observaciones);
@@ -128,7 +167,18 @@ export class AsignacionesService {
       if (!agrupador.tipoAgrupador?.asignable) {
         throw new BadRequestException('Este tipo de agrupador no es asignable (es un contenedor/ubicación)');
       }
-      if (agrupador.estado === 'ASIGNADO') throw new BadRequestException('Agrupador ya asignado');
+      if (agrupador.estado === 'ASIGNADO' && !agrupador.tipoAgrupador?.multiAsignable) {
+        throw new BadRequestException('Agrupador ya asignado');
+      }
+
+      // Check duplicate active assignment for the same employee
+      const criteria = new Criteria();
+      criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: agrupadorId });
+      criteria.filters.push({ field: 'empleadoId', operator: 'eq', value: empleadoId });
+      const existing = await this.asignacionAgrupadorRepo.search(criteria);
+      if (existing.some((a) => !a.fechaDevolucion)) {
+        throw new BadRequestException('Este agrupador ya está asignado a esta persona');
+      }
 
       // Único escritor de `estado` (denormalizado), en la misma transacción. Ver ADR-0004 D5.
       agrupador.estado = 'ASIGNADO';
@@ -248,11 +298,19 @@ export class AsignacionesService {
 
       const agrupador: any = await this.agrupadorRepo.findById(asig.agrupadorId);
       if (agrupador) {
-        agrupador.estado = 'DISPONIBLE';
-        await this.agrupadorRepo.save(agrupador);
+        // Check if there are other active assignments for this group
+        const criteria = new Criteria();
+        criteria.filters.push({ field: 'agrupadorId', operator: 'eq', value: asig.agrupadorId });
+        const allAsgs = await this.asignacionAgrupadorRepo.search(criteria);
+        const remainingActive = allAsgs.filter((a) => !a.fechaDevolucion && a.id !== asignacionId);
 
-        // Cascada recursiva a todos los sub-agrupadores y artículos contenidos
-        await this.cascadeAgrupadorEstado(asig.agrupadorId, 'DISPONIBLE', EstadoCodigo.DISPONIBLE);
+        if (remainingActive.length === 0) {
+          agrupador.estado = 'DISPONIBLE';
+          await this.agrupadorRepo.save(agrupador);
+        }
+
+        // cascade DISPONIBLE state to children (specifically for this returning employee)
+        await this.cascadeAgrupadorEstado(asig.agrupadorId, 'DISPONIBLE', EstadoCodigo.DISPONIBLE, asig.empleadoId);
       }
       return { success: true };
     });

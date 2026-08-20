@@ -48,7 +48,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
 
   showTipoDialog = false;
   editingTipoId: number | null = null;
-  tipoForm = { nombre: '', asignable: true, categoriaIds: [] as number[], subTipoIds: [] as number[] };
+  tipoForm = { nombre: '', asignable: true, multiAsignable: false, categoriaIds: [] as number[], subTipoIds: [] as number[] };
   categorias: Categoria[] = [];
 
   showAdminDialog = false;
@@ -197,14 +197,14 @@ export class ConfiguracionDominiosComponent implements OnInit {
   // ---- Tipo de agrupador ----
   openNewTipo(): void {
     this.editingTipoId = null;
-    this.tipoForm = { nombre: '', asignable: true, categoriaIds: [], subTipoIds: [] };
+    this.tipoForm = { nombre: '', asignable: true, multiAsignable: false, categoriaIds: [], subTipoIds: [] };
     this.showTipoDialog = true;
   }
   openEditTipo(t: TipoAgrupador): void {
     this.editingTipoId = t.id ?? null;
     const categoriaIds = (t.categoriasRecomendadas || []).map((cr: any) => cr.categoria.id).filter(Boolean);
     const subTipoIds = (t.subTiposRecomendados || []).map((sr: any) => sr.childTipo.id).filter(Boolean);
-    this.tipoForm = { nombre: t.nombre, asignable: t.asignable ?? true, categoriaIds, subTipoIds };
+    this.tipoForm = { nombre: t.nombre, asignable: t.asignable ?? true, multiAsignable: t.multiAsignable ?? false, categoriaIds, subTipoIds };
     this.showTipoDialog = true;
   }
   saveTipo(): void {
@@ -220,6 +220,7 @@ export class ConfiguracionDominiosComponent implements OnInit {
     const payload = {
       nombre,
       asignable: this.tipoForm.asignable,
+      multiAsignable: this.tipoForm.asignable ? this.tipoForm.multiAsignable : false,
       categoriaIds: this.tipoForm.categoriaIds,
       subTipoIds: this.tipoForm.subTipoIds
     };

@@ -10,7 +10,10 @@
     <section class="rail" aria-label="Lista de dominios">
       <div class="rail-head">
         <span class="lbl">Dominios</span>
-        <button class="btn primary sm" *ngIf="isSystemAdmin()" (click)="openNewDominio()"><i class="pi pi-plus"></i>Nuevo</button>
+        <div style="display: flex; gap: 0.25rem;">
+          <button class="btn primary sm" *ngIf="isSystemAdmin() && selectedId" (click)="openNewAdmin()" title="Asociar administrador al dominio"><i class="pi pi-user-plus"></i>Asociar admin</button>
+          <button class="btn primary sm" *ngIf="isSystemAdmin()" (click)="openNewDominio()"><i class="pi pi-plus"></i>Nuevo</button>
+        </div>
       </div>
       <div class="rail-list">
         <button
@@ -80,8 +83,14 @@
               <tr *ngFor="let t of tipos">
                 <td class="cell-name">{{ t.nombre }}</td>
                 <td>
-                  <span class="pill" [class.green]="t.asignable !== false" [class.slate]="t.asignable === false">
-                    <span class="dot"></span>{{ t.asignable === false ? 'Contenedor' : 'Asignable' }}
+                  <span class="pill slate" *ngIf="t.asignable === false">
+                    <span class="dot"></span>Contenedor
+                  </span>
+                  <span class="pill indigo" *ngIf="t.asignable !== false && t.multiAsignable">
+                    <span class="dot"></span>Multi-asignable
+                  </span>
+                  <span class="pill green" *ngIf="t.asignable !== false && !t.multiAsignable">
+                    <span class="dot"></span>Asignable
                   </span>
                 </td>
                 <td>
@@ -136,7 +145,6 @@
           </div>
           <div class="toolbar">
             <span class="cap">Quiénes gestionan las existencias y agrupadores de este dominio.</span>
-            <button class="btn primary sm" (click)="openNewAdmin()"><i class="pi pi-plus"></i>Asociar administrador</button>
           </div>
 
           <table *ngIf="administradores.length > 0; else emptyAdmins">
@@ -214,6 +222,11 @@
     <label class="mt">Comportamiento</label>
     <p-select [options]="asignableOptions" [(ngModel)]="tipoForm.asignable" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
     <small class="hint">Asignable = se entrega a una persona · Contenedor = ubicación (no se entrega).</small>
+    
+    <div class="checkbox-field" *ngIf="tipoForm.asignable" style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+      <input type="checkbox" id="tipoAgrupadorMultiAsignable" [(ngModel)]="tipoForm.multiAsignable" style="cursor: pointer; width: 1.15rem; height: 1.15rem;" />
+      <label for="tipoAgrupadorMultiAsignable" style="margin: 0; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--ink);">Permitir Multi-asignación (Múltiples Responsables)</label>
+    </div>
     
     <label class="mt">Categorías preestablecidas / recomendadas</label>
     <p-multiSelect [options]="categorias" [(ngModel)]="tipoForm.categoriaIds" optionLabel="nombre" optionValue="id" placeholder="Ninguna (permite cualquier artículo)" appendTo="body" styleClass="w-full"></p-multiSelect>

@@ -289,7 +289,7 @@ export class AsignacionesComponent implements OnInit {
     this.agrupadoresService.getAgrupadores(dominioId || undefined).subscribe(res => {
       if(res.success) {
         this.agrupadoresDisponibles = res.data
-          .filter((a: any) => a.estado === 'DISPONIBLE' && a.tipoAgrupador?.asignable === true)
+          .filter((a: any) => (a.estado === 'DISPONIBLE' || a.tipoAgrupador?.multiAsignable === true) && a.tipoAgrupador?.asignable === true)
           .map((a: any) => ({
             ...a,
             displayLabel: a.tipoAgrupador?.nombre ? `${a.tipoAgrupador.nombre} - ${a.nombre}` : a.nombre

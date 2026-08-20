@@ -31,8 +31,9 @@ export class CatalogosService {
   constructor(private http: HttpClient) {}
 
   // ---- DOMINIOS ----
-  getDominios(): Observable<ApiResponse<Dominio[]>> {
-    return this.http.get<ApiResponse<Dominio[]>>('/api/catalogos/dominios');
+  getDominios(todos = false): Observable<ApiResponse<Dominio[]>> {
+    const url = todos ? '/api/catalogos/dominios?todos=true' : '/api/catalogos/dominios';
+    return this.http.get<ApiResponse<Dominio[]>>(url);
   }
   createDominio(data: { nombre: string; icono?: string; color?: string }) {
     return this.http.post('/api/catalogos/dominios', data);

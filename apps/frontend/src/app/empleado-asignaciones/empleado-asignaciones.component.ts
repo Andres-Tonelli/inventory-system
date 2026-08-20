@@ -151,9 +151,15 @@ export class EmpleadoAsignacionesComponent implements OnInit {
 
   getPredefinedSlots(ag: any): any[] {
     if (!ag || !ag.tipoAgrupador?.categoriasRecomendadas) return [];
+    const usedIds = new Set<number>();
     return ag.tipoAgrupador.categoriasRecomendadas.map((cr: any) => {
       const cat = cr.categoria;
-      const articulo = (ag.articulos || []).find((art: any) => art.modelo?.categoriaId === cat.id);
+      const articulo = (ag.articulos || []).find(
+        (art: any) => art.modelo?.categoriaId === cat.id && !usedIds.has(art.id)
+      );
+      if (articulo) {
+        usedIds.add(articulo.id);
+      }
       return {
         categoria: cat,
         articulo: articulo || null
@@ -163,17 +169,32 @@ export class EmpleadoAsignacionesComponent implements OnInit {
 
   getAdditionalArticles(ag: any): any[] {
     if (!ag) return [];
-    const recCatIds = new Set(
-      (ag.tipoAgrupador?.categoriasRecomendadas || []).map((cr: any) => cr.categoria.id).filter(Boolean)
-    );
-    return (ag.articulos || []).filter((art: any) => !recCatIds.has(art.modelo?.categoriaId));
+    const usedIds = new Set<number>();
+    if (ag.tipoAgrupador?.categoriasRecomendadas) {
+      for (const cr of ag.tipoAgrupador.categoriasRecomendadas) {
+        const cat = cr.categoria;
+        const articulo = (ag.articulos || []).find(
+          (art: any) => art.modelo?.categoriaId === cat.id && !usedIds.has(art.id)
+        );
+        if (articulo) {
+          usedIds.add(articulo.id);
+        }
+      }
+    }
+    return (ag.articulos || []).filter((art: any) => !usedIds.has(art.id));
   }
 
   getPredefinedSubSlots(ag: any): any[] {
     if (!ag || !ag.tipoAgrupador?.subTiposRecomendados) return [];
+    const usedIds = new Set<number>();
     return ag.tipoAgrupador.subTiposRecomendados.map((sr: any) => {
       const tipoChild = sr.childTipo;
-      const sub = (ag.subAgrupadores || []).find((subAg: any) => subAg.tipoAgrupadorId === tipoChild.id);
+      const sub = (ag.subAgrupadores || []).find(
+        (subAg: any) => subAg.tipoAgrupadorId === tipoChild.id && !usedIds.has(subAg.id)
+      );
+      if (sub) {
+        usedIds.add(sub.id);
+      }
       return {
         tipoAgrupador: tipoChild,
         subAgrupador: sub || null
@@ -183,10 +204,19 @@ export class EmpleadoAsignacionesComponent implements OnInit {
 
   getAdditionalSubAgrupadores(ag: any): any[] {
     if (!ag) return [];
-    const recTipoIds = new Set(
-      (ag.tipoAgrupador?.subTiposRecomendados || []).map((sr: any) => sr.childTipo.id).filter(Boolean)
-    );
-    return (ag.subAgrupadores || []).filter((subAg: any) => !recTipoIds.has(subAg.tipoAgrupadorId));
+    const usedIds = new Set<number>();
+    if (ag.tipoAgrupador?.subTiposRecomendados) {
+      for (const sr of ag.tipoAgrupador.subTiposRecomendados) {
+        const tipoChild = sr.childTipo;
+        const sub = (ag.subAgrupadores || []).find(
+          (subAg: any) => subAg.tipoAgrupadorId === tipoChild.id && !usedIds.has(subAg.id)
+        );
+        if (sub) {
+          usedIds.add(sub.id);
+        }
+      }
+    }
+    return (ag.subAgrupadores || []).filter((subAg: any) => !usedIds.has(subAg.id));
   }
 
   getObjectKeys(obj: any): string[] {

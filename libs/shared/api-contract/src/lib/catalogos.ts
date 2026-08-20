@@ -78,6 +78,7 @@ export interface TipoAgrupador {
   dominioId: number;
   /** true = conjunto asignable a persona; false = contenedor/ubicación (ej. locker). Ver ADR-0004 D3. */
   asignable?: boolean;
+  multiAsignable?: boolean;
   categoriasRecomendadas?: { categoria: Categoria }[];
   subTiposRecomendados?: { childTipo: TipoAgrupador }[];
 }
@@ -127,6 +128,7 @@ export interface CreateTipoAgrupadorDto {
   nombre: string;
   /** Si se omite, el backend usa true (asignable) por defecto. */
   asignable?: boolean;
+  multiAsignable?: boolean;
   categoriaIds?: number[];
   subTipoIds?: number[];
 }
@@ -168,6 +170,7 @@ export interface UpdateModeloDto {
 export interface UpdateTipoAgrupadorDto {
   nombre?: string;
   asignable?: boolean;
+  multiAsignable?: boolean;
   categoriaIds?: number[];
   subTipoIds?: number[];
 }

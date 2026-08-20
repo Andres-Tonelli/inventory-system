@@ -243,7 +243,7 @@
                       Asignado a <i class="pi" [ngClass]="getSortAgrIcon('asignatario')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
                     </th>
                     <th (click)="toggleSortAgr('articulos')" class="ta-right" style="cursor: pointer; user-select: none;">
-                      Art. <i class="pi" [ngClass]="getSortAgrIcon('articulos')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
+                      Cant. Elementos <i class="pi" [ngClass]="getSortAgrIcon('articulos')" style="font-size: 0.8rem; margin-left: 0.25rem;"></i>
                     </th>
                   </tr>
                 </thead>
@@ -252,7 +252,7 @@
                     <td class="rowname">{{ ag.nombre }}</td>
                     <td><span class="pill" [class.blue]="ag.estado !== 'DISPONIBLE'" [class.green]="ag.estado === 'DISPONIBLE'"><span class="dot"></span>{{ ag.estado === 'DISPONIBLE' ? 'Disponible' : 'Asignado' }}</span></td>
                     <td class="mut">{{ getAgrupadorAsignatario(ag) || '—' }}</td>
-                    <td class="ta-right num">{{ ag.articulos?.length || 0 }}</td>
+                    <td class="ta-right num">{{ (ag.articulos?.length || 0) + (ag.subAgrupadores?.length || 0) }}</td>
                   </tr>
                   <tr *ngIf="getAgrupadoresPorTipo(tipo.id!).length === 0"><td colspan="4" class="empty">Sin {{ tipo.nombre }}s. Creá el primero.</td></tr>
                 </tbody>

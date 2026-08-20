@@ -214,4 +214,89 @@ describe('AsignacionesService', () => {
       expect(articuloRepo.savedWith[0]).toMatchObject({ id: 1, estadoCodigo: 'DISPONIBLE' });
     });
   });
+
+  describe('multiAsignacion de Agrupador', () => {
+    it('permite asignar a múltiples personas si el tipo de agrupador es multiAsignable', async () => {
+      agrupadorRepo.seed({
+        id: 10, estado: 'ASIGNADO',
+        tipoAgrupador: { asignable: true, multiAsignable: true },
+        articulos: [
+          { id: 1, estado: { codigo: 'EN_USO' } },
+        ],
+      });
+      // Ya tiene una asignación activa para el empleado 8
+      asignacionAgrupadorRepo.seed({ id: 1, agrupadorId: 10, empleadoId: 8 });
+      asignacionRepo.seed({ id: 1, articuloId: 1, empleadoId: 8 });
+
+      // Ahora asignamos al empleado 7
+      await service.asignarAgrupador(10, 7, 'segundo responsable');
+
+      // Se debió crear la segunda asignación activa del agrupador
+      const allAgrupadorAsgs = [...asignacionAgrupadorRepo.items.values()];
+      expect(allAgrupadorAsgs.filter((a) => !a.fechaDevolucion)).toHaveLength(2);
+
+      // Y también la del artículo para el empleado 7
+      const allArtAsgs = [...asignacionRepo.items.values()];
+      expect(allArtAsgs.filter((a) => !a.fechaDevolucion)).toHaveLength(2);
+      expect(allArtAsgs.some(a => a.articuloId === 1 && a.empleadoId === 7)).toBe(true);
+    });
+
+    it('al devolver uno de los responsables, mantiene el agrupador y artículos en ASIGNADO/EN_USO para el otro', async () => {
+      agrupadorRepo.seed({
+        id: 10, estado: 'ASIGNADO',
+        tipoAgrupador: { asignable: true, multiAsignable: true },
+        articulos: [
+          { id: 1, estado: { codigo: 'EN_USO' } },
+        ],
+      });
+      // Empleado 8 y Empleado 7 están asignados
+      asignacionAgrupadorRepo.seed(
+        { id: 1, agrupadorId: 10, empleadoId: 8, fechaDevolucion: null },
+        { id: 2, agrupadorId: 10, empleadoId: 7, fechaDevolucion: null }
+      );
+      asignacionRepo.seed(
+        { id: 1, articuloId: 1, empleadoId: 8, fechaDevolucion: null },
+        { id: 2, articuloId: 1, empleadoId: 7, fechaDevolucion: null }
+      );
+
+      // El empleado 7 devuelve su asignación
+      await service.devolverAgrupador(2);
+
+      // Su asignación del agrupador y artículo se cierran
+      expect(asignacionAgrupadorRepo.items.get(2).fechaDevolucion).toBeInstanceOf(Date);
+      expect(asignacionRepo.items.get(2).fechaDevolucion).toBeInstanceOf(Date);
+
+      // Las de empleado 8 continúan activas
+      expect(asignacionAgrupadorRepo.items.get(1).fechaDevolucion).toBeNull();
+      expect(asignacionRepo.items.get(1).fechaDevolucion).toBeNull();
+
+      // El estado físico del agrupador y artículo no cambia a DISPONIBLE porque queda el empleado 8
+      expect(agrupadorRepo.savedWith).toHaveLength(0); // no se re-guardó como DISPONIBLE
+      expect(articuloRepo.savedWith).toHaveLength(0); // no se re-guardó como DISPONIBLE
+    });
+
+    it('al devolver el ÚLTIMO responsable, el agrupador y artículos vuelven a DISPONIBLE', async () => {
+      agrupadorRepo.seed({
+        id: 10, estado: 'ASIGNADO',
+        tipoAgrupador: { asignable: true, multiAsignable: true },
+        articulos: [
+          { id: 1, estado: { codigo: 'EN_USO' } },
+        ],
+      });
+      // Empleado 7 es el único asignado
+      asignacionAgrupadorRepo.seed({ id: 2, agrupadorId: 10, empleadoId: 7 });
+      asignacionRepo.seed({ id: 2, articuloId: 1, empleadoId: 7 });
+
+      // Devuelve su asignación
+      await service.devolverAgrupador(2);
+
+      // Su asignación se cierra
+      expect(asignacionAgrupadorRepo.items.get(2).fechaDevolucion).toBeInstanceOf(Date);
+      expect(asignacionRepo.items.get(2).fechaDevolucion).toBeInstanceOf(Date);
+
+      // Vuelven a DISPONIBLE al ser la última
+      expect(agrupadorRepo.savedWith[0].estado).toBe('DISPONIBLE');
+      expect(articuloRepo.savedWith[0].estadoCodigo).toBe('DISPONIBLE');
+    });
+  });
 });

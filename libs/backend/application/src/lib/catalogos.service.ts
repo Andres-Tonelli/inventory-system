@@ -142,12 +142,13 @@ export class CatalogosService {
   }
 
   // ---- TIPOS DE AGRUPADOR ----
-  async createTipoAgrupador(data: { nombre: string; dominioId: number; asignable?: boolean; categoriaIds?: number[]; subTipoIds?: number[] }) {
+  async createTipoAgrupador(data: { nombre: string; dominioId: number; asignable?: boolean; multiAsignable?: boolean; categoriaIds?: number[]; subTipoIds?: number[] }) {
     try {
       await this.tipoAgrupadorRepo.save({
         nombre: data.nombre,
         dominioId: data.dominioId,
         ...(data.asignable !== undefined && { asignable: data.asignable }),
+        ...(data.multiAsignable !== undefined && { multiAsignable: data.multiAsignable }),
         categoriaIds: data.categoriaIds,
         subTipoIds: data.subTipoIds
       } as any);
@@ -256,7 +257,7 @@ export class CatalogosService {
     }
   }
 
-  async updateTipoAgrupador(id: number, data: { nombre?: string; asignable?: boolean; categoriaIds?: number[]; subTipoIds?: number[] }) {
+  async updateTipoAgrupador(id: number, data: { nombre?: string; asignable?: boolean; multiAsignable?: boolean; categoriaIds?: number[]; subTipoIds?: number[] }) {
     await this.tipoAgrupadorRepo.save({ id, ...data } as any);
   }
 
